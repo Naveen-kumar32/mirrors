@@ -2910,3 +2910,42 @@ a.method__inner:hover {
 .location__card.glass {
   background: rgba(255, 255, 255, 0.92);
 }
+
+/* Footer — keep columns inside the viewport */
+.footer__col,
+.footer__brand {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 640px) {
+  .footer__inner {
+    padding-top: 70px;
+  }
+  .footer__top {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px 20px;
+    padding-bottom: 44px;
+  }
+  .footer__brand,
+  .footer__col:last-child {
+    grid-column: 1 / -1;
+  }
+  .footer__news {
+    max-width: none;
+  }
+  .footer__col {
+    font-size: 0.92rem;
+  }
+  .footer__bottom {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 20px;
+  }
+  .footer__bottom > p:first-child {
+    flex-basis: 100%;
+  }
+  .footer__legal {
+    flex: 1;
+  }
+}
