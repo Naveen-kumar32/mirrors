@@ -74,14 +74,14 @@ export function downloadIcs({ date, time, title, ref }) {
   const ics = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Mirrors Dema//Booking//EN',
+    'PRODID:-//The Mirrors Dermatology Clinic//Booking//EN',
     'BEGIN:VEVENT',
-    `UID:${ref}@mirrorsdema`,
+    `UID:${ref}@themirrors`,
     `DTSTAMP:${fmt(new Date())}`,
     `DTSTART:${fmt(start)}`,
     `DTEND:${fmt(end)}`,
     `SUMMARY:${title} (requested)`,
-    'LOCATION:Mirrors Dema\\, First Floor\\, 1/95D\\, Avinashi Rd\\, Neelambur\\, Coimbatore 641062',
+    'LOCATION:The Mirrors Dermatology Clinic\\, First Floor\\, 1/95D\\, Avinashi Rd\\, Neelambur\\, Coimbatore 641062',
     `DESCRIPTION:Reference ${ref}. Our team will call to confirm this time.`,
     'STATUS:TENTATIVE',
     'END:VEVENT',
@@ -90,7 +90,7 @@ export function downloadIcs({ date, time, title, ref }) {
   const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
   const a = document.createElement('a');
   a.href = url;
-  a.download = `mirrors-dema-${ref}.ics`;
+  a.download = `the-mirrors-${ref}.ics`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

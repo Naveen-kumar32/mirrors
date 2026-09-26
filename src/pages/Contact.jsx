@@ -76,7 +76,7 @@ function MapEmbed() {
   return (
     <iframe
       className="map"
-      title="Map showing Mirrors Dema Dermatology Clinic, Neelambur, Coimbatore"
+      title="Map showing The Mirrors Dermatology Clinic, Neelambur, Coimbatore"
       src={CONTACT.mapsEmbed}
       loading="lazy"
       referrerPolicy="no-referrer-when-downgrade"
@@ -92,7 +92,7 @@ function Location() {
         <Reveal className="location__map" y={60}>
           <MapEmbed />
           <div className="location__card glass">
-            <strong>Mirrors Dema Dermatology Clinic</strong>
+            <strong>The Mirrors Dermatology Clinic</strong>
             <span>{CONTACT.address}</span>
             <span>{CONTACT.area}</span>
             <a href={CONTACT.mapsHref} target="_blank" rel="noreferrer" className="text-link">

@@ -75,7 +75,7 @@ function Confirm({ d, kind }) {
       {kind === 'booking' && d.date && (
         <button
           className="cc__btn"
-          onClick={() => downloadIcs({ date: d.date, time: d.time, title: `Mirrors Dema — ${d.concern}`, ref: d.ref })}
+          onClick={() => downloadIcs({ date: d.date, time: d.time, title: `The Mirrors — ${d.concern}`, ref: d.ref })}
         >
           <Icon name="clock" size={15} /> Add to calendar
         </button>
@@ -342,7 +342,7 @@ export default function ChatWidget() {
           <motion.section
             className="chat"
             role="dialog"
-            aria-label="Chat with Aura, Mirrors Dema’s care assistant"
+            aria-label="Chat with Aura, the care assistant at The Mirrors Dermatology Clinic"
             initial={{ opacity: 0, scale: 0.6, y: 40 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.7, y: 40 }}

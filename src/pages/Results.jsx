@@ -138,7 +138,7 @@ function Gallery() {
   return (
     <section className="gallery section">
       <div className="gallery__head">
-        <SectionLabel>Inside Mirrors Dema</SectionLabel>
+        <SectionLabel>Inside The Mirrors</SectionLabel>
         <h2 className="h2">
           <SplitWords text="Details that make the *difference*." />
         </h2>

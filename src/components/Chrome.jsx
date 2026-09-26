@@ -58,7 +58,7 @@ export function Preloader({ onDone }) {
           animate={{ scale: 1, rotate: 0, opacity: 1 }}
           transition={{ duration: 1.1, ease: EASE }}
         />
-        Mirrors <em>Dema</em>
+        The <em>Mirrors</em>
         <span>Dermatology Clinic · Coimbatore</span>
       </motion.div>
       <div className="preloader__count">{String(n).padStart(3, '0')}</div>
@@ -147,7 +147,7 @@ export function Logo({ light = false }) {
       </span>
       <span className="logo__text">
         <span className="logo__name">
-          Mirrors <em>Dema</em>
+          The <em>Mirrors</em>
         </span>
         <span className="logo__sub">Dermatology Clinic</span>
       </span>
@@ -192,7 +192,7 @@ export function Nav() {
         animate={{ y: hidden && !open ? '-130%' : '0%' }}
         transition={{ duration: 0.55, ease: EASE }}
       >
-        <Link className="nav__logo" to="/" aria-label="Mirrors Dema Dermatology Clinic home">
+        <Link className="nav__logo" to="/" aria-label="The Mirrors Dermatology Clinic home">
           <Logo />
         </Link>
         <nav className="nav__links" aria-label="Main">

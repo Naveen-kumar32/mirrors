@@ -8,8 +8,8 @@ export const img = (name, w = 1200) => {
 };
 
 export const BRAND = {
-  name: 'Mirrors Dema',
-  full: 'Mirrors Dema Dermatology Clinic',
+  name: 'The Mirrors',
+  full: 'The Mirrors Dermatology Clinic',
   logo: '/images/brand/logo-color-256.png',
   logoWhite: '/images/brand/logo-white-256.png',
 };

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { EASE_IN_OUT } from '../lib';
 import Footer from './Footer';
 
-const BASE_TITLE = 'Mirrors Dema Dermatology Clinic';
+const BASE_TITLE = 'The Mirrors Dermatology Clinic';
 
 /* Wraps every route: sets the document title and plays the curtain transition */
 export default function Page({ title, children }) {
@@ -40,7 +40,7 @@ export default function Page({ title, children }) {
           animate={{ opacity: 0, y: -30 }}
           transition={{ duration: 0.4 }}
         >
-          {title || 'Mirrors Dema'}
+          {title || 'The Mirrors'}
         </motion.span>
       </motion.div>
     </>

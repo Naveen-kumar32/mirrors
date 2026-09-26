@@ -28,7 +28,7 @@ export default function About() {
           </h2>
           <ScrollRevealText
             className="about__statement"
-            text="We believe great skin care starts with a correct diagnosis, not a product. Every plan at Mirrors Dema is written by a board-certified dermatologist, grounded in *evidence* and shaped around the person in front of us — their skin tone, their lifestyle and their goals."
+            text="We believe great skin care starts with a correct diagnosis, not a product. Every plan at The Mirrors is written by a board-certified dermatologist, grounded in *evidence* and shaped around the person in front of us — their skin tone, their lifestyle and their goals."
           />
           <Reveal className="about__sign" delay={0.1}>
             <span className="about__sig">Elena Marsh</span>

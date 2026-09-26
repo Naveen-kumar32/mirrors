@@ -221,7 +221,7 @@ export default function Journey() {
         label="Your Journey"
         index="03"
         title={['From first hello', 'to *healthy* skin.']}
-        lead="What happens when you choose Mirrors Dema — from the moment you book to the aftercare that keeps your skin at its best."
+        lead="What happens when you choose The Mirrors — from the moment you book to the aftercare that keeps your skin at its best."
         image={IMG.journeyHero}
         shape="circle"
       />

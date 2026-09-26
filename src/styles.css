@@ -681,7 +681,6 @@ em {
   width: 42px;
   height: 42px;
   flex: none;
-  transition: transform 0.8s var(--ease);
 }
 .logo__img {
   position: absolute;
@@ -698,9 +697,6 @@ em {
 .logo--light .logo__img--white,
 .nav.is-open .logo__img--white {
   opacity: 1;
-}
-.nav__logo:hover .logo__mark {
-  transform: rotate(-12deg) scale(1.06);
 }
 .logo__text {
   display: flex;

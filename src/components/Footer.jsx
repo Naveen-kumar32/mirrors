@@ -21,7 +21,7 @@ export default function Footer() {
       <motion.div className="footer__inner" style={{ y }}>
         <div className="footer__top">
           <div className="footer__brand">
-            <Link to="/" aria-label="Mirrors Dema home">
+            <Link to="/" aria-label="The Mirrors home">
               <Logo light />
             </Link>
             <p>
@@ -107,7 +107,7 @@ export default function Footer() {
         </div>
 
         <div className="footer__bottom">
-          <p>© {new Date().getFullYear()} Mirrors Dema Dermatology Clinic. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} The Mirrors Dermatology Clinic. All rights reserved.</p>
           <p className="footer__legal">
             <Link to="/contact">Privacy</Link>
             <Link to="/contact">Accessibility</Link>

@@ -8,7 +8,7 @@ const OPEN = [false, true, true, false, true, true];
 export default function Bento() {
   return (
     <section className="bento-section section" id="why">
-      <SectionLabel>Why Mirrors Dema</SectionLabel>
+      <SectionLabel>Why The Mirrors</SectionLabel>
       <h2 className="h2 bento-title">
         <SplitWords text="Small details. *Big* difference." />
       </h2>

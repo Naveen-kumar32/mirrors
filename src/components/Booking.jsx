@@ -199,7 +199,7 @@ export default function Booking() {
                   <button
                     className="btn btn--primary btn--sm"
                     onClick={() =>
-                      downloadIcs({ date: result.date, time: result.time, title: `Mirrors Dema — ${result.concern}`, ref: result.ref })
+                      downloadIcs({ date: result.date, time: result.time, title: `The Mirrors — ${result.concern}`, ref: result.ref })
                     }
                   >
                     Add to calendar

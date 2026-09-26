@@ -36,7 +36,7 @@ function Story() {
         </div>
       </div>
       <div className="story__images">
-        <ParallaxImage src={img(IMG.reception, 1200)} alt="Mirrors Dema reception" className="story__img story__img--a" speed={0.1} />
+        <ParallaxImage src={img(IMG.reception, 1200)} alt="The Mirrors reception" className="story__img story__img--a" speed={0.1} />
         <ParallaxImage src={img(IMG.consult, 900)} alt="Dermatologist speaking with a patient" className="story__img story__img--b" speed={0.16} delay={0.15} />
         <Reveal className="story__stamp" delay={0.3}>
           <span>Est.</span>
@@ -195,7 +195,7 @@ export default function About() {
         label="About"
         index="01"
         title={['A clinic built', 'around *you*.']}
-        lead="Mirrors Dema is an independent dermatology clinic led by board-certified specialists. We combine medical rigour with the calm of a boutique — and we never rush."
+        lead="The Mirrors Dermatology Clinic is an independent dermatology clinic led by board-certified specialists. We combine medical rigour with the calm of a boutique — and we never rush."
         image={IMG.aboutHero}
         shape="arch"
       />

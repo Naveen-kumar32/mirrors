@@ -1,4 +1,4 @@
-# Mirrors Dema Dermatology Clinic — website
+# The Mirrors Dermatology Clinic — website
 
 First Floor, 1/95D, Avinashi Rd, Neelambur, Coimbatore 641062 · +91 93612 61413 · Mon–Sat 3–7 pm
 

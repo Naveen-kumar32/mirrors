@@ -37,7 +37,7 @@ const isName = (v) => v.trim().length >= 2 || 'Please tell me your name so our t
 export const NODES = {
   welcome: {
     say: (d) => [
-      `Hi${d.name ? ` ${first(d.name)}` : ''}! I’m Aura, Mirrors Dema’s virtual care assistant. 👋`,
+      `Hi${d.name ? ` ${first(d.name)}` : ''}! I’m Aura, the virtual care assistant at The Mirrors Dermatology Clinic. 👋`,
       'I can book an appointment, answer common questions or put you in touch with our team. What can I help with?',
     ],
     options: MAIN_OPTIONS,
@@ -86,7 +86,7 @@ export const NODES = {
     returnable: true,
   },
   patientType: {
-    say: ['Have you visited Mirrors Dema before?'],
+    say: ['Have you visited The Mirrors before?'],
     options: [opt('I’m a new patient', 'New patient'), opt('I’ve been before', 'Returning patient')],
     field: 'patientType',
     next: 'visitType',

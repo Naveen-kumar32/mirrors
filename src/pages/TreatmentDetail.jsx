@@ -47,7 +47,7 @@ function Overview({ s }) {
       <div className="overview__text">
         <SectionLabel>Overview</SectionLabel>
         <h2 className="h2">
-          <SplitWords text={`Why choose *Mirrors* *Dema* for ${s.title.toLowerCase()}?`} />
+          <SplitWords text={`Why choose *The* *Mirrors* for ${s.title.toLowerCase()}?`} />
         </h2>
         <Reveal as="p" className="overview__lead" delay={0.1}>
           {s.overview}

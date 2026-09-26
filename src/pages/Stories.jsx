@@ -162,7 +162,7 @@ export default function Stories() {
         label="Stories"
         index="06"
         title={['Kind words from', '*real* skin.']}
-        lead="Thousands of patients have trusted Mirrors Dema with their skin. Here are a few of their stories, in their own words."
+        lead="Thousands of patients have trusted The Mirrors with their skin. Here are a few of their stories, in their own words."
         image={IMG.p4}
         shape="circle"
       />
