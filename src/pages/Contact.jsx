@@ -141,7 +141,7 @@ export default function Contact() {
         index="07"
         title={['Let’s talk', '*skin.*']}
         lead="Book an appointment, ask a question or just say hello. Choose whatever’s easiest — our care team is here to help."
-        image={IMG.reception}
+        image={IMG.contactHero}
         shape="blob"
       />
       <Methods />

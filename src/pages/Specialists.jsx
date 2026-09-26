@@ -220,7 +220,7 @@ export default function Specialists() {
         index="05"
         title={['The hands your', 'skin is *in*.']}
         lead="Four board-certified dermatologists, each with a deep specialist interest — from skin cancer surgery to hair loss and skin of colour."
-        image={IMG.drElena}
+        image={IMG.specHero}
         shape="arch"
       />
       <TeamGrid />

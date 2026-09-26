@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue, useScroll, useSpring, useTransform } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { IMG, img } from '../data';
@@ -19,6 +19,11 @@ export default function Hero() {
   const ready = useReady();
   const chat = useChat();
   const ref = useRef(null);
+  const heroImg = useRef(null);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    if (heroImg.current?.complete && heroImg.current.naturalWidth) setLoaded(true);
+  }, []);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
 
   // Scroll parallax — each layer travels at its own speed
@@ -110,7 +115,7 @@ export default function Hero() {
           transition={{ duration: 1, delay: 1.1 }}
         >
           <div className="avatars">
-            {[IMG.p1, IMG.p2, IMG.p3].map((id) => (
+            {[IMG.trust1, IMG.trust2, IMG.trust3].map((id) => (
               <img key={id} src={img(id, 120)} alt="" />
             ))}
             <span>18k+</span>
@@ -131,10 +136,12 @@ export default function Hero() {
             data-cursor="view"
             data-cursor-label="Hello"
             initial={{ clipPath: 'circle(0% at 50% 60%)' }}
-            animate={ready ? { clipPath: 'circle(80% at 50% 50%)' } : undefined}
+            animate={ready && loaded ? { clipPath: 'circle(80% at 50% 50%)' } : undefined}
             transition={{ duration: 1.8, ease: EASE, delay: 0.15 }}
           >
             <motion.img
+              ref={heroImg}
+              onLoad={() => setLoaded(true)}
               src={img(IMG.hero, 1100)}
               alt="Woman with clear, healthy skin"
               style={{ scale: imgScale }}

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { TESTIMONIALS, img } from '../data';
+import { TESTIMONIALS } from '../data';
 import { EASE } from '../lib';
-import { Icon, SectionLabel, SplitWords, Stars } from './ui';
+import { Icon, Initials, SectionLabel, SplitWords, Stars } from './ui';
 
 const DURATION = 7000;
 
@@ -57,7 +57,7 @@ export default function Testimonials() {
             <Stars />
             <blockquote>{t.quote}</blockquote>
             <figcaption>
-              <img src={img(t.image, 160)} alt="" />
+              <Initials name={t.name} size={54} />
               <span>
                 <strong>{t.name}</strong>
                 {t.detail}

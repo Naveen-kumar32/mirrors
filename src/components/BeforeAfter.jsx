@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { animate, motion, useInView, useMotionTemplate, useMotionValue, useTransform } from 'framer-motion';
-import { CASES, img } from '../data';
+import { CASES, IMG, img } from '../data';
 import { Counter, Icon, Reveal, SectionLabel, SplitWords } from './ui';
 
 /*
@@ -110,7 +110,8 @@ export function BeforeAfterSlider({ image, effect = 'acne', label = 'Before and 
 
 /* Home page section */
 export default function BeforeAfter() {
-  const c = CASES[0];
+  // Home uses its own face so it never repeats the Results page case studies
+  const c = { ...CASES[0], image: IMG.homeBA };
   return (
     <section className="results section">
       <div className="results__grid">

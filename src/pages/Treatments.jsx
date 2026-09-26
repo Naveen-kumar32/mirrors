@@ -235,7 +235,7 @@ export default function Treatments() {
         index="02"
         title={['Treatments that', '*actually* work.']}
         lead="Medical, surgical, aesthetic and hair care — every treatment chosen for evidence, performed by a dermatologist, and tailored to your skin."
-        image={IMG.procedure}
+        image={IMG.treatHero}
         shape="blob"
       >
         <div className="phero__pills">

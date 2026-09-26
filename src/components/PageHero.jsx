@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { img } from '../data';
@@ -14,6 +14,13 @@ import { SplitWords } from './ui';
 export default function PageHero({ label, title, lead, image, shape = 'blob', index, crumbs = [], children, dark }) {
   const ready = useReady();
   const ref = useRef(null);
+  const imgRef = useRef(null);
+  const [loaded, setLoaded] = useState(false);
+
+  // Only reveal the photo once it has actually downloaded (handles cached images too)
+  useEffect(() => {
+    if (imgRef.current?.complete && imgRef.current.naturalWidth) setLoaded(true);
+  }, [image]);
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] });
   const yText = useTransform(scrollYProgress, [0, 1], ['0%', '35%']);
   const yMedia = useTransform(scrollYProgress, [0, 1], ['0%', '-10%']);
@@ -78,10 +85,17 @@ export default function PageHero({ label, title, lead, image, shape = 'blob', in
           <motion.div
             className="phero__frame"
             initial={{ clipPath: 'inset(100% 0% 0% 0%)' }}
-            animate={ready ? { clipPath: 'inset(0% 0% 0% 0%)' } : undefined}
+            animate={ready && loaded ? { clipPath: 'inset(0% 0% 0% 0%)' } : undefined}
             transition={{ duration: 1.4, ease: EASE, delay: base }}
           >
-            <motion.img src={img(image, 1100)} alt="" style={{ scale: imgScale }} fetchPriority="high" />
+            <motion.img
+              ref={imgRef}
+              src={img(image, 1100)}
+              alt=""
+              style={{ scale: imgScale }}
+              fetchPriority="high"
+              onLoad={() => setLoaded(true)}
+            />
           </motion.div>
         </motion.div>
       )}

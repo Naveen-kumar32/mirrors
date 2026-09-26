@@ -5,7 +5,7 @@ import { JOURNEY, img } from '../data';
 import { Icon } from './ui';
 
 /* Vertical scroll drives a pinned horizontal track */
-export default function Journey({ showLink = true }) {
+export default function Journey({ showLink = true, altImages = false }) {
   const section = useRef(null);
   const track = useRef(null);
   const dist = useRef(0);
@@ -50,10 +50,10 @@ export default function Journey({ showLink = true }) {
           </div>
 
           {JOURNEY.map((step) => (
-            <article className={`jcard ${step.image ? 'jcard--image' : ''}`} key={step.no}>
-              {step.image && (
+            <article className="jcard jcard--image" key={step.no}>
+              {(altImages ? step.imageAlt : step.image) && (
                 <div className="jcard__img">
-                  <img src={img(step.image, 800)} alt="" loading="lazy" />
+                  <img src={img(altImages ? step.imageAlt : step.image, 800)} alt="" loading="lazy" />
                 </div>
               )}
               <div className="jcard__top">

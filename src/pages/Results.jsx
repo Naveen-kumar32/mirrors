@@ -5,7 +5,7 @@ import PageHero from '../components/PageHero';
 import Testimonials from '../components/Testimonials';
 import ChatCTA from '../components/ChatCTA';
 import { BeforeAfterSlider } from '../components/BeforeAfter';
-import { CASES, GALLERY, IMG, OUTCOMES, img } from '../data';
+import { CASES, IMG, OUTCOMES, RESULTS_GALLERY, img } from '../data';
 import { EASE } from '../lib';
 import { Counter, Reveal, ScrollRevealText, SectionLabel, SplitWords } from '../components/ui';
 
@@ -144,7 +144,7 @@ function Gallery() {
         </h2>
       </div>
       <div className="masonry">
-        {GALLERY.map((g, i) => (
+        {RESULTS_GALLERY.map((g, i) => (
           <motion.figure
             key={g.caption}
             className={`masonry__item ${g.tall ? 'is-tall' : ''}`}
@@ -172,7 +172,7 @@ export default function Results() {
         index="04"
         title={['Honest results,', '*real* skin.']}
         lead="See how our treatment programmes transform common skin concerns — measured objectively, and always without filters."
-        image={IMG.faceSmile}
+        image={IMG.resultsHero}
         shape="tilted"
       />
       <Cases />

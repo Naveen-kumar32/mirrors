@@ -6,7 +6,7 @@ import ChatCTA from '../components/ChatCTA';
 import { IMG, RATING_BREAKDOWN, REVIEWS, img } from '../data';
 import { useChat } from '../chat/ChatProvider';
 import { EASE } from '../lib';
-import { Counter, Icon, Reveal, SectionLabel, SplitWords, Stars } from '../components/ui';
+import { Counter, Icon, Initials, Reveal, SectionLabel, SplitWords, Stars } from '../components/ui';
 
 const FILTERS = ['All', 'Medical', 'Surgical', 'Aesthetic', 'Hair'];
 
@@ -88,7 +88,7 @@ function Wall() {
               </div>
               <blockquote>{r.text}</blockquote>
               <figcaption>
-                <img src={img(r.image, 120)} alt="" loading="lazy" />
+                <Initials name={r.name} />
                 <span>
                   <strong>{r.name}</strong>
                   {r.date} · Verified patient
@@ -112,7 +112,7 @@ function Featured() {
       <div className="featured__media">
         <motion.div className="featured__blob" style={{ rotate }} aria-hidden="true" />
         <div className="featured__img">
-          <motion.img src={img(IMG.p1, 900)} alt="Claire, a patient" style={{ y, scale: 1.25 }} />
+          <motion.img src={img(IMG.featured, 900)} alt="Portrait of a smiling patient" style={{ y, scale: 1.25 }} />
         </div>
       </div>
       <div className="featured__text">

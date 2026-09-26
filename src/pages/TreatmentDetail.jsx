@@ -111,7 +111,7 @@ function DoctorQuote({ s }) {
   const y = useTransform(scrollYProgress, [0, 1], ['-15%', '15%']);
   return (
     <section className="dquote" ref={ref}>
-      <motion.img className="dquote__bg" src={img(s.image, 1600)} alt="" style={{ y }} />
+      <motion.img className="dquote__bg" src={img(s.mood, 1600)} alt="" style={{ y }} />
       <div className="dquote__card glass">
         <img src={img(d.image, 300)} alt={d.name} className="dquote__img" />
         <blockquote>

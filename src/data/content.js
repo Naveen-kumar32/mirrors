@@ -1,19 +1,19 @@
 import { IMG } from './site';
 
 export const JOURNEY = [
-  { no: '01', icon: 'chat', title: 'Consultation', text: 'A relaxed 45-minute conversation about your skin, history and goals — never rushed, never upsold.' },
-  { no: '02', icon: 'scan', title: 'Skin Analysis', text: '3D imaging and dermoscopy map what the eye can’t see: pigment depth, vascularity and texture.' },
-  { no: '03', icon: 'plan', title: 'Your Plan', text: 'A written, phased treatment plan with clear costs, timelines and realistic outcomes.', image: IMG.products },
-  { no: '04', icon: 'spark', title: 'Treatment', text: 'Delivered by the specialist who designed your plan, in calm private suites.' },
-  { no: '05', icon: 'leaf', title: 'Aftercare', text: 'Follow-ups in clinic or online, plus a direct line to your care team between visits.', image: IMG.lounge },
+  { no: '01', icon: 'chat', title: 'Consultation', image: IMG.jConsult, imageAlt: IMG.jConsult2, text: 'A relaxed 45-minute conversation about your skin, history and goals — never rushed, never upsold.' },
+  { no: '02', icon: 'scan', title: 'Skin Analysis', image: IMG.jAnalysis, imageAlt: IMG.jAnalysis2, text: '3D imaging and dermoscopy map what the eye can’t see: pigment depth, vascularity and texture.' },
+  { no: '03', icon: 'plan', title: 'Your Plan', text: 'A written, phased treatment plan with clear costs, timelines and realistic outcomes.', image: IMG.products, imageAlt: IMG.jPlan2 },
+  { no: '04', icon: 'spark', title: 'Treatment', image: IMG.jTreat, imageAlt: IMG.jTreat2, text: 'Delivered by the specialist who designed your plan, in calm private suites.' },
+  { no: '05', icon: 'leaf', title: 'Aftercare', text: 'Follow-ups in clinic or online, plus a direct line to your care team between visits.', image: IMG.jCare, imageAlt: IMG.jCare2 },
 ];
 
 export const FIRST_VISIT = [
-  { time: '0 min', title: 'A warm welcome', text: 'Check in at our quiet reception. Tea, water and zero waiting-room chaos.', image: IMG.reception },
-  { time: '5 min', title: 'Meet your dermatologist', text: 'Not a nurse or a junior — the specialist who will lead your care.', image: IMG.consult },
-  { time: '20 min', title: 'Imaging & examination', text: 'Dermoscopy and 3D imaging reveal what is really going on beneath the surface.', image: IMG.scans },
-  { time: '35 min', title: 'Your plan, explained', text: 'We walk through options, costs and timelines — and answer every question.', image: IMG.products },
-  { time: '45 min', title: 'Leave with clarity', text: 'A written plan in your inbox, prescriptions sent, and a follow-up booked.', image: IMG.lounge },
+  { time: '0 min', title: 'A warm welcome', text: 'Check in at our quiet reception. Tea, water and zero waiting-room chaos.', image: IMG.visit1 },
+  { time: '5 min', title: 'Meet your dermatologist', text: 'Not a nurse or a junior — the specialist who will lead your care.', image: IMG.visit2 },
+  { time: '20 min', title: 'Imaging & examination', text: 'Dermoscopy and 3D imaging reveal what is really going on beneath the surface.', image: IMG.visit3 },
+  { time: '35 min', title: 'Your plan, explained', text: 'We walk through options, costs and timelines — and answer every question.', image: IMG.visit4 },
+  { time: '45 min', title: 'Leave with clarity', text: 'A written plan in your inbox, prescriptions sent, and a follow-up booked.', image: IMG.visit5 },
 ];
 
 export const CHECKLIST = [
@@ -26,10 +26,10 @@ export const CHECKLIST = [
 ];
 
 export const TECH = [
-  { title: '3D Skin Imaging', text: 'Maps pigment, redness and texture in three dimensions for precise planning.', image: IMG.scans, icon: 'scan' },
-  { title: 'Digital Dermoscopy', text: 'Magnified, stored images of every mole so tiny changes are never missed.', image: IMG.clinical, icon: 'spark' },
-  { title: 'Multi-Platform Lasers', text: 'Fractional, vascular and pigment lasers safe for all skin tones.', image: IMG.procedure, icon: 'leaf' },
-  { title: 'Trichoscopy', text: 'Follicle-level imaging that diagnoses hair loss accurately.', image: IMG.hair, icon: 'plan' },
+  { title: '3D Skin Imaging', text: 'Maps pigment, redness and texture in three dimensions for precise planning.', image: IMG.tech1, icon: 'scan' },
+  { title: 'Digital Dermoscopy', text: 'Magnified, stored images of every mole so tiny changes are never missed.', image: IMG.tech2, icon: 'spark' },
+  { title: 'Multi-Platform Lasers', text: 'Fractional, vascular and pigment lasers safe for all skin tones.', image: IMG.tech3, icon: 'leaf' },
+  { title: 'Trichoscopy', text: 'Follicle-level imaging that diagnoses hair loss accurately.', image: IMG.tech4, icon: 'plan' },
 ];
 
 export const PAYMENT = [
@@ -69,7 +69,7 @@ export const CASES = [
     label: 'Acne',
     title: 'Inflammatory acne',
     text: 'A 12-week combined prescription and peel programme cleared active breakouts and faded post-acne marks.',
-    image: IMG.hero,
+    image: IMG.caseAcne,
     effect: 'acne',
     stats: [
       { to: 87, suffix: '%', label: 'fewer active breakouts' },
@@ -110,14 +110,25 @@ export const OUTCOMES = [
 ];
 
 export const GALLERY = [
-  { image: IMG.lounge, caption: 'The lounge', tall: true },
-  { image: IMG.dropper, caption: 'Medical-grade actives' },
-  { image: IMG.reception, caption: 'Reception' },
-  { image: IMG.oil, caption: 'Barrier-repair ritual', tall: true },
+  { image: IMG.gal2, caption: 'Our waiting lounge', tall: true },
+  { image: IMG.gal1, caption: 'Medical-grade actives' },
+  { image: IMG.gal3, caption: 'Fresh linen, every visit' },
+  { image: IMG.gal4, caption: 'Gentle, fragrance-free care', tall: true },
   { image: IMG.range, caption: 'Our curated range' },
-  { image: IMG.citrus, caption: 'Vitamin C, the real kind' },
+  { image: IMG.gal5, caption: 'Serums, precisely dosed' },
   { image: IMG.spa, caption: 'Treatment suite details', tall: true },
-  { image: IMG.cream, caption: 'Prescription moisturiser' },
+  { image: IMG.gal6, caption: 'Prescribed home care' },
+];
+
+export const RESULTS_GALLERY = [
+  { image: IMG.rg1, caption: 'Textures we trust', tall: true },
+  { image: IMG.rg2, caption: 'Calming masks' },
+  { image: IMG.rg3, caption: 'Daily SPF, non-negotiable' },
+  { image: IMG.rg4, caption: 'Gentle cleansing', tall: true },
+  { image: IMG.rg5, caption: 'Barrier repair' },
+  { image: IMG.rg6, caption: 'Post-treatment care' },
+  { image: IMG.rg7, caption: 'Lymphatic massage', tall: true },
+  { image: IMG.rg8, caption: 'Targeted serums' },
 ];
 
 export const FAQS = [

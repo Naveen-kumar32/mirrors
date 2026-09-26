@@ -16,7 +16,7 @@ export default function Bento() {
       <div className="bento">
         {/* Glass over photo */}
         <Reveal className="bento__cell bento__cell--photo" delay={0}>
-          <img src={img(IMG.lounge, 1100)} alt="" loading="lazy" />
+          <img src={img(IMG.bentoRoom, 1100)} alt="" loading="lazy" />
           <div className="bento__glass glass">
             <Icon name="shield" size={26} />
             <h3>Only board-certified dermatologists</h3>

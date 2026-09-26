@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion, useInView } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import Page from '../components/Page';
 import PageHero from '../components/PageHero';
 import JourneyScroller from '../components/Journey';
@@ -39,18 +39,23 @@ function FirstVisit() {
       <div className="visit__grid">
         <div className="visit__sticky">
           <div className="visit__frame">
-            <AnimatePresence initial={false}>
+            {/* All photos are mounted up front so switching steps never shows an empty frame */}
+            {FIRST_VISIT.map((step, i) => (
               <motion.img
-                key={active}
-                src={img(FIRST_VISIT[active].image, 1000)}
+                key={step.title}
+                src={img(step.image, 1000)}
                 alt=""
-                initial={{ clipPath: 'inset(0% 0% 100% 0%)', scale: 1.15 }}
-                animate={{ clipPath: 'inset(0% 0% 0% 0%)', scale: 1 }}
-                exit={{ opacity: 0 }}
+                style={{ zIndex: i }}
+                initial={false}
+                animate={
+                  i <= active
+                    ? { clipPath: 'inset(0% 0% 0% 0%)', scale: 1 }
+                    : { clipPath: 'inset(0% 0% 100% 0%)', scale: 1.15 }
+                }
                 transition={{ duration: 1, ease: EASE }}
               />
-            </AnimatePresence>
-            <div className="visit__counter glass">
+            ))}
+            <div className="visit__counter glass" style={{ zIndex: FIRST_VISIT.length }}>
               <strong>{FIRST_VISIT[active].time}</strong>
               <span>
                 {active + 1} / {FIRST_VISIT.length}
@@ -174,7 +179,7 @@ function Tele() {
               <span className="pulse" /> Live · 12:04
             </span>
             <div className="tele__pip">
-              <img src={img(IMG.p4, 300)} alt="" />
+              <img src={img(IMG.pip, 300)} alt="" />
             </div>
             <div className="tele__bar">
               <span><Icon name="video" size={18} /></span>
@@ -217,10 +222,10 @@ export default function Journey() {
         index="03"
         title={['From first hello', 'to *healthy* skin.']}
         lead="What happens when you choose Mirrors Dema — from the moment you book to the aftercare that keeps your skin at its best."
-        image={IMG.consult}
+        image={IMG.journeyHero}
         shape="circle"
       />
-      <JourneyScroller showLink={false} />
+      <JourneyScroller showLink={false} altImages />
       <FirstVisit />
       <Checklist />
       <Technology />

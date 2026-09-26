@@ -2949,3 +2949,55 @@ a.method__inner:hover {
     flex: 1;
   }
 }
+
+/* Patient initials (instead of stock faces) */
+.initials {
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-family: var(--ff-display);
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+}
+.initials--0 {
+  background: var(--navy);
+  color: var(--aqua);
+}
+.initials--1 {
+  background: var(--teal);
+  color: var(--white);
+}
+.initials--2 {
+  background: var(--mist);
+  color: var(--navy);
+}
+.review--accent .initials--0 {
+  background: var(--aqua);
+  color: var(--navy);
+}
+
+/* Soft brand-tinted placeholder behind every photo frame while it loads */
+.hero__blob,
+.phero__frame,
+.pimg,
+.stack__media,
+.tcard__media,
+.jcard__img,
+.visit__frame,
+.techcard__img,
+.rcard__img,
+.rcard-doc__img,
+.doc__arch,
+.masonry__item,
+.space__item,
+.featured__img,
+.bento__cell--photo,
+.scan,
+.ba,
+.tele__screen,
+.cc--treatment img {
+  background-color: var(--mist);
+  background-image: linear-gradient(135deg, var(--mist), var(--pearl-2));
+}

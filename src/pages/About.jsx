@@ -196,7 +196,7 @@ export default function About() {
         index="01"
         title={['A clinic built', 'around *you*.']}
         lead="Mirrors Dema is an independent dermatology clinic led by board-certified specialists. We combine medical rigour with the calm of a boutique — and we never rush."
-        image={IMG.lounge}
+        image={IMG.aboutHero}
         shape="arch"
       />
       <Story />

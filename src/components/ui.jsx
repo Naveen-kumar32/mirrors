@@ -281,6 +281,23 @@ export function Stars({ n = 5 }) {
   );
 }
 
+/* Coloured monogram used instead of photos for patient reviews */
+export function Initials({ name, size = 44 }) {
+  const letters = name
+    .replace(/[^A-Za-z ]/g, '')
+    .split(' ')
+    .filter(Boolean)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('');
+  const tone = [...name].reduce((a, c) => a + c.charCodeAt(0), 0) % 3;
+  return (
+    <span className={`initials initials--${tone}`} style={{ width: size, height: size }} aria-hidden="true">
+      {letters}
+    </span>
+  );
+}
+
 export function SectionLabel({ children, light }) {
   return (
     <Reveal as="p" y={16} className={`section-label ${light ? 'is-light' : ''}`}>
