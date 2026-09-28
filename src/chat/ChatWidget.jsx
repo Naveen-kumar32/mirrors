@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { CONTACT, HOURS, PRICING, SERVICES, img } from '../data';
 import { downloadIcs } from '../api';
-import { EASE } from '../lib';
 import { Icon } from '../components/ui';
 import { useChat } from './ChatProvider';
 import { first } from './flow';
@@ -56,12 +54,9 @@ function Confirm({ d, kind }) {
 
   return (
     <div className="cc cc--confirm">
-      <svg viewBox="0 0 52 52" width="44" height="44" aria-hidden="true">
-        <motion.circle cx="26" cy="26" r="23" fill="none" stroke="currentColor" strokeWidth="2.5"
-          initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.7, ease: EASE }} />
-        <motion.path d="M16 27l7 7 13-15" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
-          initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.5, ease: EASE, delay: 0.5 }} />
-      </svg>
+      <span className="cc__check">
+        <Icon name="check" size={22} />
+      </span>
       <p className="cc__title">{copy.title}</p>
       <p>{copy.text}</p>
       {kind === 'booking' && (
@@ -194,22 +189,14 @@ function Message({ m }) {
     default: body = <p className="bubble">{m.text}</p>;
   }
   return (
-    <motion.div
-      className={`msg msg--${m.from} ${m.type ? 'msg--card' : ''}`}
-      initial={{ opacity: 0, y: 14, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.4, ease: EASE }}
-      layout="position"
-    >
-      {body}
-    </motion.div>
+    <div className={`msg msg--${m.from} ${m.type ? 'msg--card' : ''}`}>{body}</div>
   );
 }
 
 function Avatar({ size = 36 }) {
   return (
     <span className="aura-avatar" style={{ width: size, height: size }} aria-hidden="true">
-      <span>a</span>
+      <Icon name="chat" size={Math.round(size * 0.45)} />
     </span>
   );
 }
@@ -222,7 +209,6 @@ export default function ChatWidget() {
   const [nudge, setNudge] = useState(false);
   const scroller = useRef(null);
   const inputRef = useRef(null);
-  const { pathname } = useLocation();
 
   // Friendly nudge after a few seconds on the first visit
   useEffect(() => {
@@ -252,7 +238,7 @@ export default function ChatWidget() {
   // Keep the newest message in view
   useEffect(() => {
     const el = scroller.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    if (el) el.scrollTo({ top: el.scrollHeight });
   }, [messages, typing, prompt, isOpen]);
 
   // Focus the input when the bot asks for typed info (desktop only)
@@ -264,10 +250,7 @@ export default function ChatWidget() {
 
   // Lock page scroll behind the full-screen chat on phones
   useEffect(() => {
-    const small = window.matchMedia('(max-width: 640px)').matches;
-    if (!small) return;
-    if (isOpen) window.__lenis?.stop();
-    else window.__lenis?.start();
+    if (!window.matchMedia('(max-width: 640px)').matches) return;
     document.body.style.overflow = isOpen ? 'hidden' : '';
   }, [isOpen]);
 
@@ -290,147 +273,98 @@ export default function ChatWidget() {
 
   return (
     <>
-      <AnimatePresence>
-        {nudge && !isOpen && (
-          <motion.div
-            className="chat-nudge glass"
-            initial={{ opacity: 0, y: 20, scale: 0.9 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10, scale: 0.9 }}
-            transition={{ duration: 0.5, ease: EASE }}
-          >
-            <button className="chat-nudge__close" onClick={() => setNudge(false)} aria-label="Dismiss">
-              ×
-            </button>
-            <Avatar size={34} />
-            <button className="chat-nudge__body" onClick={() => chat.open()}>
-              <strong>Need help booking?</strong>
-              Chat with Aura — it takes a minute.
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {nudge && !isOpen && (
+        <div className="chat-nudge">
+          <button className="chat-nudge__close" onClick={() => setNudge(false)} aria-label="Dismiss">
+            ×
+          </button>
+          <button className="chat-nudge__body" onClick={() => chat.open()}>
+            <strong>Need help booking?</strong>
+            Our care assistant can book you in.
+          </button>
+        </div>
+      )}
 
-      <motion.button
+      <button
         className={`chat-launcher ${isOpen ? 'is-open' : ''}`}
         onClick={() => (isOpen ? chat.close() : chat.open())}
         aria-label={isOpen ? 'Close chat' : 'Chat with us'}
         aria-expanded={isOpen}
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: pathname ? 1.2 : 0, type: 'spring', stiffness: 260, damping: 18 }}
-        whileHover={{ scale: 1.06 }}
-        whileTap={{ scale: 0.94 }}
       >
-        <span className="chat-launcher__blob" />
-        <AnimatePresence mode="wait" initial={false}>
-          {isOpen ? (
-            <motion.span key="x" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }}>
-              <Icon name="plus" size={26} className="rot45" />
-            </motion.span>
-          ) : (
-            <motion.span key="c" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }}>
-              <Icon name="chat" size={26} />
-            </motion.span>
-          )}
-        </AnimatePresence>
-        {!isOpen && <span className="chat-launcher__ping" />}
-      </motion.button>
+        <Icon name={isOpen ? 'plus' : 'chat'} size={20} className={isOpen ? 'rot45' : ''} />
+        <span className="chat-launcher__label">{isOpen ? 'Close' : 'Book / Ask'}</span>
+      </button>
 
-      <AnimatePresence>
-        {isOpen && (
-          <motion.section
-            className="chat"
-            role="dialog"
-            aria-label="Chat with Aura, the care assistant at The Mirrors Dermatology Clinic"
-            initial={{ opacity: 0, scale: 0.6, y: 40 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.7, y: 40 }}
-            transition={{ type: 'spring', stiffness: 260, damping: 26 }}
-          >
-            <header className="chat__head">
-              <Avatar size={44} />
-              <div className="chat__who">
-                <strong>Aura · Care assistant</strong>
-                <span>
-                  <span className="pulse" /> Online · replies instantly
-                </span>
-              </div>
-              <button className="chat__icon-btn" onClick={chat.restart} aria-label="Start over" title="Start over">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5" />
-                </svg>
-              </button>
-              <button className="chat__icon-btn" onClick={chat.close} aria-label="Close chat">
-                <Icon name="plus" size={20} className="rot45" />
-              </button>
-            </header>
-
-            <div className="chat__body" ref={scroller} data-lenis-prevent aria-live="polite">
-              <p className="chat__day">Today</p>
-              {messages.map((m) => (
-                <Message key={m.id} m={m} />
-              ))}
-              <AnimatePresence>
-                {typing && (
-                  <motion.div
-                    className="msg msg--bot"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <p className="bubble typing" aria-label="Aura is typing">
-                      <span />
-                      <span />
-                      <span />
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {prompt?.options && !typing && (
-                <motion.div
-                  className="chips"
-                  key={prompt.id + messages.length}
-                  initial="hidden"
-                  animate="show"
-                  variants={{ show: { transition: { staggerChildren: 0.05 } } }}
-                >
-                  {prompt.options.map((o) => (
-                    <motion.button
-                      key={o.label}
-                      className="chip"
-                      variants={{ hidden: { opacity: 0, y: 10, scale: 0.9 }, show: { opacity: 1, y: 0, scale: 1 } }}
-                      onClick={() => chat.answer(o.value, o.label)}
-                    >
-                      {o.label}
-                    </motion.button>
-                  ))}
-                </motion.div>
-              )}
+      {isOpen && (
+        <section
+          className="chat"
+          role="dialog"
+          aria-label="Chat with Aura, the care assistant at The Mirrors Dermatology Clinic"
+        >
+          <header className="chat__head">
+            <Avatar size={40} />
+            <div className="chat__who">
+              <strong>Aura · Care assistant</strong>
+              <span>
+                <span className="dot" /> Online · replies instantly
+              </span>
             </div>
+            <button className="chat__icon-btn" onClick={chat.restart} aria-label="Start over" title="Start over">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5" />
+              </svg>
+            </button>
+            <button className="chat__icon-btn" onClick={chat.close} aria-label="Close chat">
+              <Icon name="plus" size={20} className="rot45" />
+            </button>
+          </header>
 
-            <form className="chat__input" onSubmit={submit} noValidate>
-              <input
-                ref={inputRef}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder={placeholder}
-                type={input?.type === 'email' ? 'email' : input?.type === 'tel' ? 'tel' : 'text'}
-                autoComplete={input?.autoComplete || 'off'}
-                aria-label="Message"
-                enterKeyHint="send"
-              />
-              <button type="submit" aria-label="Send" disabled={!text.trim()}>
-                <Icon name="arrow" size={18} />
-              </button>
-            </form>
-            <p className="chat__fine">
-              Aura can’t give medical advice. Emergency? Call your local emergency number.
-            </p>
-          </motion.section>
-        )}
-      </AnimatePresence>
+          <div className="chat__body" ref={scroller} aria-live="polite">
+            <p className="chat__day">Today</p>
+            {messages.map((m) => (
+              <Message key={m.id} m={m} />
+            ))}
+            {typing && (
+              <div className="msg msg--bot">
+                <p className="bubble typing" aria-label="Aura is typing">
+                  <span />
+                  <span />
+                  <span />
+                </p>
+              </div>
+            )}
+
+            {prompt?.options && !typing && (
+              <div className="chips">
+                {prompt.options.map((o) => (
+                  <button key={o.label} className="chip" onClick={() => chat.answer(o.value, o.label)}>
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <form className="chat__input" onSubmit={submit} noValidate>
+            <input
+              ref={inputRef}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              placeholder={placeholder}
+              type={input?.type === 'email' ? 'email' : input?.type === 'tel' ? 'tel' : 'text'}
+              autoComplete={input?.autoComplete || 'off'}
+              aria-label="Message"
+              enterKeyHint="send"
+            />
+            <button type="submit" aria-label="Send" disabled={!text.trim()}>
+              <Icon name="arrow" size={18} />
+            </button>
+          </form>
+          <p className="chat__fine">
+            Aura can’t give medical advice. Emergency? Call your local emergency number.
+          </p>
+        </section>
+      )}
     </>
   );
 }

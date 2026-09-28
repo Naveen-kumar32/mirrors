@@ -1,19 +1,28 @@
-export const EASE = [0.22, 1, 0.36, 1];
-export const EASE_IN_OUT = [0.76, 0, 0.24, 1];
-
 export function scrollToId(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  if (window.__lenis) window.__lenis.scrollTo(el, { duration: 1.6 });
-  else el.scrollIntoView({ behavior: 'smooth' });
+  document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-export function scrollToTop({ immediate = false } = {}) {
-  if (window.__lenis) window.__lenis.scrollTo(0, immediate ? { immediate: true, force: true } : { duration: 1.6 });
-  else window.scrollTo({ top: 0, behavior: immediate ? 'instant' : 'smooth' });
+export function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-export const wrap = (min, max, v) => {
-  const range = max - min;
-  return ((((v - min) % range) + range) % range) + min;
-};
+/* Live open/closed status for the clinic (Mon–Sat, 3–7 pm, India time) */
+export function clinicStatus(now = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata',
+    weekday: 'short',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+  }).formatToParts(now);
+  const get = (t) => parts.find((p) => p.type === t)?.value;
+  const day = get('weekday');
+  const mins = Number(get('hour')) * 60 + Number(get('minute'));
+  const OPEN = 15 * 60;
+  const CLOSE = 19 * 60;
+
+  if (day !== 'Sun' && mins >= OPEN && mins < CLOSE) return { open: true, text: 'Open now · until 7 pm' };
+  if (day !== 'Sun' && mins < OPEN) return { open: false, text: 'Opens today at 3 pm' };
+  if (day === 'Sat' || day === 'Sun') return { open: false, text: 'Opens Monday at 3 pm' };
+  return { open: false, text: 'Opens tomorrow at 3 pm' };
+}
