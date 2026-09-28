@@ -22,7 +22,7 @@ export default function Hero() {
           gentle aesthetic treatments.
         </p>
         <div className="hero__actions">
-          <button className="btn btn--navy" onClick={() => chat.open('book')}>
+          <button className="btn btn--navy" onClick={() => chat.openBooking()}>
             Book a consultation <Icon name="arrow" size={18} />
           </button>
           <Link className="btn btn--ghost" to="/treatments">

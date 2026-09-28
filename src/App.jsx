@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { ChatProvider } from './chat/ChatProvider';
 import ChatWidget from './chat/ChatWidget';
+import BookingModal from './chat/BookingModal';
 import Loader from './components/Loader';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -55,6 +56,7 @@ export default function App() {
         </Routes>
         <Footer />
         <ChatWidget />
+        <BookingModal />
       </ChatProvider>
     </BrowserRouter>
   );

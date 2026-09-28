@@ -40,7 +40,7 @@ export default function Contact() {
           </ul>
 
           <div className="contact__actions reveal">
-            <button className="btn btn--navy" onClick={() => chat.open('book')}>
+            <button className="btn btn--navy" onClick={() => chat.openBooking()}>
               Book appointment <Icon name="arrow" size={18} />
             </button>
             <a className="btn btn--ghost" href={CONTACT.whatsapp} target="_blank" rel="noreferrer">

@@ -45,7 +45,7 @@ export default function Header() {
 
   const book = () => {
     setOpen(false);
-    chat.open('book');
+    chat.openBooking();
   };
 
   return (

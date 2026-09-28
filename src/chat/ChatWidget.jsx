@@ -1,47 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CONTACT, HOURS, PRICING, SERVICES, img } from '../data';
-import { downloadIcs } from '../api';
 import { Icon } from '../components/ui';
 import { useChat } from './ChatProvider';
-import { first } from './flow';
 
 /* ---------- Rich message cards ---------- */
-function Summary({ d }) {
-  const rows = [
-    ['Treatment', d.concern],
-    ['Patient', d.patientType],
-    ['Visit', d.visitType],
-    ['Dermatologist', d.doctor],
-    ['When', d.dateLabel && `${d.dateLabel} · ${d.time}`],
-    ['Name', d.name],
-    ['Phone', d.phone],
-    ['Email', d.email],
-    ['Notes', d.notes],
-  ].filter(([, v]) => v);
-  return (
-    <div className="cc cc--summary">
-      <p className="cc__title">
-        <Icon name="plan" size={16} /> Appointment request
-      </p>
-      <dl>
-        {rows.map(([k, v]) => (
-          <div key={k}>
-            <dt>{k}</dt>
-            <dd>{v}</dd>
-          </div>
-        ))}
-      </dl>
-    </div>
-  );
-}
-
 function Confirm({ d, kind }) {
   const copy = {
-    booking: {
-      title: 'Request sent!',
-      text: `Thanks ${first(d.name)} — our care team will call ${d.phone} within one business day to confirm your appointment.`,
-    },
     callback: {
       title: 'Call back booked',
       text: `We’ll call you on ${d.phone} (${String(d.callTime).toLowerCase()}).`,
@@ -59,22 +24,9 @@ function Confirm({ d, kind }) {
       </span>
       <p className="cc__title">{copy.title}</p>
       <p>{copy.text}</p>
-      {kind === 'booking' && (
-        <p className="cc__when">
-          Requested: <strong>{d.dateLabel} · {d.time}</strong>
-        </p>
-      )}
       <p className="cc__ref">
         Reference <strong>{d.ref}</strong>
       </p>
-      {kind === 'booking' && d.date && (
-        <button
-          className="cc__btn"
-          onClick={() => downloadIcs({ date: d.date, time: d.time, title: `The Mirrors — ${d.concern}`, ref: d.ref })}
-        >
-          <Icon name="clock" size={15} /> Add to calendar
-        </button>
-      )}
     </div>
   );
 }
@@ -179,7 +131,6 @@ function Message({ m }) {
   const d = m.snap || {};
   let body;
   switch (m.type) {
-    case 'summary': body = <Summary d={d} />; break;
     case 'confirm': body = <Confirm d={d} kind={m.kind} />; break;
     case 'treatment': body = <TreatmentCard slug={m.slug} />; break;
     case 'prices': body = <Prices />; break;
@@ -279,8 +230,8 @@ export default function ChatWidget() {
             ×
           </button>
           <button className="chat-nudge__body" onClick={() => chat.open()}>
-            <strong>Need help booking?</strong>
-            Our care assistant can book you in.
+            <strong>Have a question?</strong>
+            Our care assistant is here to help.
           </button>
         </div>
       )}
@@ -288,11 +239,11 @@ export default function ChatWidget() {
       <button
         className={`chat-launcher ${isOpen ? 'is-open' : ''}`}
         onClick={() => (isOpen ? chat.close() : chat.open())}
-        aria-label={isOpen ? 'Close chat' : 'Chat with us'}
+        aria-label={isOpen ? 'Close chat' : 'Ask us a question'}
         aria-expanded={isOpen}
       >
         <Icon name={isOpen ? 'plus' : 'chat'} size={20} className={isOpen ? 'rot45' : ''} />
-        <span className="chat-launcher__label">{isOpen ? 'Close' : 'Book / Ask'}</span>
+        <span className="chat-launcher__label">{isOpen ? 'Close' : 'Ask us'}</span>
       </button>
 
       {isOpen && (

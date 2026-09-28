@@ -38,7 +38,7 @@ export default function DoctorsPage() {
                 </p>
                 <button
                   className="btn btn--navy"
-                  onClick={() => chat.open('book', { doctor: d.name, userText: `I’d like to book with ${d.name}` })}
+                  onClick={() => chat.openBooking({ doctor: d.name })}
                 >
                   Book with Dr. {d.first} <Icon name="arrow" size={18} />
                 </button>

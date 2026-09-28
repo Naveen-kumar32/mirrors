@@ -30,6 +30,7 @@ export function ChatProvider({ children }) {
   const [messages, setMessages] = useState(saved?.messages || []);
   const [promptId, setPromptId] = useState(saved?.promptId || null);
   const [typing, setTyping] = useState(false);
+  const [booking, setBooking] = useState(null); // null = closed, otherwise the form preset
   const data = useRef(saved?.data || {});
   const token = useRef(0);
   const busy = useRef(false);
@@ -75,10 +76,6 @@ export function ChatProvider({ children }) {
         node.enter?.(d);
         if (node.skipIf?.(d)) {
           nodeId = resolve(node.next, undefined, d);
-          if (d._return && node.returnable) {
-            nodeId = d._return;
-            delete d._return;
-          }
           continue;
         }
         if (node.run) {
@@ -97,6 +94,11 @@ export function ChatProvider({ children }) {
         const says = typeof node.say === 'function' ? node.say(d) : node.say || [];
         if (!(await botSay(says, t))) return;
         setTyping(false);
+        if (node.openForm) {
+          setBooking({ concern: d.concern, doctor: d.doctor });
+          delete d.concern;
+          delete d.doctor;
+        }
         if (node.options || node.input) {
           busy.current = false;
           setPromptId(nodeId);
@@ -123,12 +125,7 @@ export function ChatProvider({ children }) {
         d[node.field] = value;
         d[`${node.field}Label`] = label ?? value;
       }
-      let next = resolve(node.next, value, d);
-      if (d._return && node.returnable) {
-        next = d._return;
-        delete d._return;
-      }
-      goTo(next);
+      goTo(resolve(node.next, value, d));
     },
     [promptId, push, goTo]
   );
@@ -200,6 +197,10 @@ export function ChatProvider({ children }) {
     [goTo, push, messages.length, promptId]
   );
 
+  /** Open the booking form, optionally pre-filled ({ concern, doctor }). */
+  const openBooking = useCallback((preset = {}) => setBooking({ ...preset }), []);
+  const closeBooking = useCallback(() => setBooking(null), []);
+
   const restart = useCallback(() => {
     token.current++;
     data.current = {};
@@ -219,8 +220,11 @@ export function ChatProvider({ children }) {
       prompt: promptId ? { id: promptId, node: NODES[promptId], options: getOptions(NODES[promptId], data.current) } : null,
       answer,
       sendText,
+      booking,
+      openBooking,
+      closeBooking,
     }),
-    [isOpen, open, restart, messages, typing, promptId, answer, sendText]
+    [isOpen, open, restart, messages, typing, promptId, answer, sendText, booking, openBooking, closeBooking]
   );
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

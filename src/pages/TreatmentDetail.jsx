@@ -39,7 +39,7 @@ export default function TreatmentDetail() {
   const s = SERVICES.find((x) => x.slug === slug);
   if (!s) return <NotFound />;
 
-  const preset = { concern: s.title, userText: `I’d like to book ${s.title}` };
+  const preset = { concern: s.title };
   const facts = [
     { label: 'Duration', value: s.facts.duration },
     { label: 'Downtime', value: s.facts.downtime },
@@ -86,7 +86,7 @@ export default function TreatmentDetail() {
                 </li>
               ))}
             </ul>
-            <button className="btn btn--navy reveal" onClick={() => chat.open('book', preset)}>
+            <button className="btn btn--navy reveal" onClick={() => chat.openBooking(preset)}>
               Book this treatment <Icon name="arrow" size={18} />
             </button>
           </div>

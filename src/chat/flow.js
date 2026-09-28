@@ -10,10 +10,10 @@
  *   enter    – (data) => void, runs on arrival
  *   skipIf   – (data) => bool, skip straight to `next`
  *   run      – async (data) => void, e.g. submit the request
- *   returnable – after an edit from the review screen, jump back to review
+ *   openForm – open the booking form modal on arrival
  */
-import { submitRequest, nextOpenDays, TIME_SLOTS } from '../api';
-import { SERVICES, TEAM } from '../data';
+import { submitRequest } from '../api';
+import { SERVICES } from '../data';
 
 export const first = (n = '') => n.trim().split(/\s+/)[0];
 
@@ -28,17 +28,15 @@ export const MAIN_OPTIONS = [
 
 const opt = (label, value = label) => ({ label, value });
 
-const BOOKING_FIELDS = ['concern', 'patientType', 'visitType', 'doctor', 'date', 'dateLabel', 'time', 'notes'];
-
-const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || 'Hmm, that email doesn’t look quite right — could you check it?';
-const isPhone = (v) => (v.replace(/\D/g, '').length >= 7 && /^[+()\d\s.-]+$/.test(v.trim())) || 'That doesn’t look like a phone number — could you try again?';
-const isName = (v) => v.trim().length >= 2 || 'Please tell me your name so our team knows who to contact.';
+export const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || 'Hmm, that email doesn’t look quite right — could you check it?';
+export const isPhone = (v) => (v.replace(/\D/g, '').length >= 7 && /^[+()\d\s.-]+$/.test(v.trim())) || 'That doesn’t look like a phone number — could you try again?';
+export const isName = (v) => v.trim().length >= 2 || 'Please tell me your name so our team knows who to contact.';
 
 export const NODES = {
   welcome: {
     say: (d) => [
       `Hi${d.name ? ` ${first(d.name)}` : ''}! I’m Aura, the virtual care assistant at The Mirrors Dermatology Clinic. 👋`,
-      'I can book an appointment, answer common questions or put you in touch with our team. What can I help with?',
+      'I can answer common questions, open our booking form or put you in touch with our team. What can I help with?',
     ],
     options: MAIN_OPTIONS,
     next: (v) => v,
@@ -65,66 +63,16 @@ export const NODES = {
     next: 'menu',
   },
 
-  /* ---------- Booking ---------- */
+  /* ---------- Booking (handled by the booking form, not the chat) ---------- */
   book: {
-    enter: (d) => {
-      d._flow = 'booking';
-    },
-    say: (d) =>
+    say: (d) => [
       d.concern
-        ? [`Great choice — let’s book you in for ${d.concern}. It only takes a minute.`]
-        : ['Lovely — let’s get you booked in. It only takes a minute.'],
-    next: 'concern',
-  },
-  concern: {
-    skipIf: (d) => !!d.concern,
-    say: ['What would you like to see us about?'],
-    options: [...SERVICES.map((s) => opt(s.title)), opt('Not sure yet — general consult', 'General consultation')],
-    input: { placeholder: 'Or describe your concern…' },
-    field: 'concern',
-    next: 'patientType',
-    returnable: true,
-  },
-  patientType: {
-    say: ['Have you visited The Mirrors before?'],
-    options: [opt('I’m a new patient', 'New patient'), opt('I’ve been before', 'Returning patient')],
-    field: 'patientType',
-    next: 'visitType',
-  },
-  visitType: {
-    skipIf: (d) => {
-      if (d.visitType) return true;
-      if (/cancer|mole/i.test(d.concern || '')) {
-        d.visitType = 'In clinic';
-        return true;
-      }
-      return false;
-    },
-    say: ['Would you like to come into the clinic, or have a secure video consultation?'],
-    options: [opt('🏥 In clinic', 'In clinic'), opt('💻 Video consult', 'Video consult')],
-    field: 'visitType',
-    next: 'doctor',
-  },
-  doctor: {
-    skipIf: (d) => !!d.doctor,
-    say: ['Do you have a preferred dermatologist?'],
-    options: [opt('No preference'), ...TEAM.map((t) => opt(t.name))],
-    field: 'doctor',
-    next: 'day',
-    returnable: true,
-  },
-  day: {
-    say: ['Which day works best for you?'],
-    options: () => nextOpenDays(6),
-    field: 'date',
-    next: 'time',
-  },
-  time: {
-    say: (d) => [`${d.dateLabel} it is. What time suits you?`],
-    options: TIME_SLOTS.map((t) => opt(t)),
-    field: 'time',
-    next: 'askName',
-    returnable: true,
+        ? `Appointments are booked through a quick form — I’ve opened it for you with ${d.concern} selected. 📝`
+        : 'Appointments are booked through a quick form — I’ve opened it for you. 📝',
+    ],
+    openForm: true,
+    options: [opt('Open the booking form', 'book'), opt('Main menu', 'menu')],
+    next: (v) => v,
   },
 
   /* ---------- Shared contact details ---------- */
@@ -147,64 +95,7 @@ export const NODES = {
     say: ['And your email address? We’ll send your confirmation there.'],
     input: { placeholder: 'you@email.com', type: 'email', autoComplete: 'email', validate: isEmail },
     field: 'email',
-    next: (_, d) => (d._flow === 'enquiry' ? 'eqSubmit' : 'notes'),
-    returnable: true,
-  },
-
-  notes: {
-    say: ['Anything you’d like your dermatologist to know beforehand? (optional)'],
-    options: [opt('Nothing to add', '')],
-    input: { placeholder: 'e.g. flare-ups on my cheeks for 3 months' },
-    field: 'notes',
-    next: 'review',
-  },
-  review: {
-    say: ['Here’s a summary of your request:', { type: 'summary' }, 'Shall I send this to our care team?'],
-    options: [opt('✓ Yes, send it', 'send'), opt('Change something', 'edit'), opt('Cancel', 'cancel')],
-    next: (v) => ({ send: 'bookSubmit', edit: 'edit', cancel: 'cancelled' })[v] || 'review',
-  },
-  edit: {
-    say: ['No problem — what would you like to change?'],
-    options: [opt('Treatment', 'concern'), opt('Date & time', 'day'), opt('Dermatologist', 'doctor'), opt('Contact details', 'details')],
-    next: (v, d) => {
-      d._return = 'review';
-      if (v === 'concern') delete d.concern;
-      if (v === 'doctor') delete d.doctor;
-      if (v === 'details') {
-        delete d.name;
-        delete d.phone;
-        delete d.email;
-        return 'askName';
-      }
-      return v;
-    },
-  },
-  cancelled: {
-    enter: (d) => BOOKING_FIELDS.forEach((k) => delete d[k]),
-    say: ['No worries — nothing has been sent.'],
-    next: 'menu',
-  },
-  bookSubmit: {
-    run: async (d) => {
-      d.ref = await submitRequest('appointment', {
-        concern: d.concern,
-        patientType: d.patientType,
-        visitType: d.visitType,
-        doctor: d.doctor,
-        date: d.date,
-        time: d.time,
-        name: d.name,
-        phone: d.phone,
-        email: d.email,
-        notes: d.notes,
-      });
-    },
-    say: [{ type: 'confirm', kind: 'booking' }],
-    next: 'postBook',
-  },
-  postBook: {
-    enter: (d) => BOOKING_FIELDS.forEach((k) => delete d[k]),
-    next: 'menu',
+    next: 'eqSubmit',
   },
 
   /* ---------- Treatment info ---------- */

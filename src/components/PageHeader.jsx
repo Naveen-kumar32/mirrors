@@ -34,7 +34,7 @@ export default function PageHeader({ eyebrow, title, text, image, image2, crumbs
           <h1 className="phead__title">{title}</h1>
           {text && <p className="phead__text">{text}</p>}
           <div className="phead__actions">
-            <button className="btn btn--navy" onClick={() => chat.open('book', preset)}>
+            <button className="btn btn--navy" onClick={() => chat.openBooking(preset)}>
               Book appointment <Icon name="arrow" size={18} />
             </button>
             <a className="phead__call" href={CONTACT.phoneHref}>

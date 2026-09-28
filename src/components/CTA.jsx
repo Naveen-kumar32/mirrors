@@ -10,7 +10,7 @@ export default function CTA({ title = 'Ready to care for your skin?', preset }) 
       <div className="container cta__inner reveal">
         <h2 className="cta__title">{title}</h2>
         <div className="cta__actions">
-          <button className="btn btn--white" onClick={() => chat.open('book', preset)}>
+          <button className="btn btn--white" onClick={() => chat.openBooking(preset)}>
             Book appointment <Icon name="arrow" size={18} />
           </button>
           <a className="btn btn--line-white" href={CONTACT.phoneHref}>
