@@ -50,3 +50,4 @@ Copy `.env.example` to `.env` and set `VITE_REQUEST_ENDPOINT` to receive them.
 Routes are client-side, so the host must serve `index.html` for every path.
 `public/_redirects` (Netlify) and `vercel.json` (Vercel) are included.
 # mirrors
+# mirrors
