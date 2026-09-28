@@ -5,6 +5,10 @@ const ChatContext = createContext(null);
 export const useChat = () => useContext(ChatContext);
 
 const SESSION_KEY = 'mirrors:chat';
+
+// Whether the booking form has been shown since this page load (resets on refresh)
+let bookingSeen = false;
+export const hasSeenBooking = () => bookingSeen;
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 let uid = 0;
 const id = () => `${Date.now()}-${uid++}`;
@@ -62,6 +66,12 @@ export function ChatProvider({ children }) {
     [push]
   );
 
+  /** Open the booking form, optionally pre-filled ({ concern, doctor }). */
+  const openBooking = useCallback((preset = {}) => {
+    bookingSeen = true;
+    setBooking({ ...preset });
+  }, []);
+
   const goTo = useCallback(
     async (start) => {
       const t = ++token.current;
@@ -95,7 +105,7 @@ export function ChatProvider({ children }) {
         if (!(await botSay(says, t))) return;
         setTyping(false);
         if (node.openForm) {
-          setBooking({ concern: d.concern, doctor: d.doctor });
+          openBooking({ concern: d.concern, doctor: d.doctor });
           delete d.concern;
           delete d.doctor;
         }
@@ -111,7 +121,7 @@ export function ChatProvider({ children }) {
         nodeId = resolve(node.next, undefined, d);
       }
     },
-    [botSay]
+    [botSay, openBooking]
   );
 
   /** Answer the current prompt (from a quick-reply chip or validated text). */
@@ -197,8 +207,6 @@ export function ChatProvider({ children }) {
     [goTo, push, messages.length, promptId]
   );
 
-  /** Open the booking form, optionally pre-filled ({ concern, doctor }). */
-  const openBooking = useCallback((preset = {}) => setBooking({ ...preset }), []);
   const closeBooking = useCallback(() => setBooking(null), []);
 
   const restart = useCallback(() => {

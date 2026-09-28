@@ -161,23 +161,20 @@ export default function ChatWidget() {
   const scroller = useRef(null);
   const inputRef = useRef(null);
 
-  // Friendly nudge after a few seconds on the first visit
+  // Friendly nudge as soon as the opening loader finishes (on every page load)
   useEffect(() => {
-    let seen = false;
-    try {
-      seen = sessionStorage.getItem('mirrors:nudged');
-    } catch { /* ignore */ }
-    if (seen) return;
-    let hide;
-    const t = setTimeout(() => {
-      setNudge(true);
-      hide = setTimeout(() => setNudge(false), 12000);
-      try {
-        sessionStorage.setItem('mirrors:nudged', '1');
-      } catch { /* ignore */ }
-    }, 8000);
+    let show, hide;
+    const poll = setInterval(() => {
+      if (!document.documentElement.classList.contains('is-ready')) return;
+      clearInterval(poll);
+      show = setTimeout(() => {
+        setNudge(true);
+        hide = setTimeout(() => setNudge(false), 12000);
+      }, 500);
+    }, 100);
     return () => {
-      clearTimeout(t);
+      clearInterval(poll);
+      clearTimeout(show);
       clearTimeout(hide);
     };
   }, []);
