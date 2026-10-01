@@ -4,17 +4,27 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently -k -n api,web -c blue,green \"npm:dev:api\" \"npm:dev:web\"",
+    "dev:web": "vite",
+    "dev:api": "node --env-file-if-exists=.env --disable-warning=ExperimentalWarning --watch server/index.js",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "node --env-file-if-exists=.env --disable-warning=ExperimentalWarning server/index.js",
+    "create-admin": "node --env-file-if-exists=.env --disable-warning=ExperimentalWarning server/create-user.js"
   },
   "dependencies": {
+    "express": "^5.2.1",
+    "multer": "^2.4.0",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "react-router-dom": "^7.18.4"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^10.0.5",
     "vite": "^8.3.1"
+  },
+  "engines": {
+    "node": ">=22.13"
   }
 }

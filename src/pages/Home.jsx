@@ -8,6 +8,7 @@ import Treatments from '../components/Treatments';
 import Doctors from '../components/Doctors';
 import Reviews from '../components/Reviews';
 import CTA from '../components/CTA';
+import BlogPreview from '../components/Blog';
 
 /* Opens the booking form once per page load when the visitor scrolls halfway down the page */
 function useAutoBooking() {
@@ -34,6 +35,7 @@ export default function Home() {
       <Treatments items={SERVICES} />
       <Doctors />
       <Reviews />
+      <BlogPreview />
       <CTA />
     </Page>
   );

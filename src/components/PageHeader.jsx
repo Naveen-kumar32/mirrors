@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { CONTACT, img } from '../data';
 import { useChat } from '../chat/ChatProvider';
+import { useReviewSummary } from '../backend';
 import { Icon } from './ui';
 
 const POINTS = [
@@ -14,8 +15,12 @@ const POINTS = [
  * Left: breadcrumbs, title, text, actions. Right: a small photo collage
  * (main photo at its natural shape, a round inset photo and a rating card).
  */
+// `image` is a built-in photo name (see IMG) or a full URL such as an uploaded blog cover
+const src = (image, w) => (image.startsWith('/') || image.startsWith('http') ? image : img(image, w));
+
 export default function PageHeader({ eyebrow, title, text, image, image2, crumbs = [], preset }) {
   const chat = useChat();
+  const reviews = useReviewSummary();
   return (
     <section className="phead">
       <div className="container phead__grid">
@@ -58,20 +63,22 @@ export default function PageHeader({ eyebrow, title, text, image, image2, crumbs
             <span className="phead__shape" aria-hidden="true" />
             <span className="phead__dots" aria-hidden="true" />
             <figure className="phead__main">
-              <img src={img(image, 1200)} alt="" fetchPriority="high" />
+              <img src={src(image, 1200)} alt="" fetchPriority="high" />
             </figure>
             {image2 && (
               <figure className="phead__inset">
-                <img src={img(image2, 480)} alt="" />
+                <img src={src(image2, 480)} alt="" />
               </figure>
             )}
-            <div className="phead__rating">
-              <strong>4.9</strong>
-              <span>
-                <span className="stars">★★★★★</span>
-                2,300+ reviews
-              </span>
-            </div>
+            {reviews?.total > 0 && (
+              <div className="phead__rating">
+                <strong>{reviews.average.toFixed(1)}</strong>
+                <span>
+                  <span className="stars">★★★★★</span>
+                  {reviews.total} {reviews.total === 1 ? 'review' : 'reviews'}
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>
