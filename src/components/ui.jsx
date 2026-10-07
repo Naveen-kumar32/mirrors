@@ -13,6 +13,14 @@ const ICONS = {
   menu: <path d="M4 8h16M4 16h16" />,
   close: <path d="M6 6l12 12M18 6L6 18" />,
   instagram: <path d="M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM17.5 6.5h.01" />,
+  facebook: <path d="M15 3h-2.5A3.5 3.5 0 0 0 9 6.5V10H6.5v3.5H9V21h3.5v-7.5H15l.5-3.5h-3V7a1 1 0 0 1 1-1H15z" />,
+  whatsapp: <path d="M4 20l1.3-4A8 8 0 1 1 8 18.7zM9 8.5c0 3.5 3 6.5 6.5 6.5l1-1.6-2-1-1 .8a5 5 0 0 1-2.2-2.2l.8-1-1-2z" />,
+  mail: <path d="M3 6h18v12H3zM3 7l9 6 9-6" />,
+  star: <path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1 6.2-5.5-2.9-5.5 2.9 1-6.2L3 9.6l6.2-.9z" />,
+  award: <path d="M12 15a6 6 0 1 0 0-12 6 6 0 0 0 0 12zM8.5 13.5L7 21l5-3 5 3-1.5-7.5" />,
+  zap: <path d="M13 2L4 14h7l-1 8 9-12h-7z" />,
+  drop: <path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z" />,
+  spark: <path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6" />,
 };
 
 export function Icon({ name, size = 20, className = '' }) {
@@ -40,6 +48,11 @@ export function Stars() {
       {'★★★★★'}
     </span>
   );
+}
+
+/* Text with **bold** parts, e.g. copy supplied by the clinic */
+export function Rich({ text }) {
+  return text.split(/\*\*(.+?)\*\*/g).map((part, i) => (i % 2 ? <strong key={i}>{part}</strong> : part));
 }
 
 /* Small heading used above every section title */

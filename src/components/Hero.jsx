@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom';
 import { HOURS, IMG, img } from '../data';
 import { useChat } from '../chat/ChatProvider';
 import { Icon } from './ui';
+import ClinicStatus from './ClinicStatus';
 
 export default function Hero() {
   const chat = useChat();
@@ -13,25 +13,26 @@ export default function Hero() {
       <div className="container hero__content">
         <p className="hero__kicker">Dermatology Clinic · Coimbatore</p>
         <h1 className="hero__title">
-          Healthy skin,
+          Rooted in science,
           <br />
-          <em>expertly</em> cared for.
+          <em>reflected</em> in your skin.
         </h1>
         <p className="hero__text">
-          Specialist care for skin, hair and nails — from acne and pigmentation to skin checks and
-          gentle aesthetic treatments.
+          A calm, welcoming dermatology clinic in Neelambur, Coimbatore — here to understand your skin,
+          hair and nail concerns and help you look after them for the long term.
         </p>
         <div className="hero__actions">
-          <button className="btn btn--navy" onClick={() => chat.openBooking()}>
-            Book a consultation <Icon name="arrow" size={18} />
+          <button className="btn btn--navy" onClick={() => chat.open()}>
+            Talk to us <Icon name="chat" size={18} />
           </button>
-          <Link className="btn btn--ghost" to="/treatments">
-            Our treatments
-          </Link>
+          <button className="btn btn--ghost" onClick={() => chat.openBooking()}>
+            Book appointment
+          </button>
         </div>
         <p className="hero__hours">
           <Icon name="clock" size={16} /> {HOURS[0].day}, {HOURS[0].time}
         </p>
+        <ClinicStatus className="hero__status" />
       </div>
       <span className="hero__scroll" aria-hidden="true">
         <span />

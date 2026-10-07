@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { ChatProvider } from './chat/ChatProvider';
 import ChatWidget from './chat/ChatWidget';
+import QuickContact from './components/QuickContact';
 import BookingModal from './chat/BookingModal';
 import Loader from './components/Loader';
 import Header from './components/Header';
@@ -16,6 +17,8 @@ import Blog from './pages/Blog';
 import BlogPost from './pages/BlogPost';
 import Gallery from './pages/Gallery';
 import PatientReviews from './pages/PatientReviews';
+import Faq from './pages/Faq';
+import Policies from './pages/Policies';
 import NotFound from './pages/NotFound';
 
 // Staff area is loaded only when someone opens /admin
@@ -62,10 +65,15 @@ function PublicSite() {
         <Route path="/reviews" element={<PatientReviews />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
+        <Route path="/faqs" element={<Faq />} />
+        <Route path="/faq" element={<Faq />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/policies" element={<Policies />} />
+        <Route path="/privacy" element={<Policies />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
+      <QuickContact />
       <ChatWidget />
       <BookingModal />
     </ChatProvider>

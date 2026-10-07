@@ -13,14 +13,13 @@
  *   openForm – open the booking form modal on arrival
  */
 import { submitRequest } from '../api';
-import { SERVICES } from '../data';
+import { COORDINATOR, SERVICES } from '../data';
 
 export const first = (n = '') => n.trim().split(/\s+/)[0];
 
 export const MAIN_OPTIONS = [
   { label: 'Book an appointment', value: 'book' },
   { label: 'Ask about a treatment', value: 'treatments' },
-  { label: 'Prices & insurance', value: 'prices' },
   { label: 'Hours & location', value: 'hours' },
   { label: 'Send a question', value: 'enquiry' },
   { label: 'Contact the clinic', value: 'contact' },
@@ -56,9 +55,9 @@ export const NODES = {
   },
   error: {
     say: [
-      'I’m sorry — something went wrong sending that to our team.',
+      'I’m sorry — I couldn’t send that to our team just now.',
       { type: 'contact' },
-      'Please call or email us directly and we’ll look after you straight away.',
+      'Please call, WhatsApp or email us directly and we’ll look after you straight away.',
     ],
     next: 'menu',
   },
@@ -115,21 +114,28 @@ export const NODES = {
   },
 
   /* ---------- Info ---------- */
-  prices: {
+  fees: {
     say: [
-      { type: 'prices' },
-      'Most medical dermatology is claimable with insurance. You’ll always get a written quote before any procedure, and payment plans are available.',
+      'Fees depend on your consultation and any treatment you need, so our team shares them directly. Please call or WhatsApp us and we’ll be happy to help.',
+      { type: 'contact' },
     ],
     options: [opt('Book an appointment', 'book'), opt('Main menu', 'menu')],
     next: (v) => v,
   },
   hours: {
-    say: [{ type: 'hours' }, 'We’re on the first floor at 1/95D, Avinashi Road, Neelambur — tap the address above for Google Maps directions.'],
+    say: [
+      { type: 'hours' },
+      'We’re on the first floor at 1/95D, Avinashi Road, Neelambur — about 200 metres from Neelambur bus stop, with roadside parking. Please note there is no lift. Tap the address above for directions.',
+    ],
     options: [opt('Book an appointment', 'book'), opt('Contact the clinic', 'contact'), opt('Main menu', 'menu')],
     next: (v) => v,
   },
   contact: {
-    say: ['You can reach our care team directly here:', { type: 'contact' }, 'Or I can arrange for someone to call you back.'],
+    say: [
+      `Appointments and enquiries are handled by ${COORDINATOR.name} (${COORDINATOR.title}). You can reach her directly here:`,
+      { type: 'contact' },
+      'Or I can ask her to call you back.',
+    ],
     options: [opt('📞 Request a call back', 'callback'), opt('Main menu', 'menu')],
     next: (v) => v,
   },
@@ -139,7 +145,7 @@ export const NODES = {
     enter: (d) => {
       d._flow = 'callback';
     },
-    say: ['Of course! A member of our care team will give you a call.'],
+    say: [`Of course! ${COORDINATOR.name} from our team will give you a call.`],
     next: 'askName',
   },
   cbTime: {
@@ -150,7 +156,7 @@ export const NODES = {
   },
   cbSubmit: {
     run: async (d) => {
-      d.ref = await submitRequest('callback', { name: d.name, phone: d.phone, callTime: d.callTime });
+      d.ref = await submitRequest('callback', { name: d.name, phone: d.phone, message: d.callTime });
     },
     say: [{ type: 'confirm', kind: 'callback' }],
     next: 'menu',
@@ -161,7 +167,7 @@ export const NODES = {
     enter: (d) => {
       d._flow = 'enquiry';
     },
-    say: ['Of course. Type your question below and our team will reply by email, usually within one business day.'],
+    say: [`Of course. Type your question below and ${COORDINATOR.name} from our team will reply by email, usually within one working day.`],
     input: {
       placeholder: 'Your question…',
       validate: (v) => v.trim().length > 4 || 'Could you tell me a little more?',
@@ -171,7 +177,7 @@ export const NODES = {
   },
   eqSubmit: {
     run: async (d) => {
-      d.ref = await submitRequest('enquiry', { name: d.name, email: d.email, question: d.question });
+      d.ref = await submitRequest('enquiry', { name: d.name, email: d.email, message: d.question });
     },
     say: [{ type: 'confirm', kind: 'enquiry' }],
     next: 'menu',
@@ -183,17 +189,21 @@ export const EMERGENCY =
   /(emergenc|can'?t breathe|cannot breathe|anaphyla|throat (is )?(closing|swelling)|bleeding (a lot|heavily|won'?t stop)|severe (pain|swelling|reaction)|suicid)/i;
 
 const SERVICE_WORDS = [
-  [/acne|pimple|breakout|eczema|dermatitis|psoriasis|rosacea|rash|itch|hives/i, 'medical-dermatology'],
-  [/mole|cancer|melanoma|spot check|skin check|mohs|biopsy|lesion/i, 'skin-cancer'],
-  [/laser|ipl|scar|pigment|melasma|sun ?damage|resurfac/i, 'laser-resurfacing'],
-  [/peel|facial|microneedl|hydrafacial|pores?|blackhead/i, 'peels-facials'],
-  [/botox|wrinkle|filler|anti.?ag|ageing|aging|lines|volume/i, 'age-well-aesthetics'],
-  [/hair|scalp|bald|thinning|alopecia|prp|dandruff/i, 'hair-scalp'],
+  [/scar|pit|crater/i, 'acne-scar-revision'],
+  [/keloid/i, 'keloid-treatment'],
+  [/pigment|melasma|dark ?spot|tan|uneven|marks/i, 'pigmentation-melasma'],
+  [/laser|unwanted hair|facial hair|body hair|hair removal/i, 'laser-hair-removal'],
+  [/prp|gfc|hair ?(fall|loss)|thinning|bald|alopecia/i, 'prp-gfc'],
+  [/peel/i, 'chemical-peeling'],
+  [/medifacial|facial|dull|glow/i, 'medifacial'],
+  [/ear ?lobe|earlobe|torn ear/i, 'ear-lobe-repair'],
+  [/mole|wart|cyst|skin ?tag/i, 'mole-wart-cyst-skin-tag-removal'],
+  [/acne|pimple|breakout/i, 'chemical-peeling'],
 ];
 
 export function detectIntent(text, data) {
   const t = text.toLowerCase();
-  if (/price|cost|fee|how much|insurance|pay|expensive|cheap/.test(t)) return 'prices';
+  if (/price|cost|fee|charge|how much|insurance|pay|expensive|cheap/.test(t)) return 'fees';
   if (/\b(book|appointment|appt|schedule|reserve|consult(ation)?)\b/.test(t)) {
     const svc = SERVICE_WORDS.find(([re]) => re.test(t));
     if (svc) data.concern = SERVICES.find((s) => s.slug === svc[1]).title;

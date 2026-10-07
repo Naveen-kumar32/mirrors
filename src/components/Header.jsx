@@ -8,10 +8,11 @@ export const LINKS = [
   { to: '/', label: 'Home' },
   { to: '/about', label: 'About' },
   { to: '/treatments', label: 'Treatments' },
-  { to: '/doctors', label: 'Doctors' },
+  { to: '/doctors', label: 'Our Doctor' },
   { to: '/gallery', label: 'Gallery' },
   { to: '/reviews', label: 'Reviews' },
   { to: '/blog', label: 'Blog' },
+  { to: '/faqs', label: 'FAQs' },
   { to: '/contact', label: 'Contact' },
 ];
 

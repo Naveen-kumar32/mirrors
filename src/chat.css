@@ -812,3 +812,205 @@
     flex: 1;
   }
 }
+
+/* Booking form: treatment chosen on a treatment page */
+.bf__concern {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  margin: 0;
+  padding: 6px 8px 6px 14px;
+  border-radius: 999px;
+  background: #e6f4f6;
+  font-size: 14px;
+  color: var(--navy);
+}
+.bf__concern strong {
+  font-weight: 500;
+}
+.bf__concern button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  color: var(--navy);
+}
+.bf__concern button:hover {
+  background: rgba(19, 51, 94, 0.1);
+}
+.bf__done a:not(.btn) {
+  color: var(--teal);
+}
+.cc__note {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+/* ---------- Phones: floating Call & WhatsApp ---------- */
+.quick {
+  display: none;
+}
+@media (max-width: 760px) {
+  .quick {
+    position: fixed;
+    left: 12px;
+    bottom: 12px;
+    z-index: 80;
+    display: flex;
+    gap: 10px;
+  }
+  .quick__btn {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: #fff;
+    box-shadow: 0 12px 30px rgba(16, 42, 76, 0.3);
+  }
+  .quick__btn--wa {
+    background: #1fa855;
+  }
+}
+
+/* ---------- Booking form: instant confirmation, time slots, success ---------- */
+.bf__promise {
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #e6f4f6;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--navy);
+}
+.bf__promise .icon {
+  flex: none;
+  margin-top: 2px;
+  color: var(--teal);
+}
+.bf__promise strong {
+  font-weight: 600;
+}
+.slots {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 6px 4px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 14px;
+  color: var(--navy);
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+}
+.slot:not(:disabled):hover {
+  border-color: var(--navy);
+}
+.slot.is-on {
+  border-color: var(--navy);
+  background: var(--navy);
+  color: #fff;
+}
+.slot.is-booked {
+  border-style: dashed;
+  background: repeating-linear-gradient(-45deg, #f4f1ec, #f4f1ec 6px, #ece7df 6px, #ece7df 12px);
+  color: var(--muted);
+  text-decoration: line-through;
+  cursor: not-allowed;
+}
+.slot small {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  text-transform: uppercase;
+  color: var(--danger);
+}
+.has-error .slots .slot:not(.is-booked) {
+  border-color: var(--danger);
+}
+.slots__hint {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.bf__success {
+  position: relative;
+  padding-bottom: 36px;
+}
+.bf__success-title {
+  font-family: var(--serif);
+  font-size: 1.8rem !important;
+  line-height: 1.1;
+  color: var(--navy);
+}
+.tick {
+  width: 76px;
+  height: 76px;
+}
+.tick__circle {
+  fill: none;
+  stroke: var(--teal);
+  stroke-width: 2.5;
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: tickDraw 0.6s var(--ease) forwards;
+}
+.tick__mark {
+  fill: none;
+  stroke: var(--teal);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: tickDraw 0.4s var(--ease) 0.5s forwards;
+}
+.bf__success > p {
+  animation: msgIn 0.45s var(--ease) 0.55s both;
+}
+@keyframes tickDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+/* Thin bar that runs down while the confirmation is shown */
+.bf__timer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4px;
+  background: var(--teal);
+  transform-origin: left;
+  animation: bfTimer linear forwards;
+}
+@keyframes bfTimer {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+@media (max-width: 520px) {
+  .slots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

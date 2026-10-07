@@ -1,10 +1,9 @@
 import { useEffect } from 'react';
-import { SERVICES } from '../data';
 import { hasSeenBooking, useChat } from '../chat/ChatProvider';
 import Page from '../components/Page';
 import Hero from '../components/Hero';
 import About from '../components/About';
-import Treatments from '../components/Treatments';
+import { FeaturedTreatments, WhyChoose } from '../components/Featured';
 import Doctors from '../components/Doctors';
 import Reviews from '../components/Reviews';
 import CTA from '../components/CTA';
@@ -32,7 +31,8 @@ export default function Home() {
     <Page>
       <Hero />
       <About link />
-      <Treatments items={SERVICES} />
+      <WhyChoose />
+      <FeaturedTreatments />
       <Doctors />
       <Reviews />
       <BlogPreview />

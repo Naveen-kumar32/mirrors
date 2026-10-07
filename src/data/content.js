@@ -1,141 +1,123 @@
 import { IMG } from './site';
 
-export const JOURNEY = [
-  { no: '01', icon: 'chat', title: 'Consultation', image: IMG.jConsult, imageAlt: IMG.jConsult2, text: 'A relaxed 45-minute conversation about your skin, history and goals — never rushed, never upsold.' },
-  { no: '02', icon: 'scan', title: 'Skin Analysis', image: IMG.jAnalysis, imageAlt: IMG.jAnalysis2, text: '3D imaging and dermoscopy map what the eye can’t see: pigment depth, vascularity and texture.' },
-  { no: '03', icon: 'plan', title: 'Your Plan', text: 'A written, phased treatment plan with clear costs, timelines and realistic outcomes.', image: IMG.products, imageAlt: IMG.jPlan2 },
-  { no: '04', icon: 'spark', title: 'Treatment', image: IMG.jTreat, imageAlt: IMG.jTreat2, text: 'Delivered by the specialist who designed your plan, in calm private suites.' },
-  { no: '05', icon: 'leaf', title: 'Aftercare', text: 'Follow-ups in clinic or online, plus a direct line to your care team between visits.', image: IMG.jCare, imageAlt: IMG.jCare2 },
+/* About the clinic — a short version of the clinic's introduction */
+export const ABOUT_INTRO =
+  'At The Mirrors Dermatology Clinic, every skin, hair and nail concern is treated with the same care we would give our own. We take time to understand the problem, recommend only what is truly needed, and offer scientific, evidence-based treatment chosen for each patient — with a focus on safety and realistic results.';
+export const ABOUT_LINE = 'No unnecessary treatments. No one-size-fits-all approach. Just honest, scientific dermatological care.';
+
+/* About page — the clinic's full introduction, word for word (**text** = bold) */
+export const ABOUT_FULL = [
+  'At **The Mirrors Dermatology Clinic**, we believe every skin, hair, and nail concern deserves to be treated with the same care and attention we would give to our own.',
+  'Our approach is simple — **understand the problem, identify what is truly needed, and treat it appropriately.** We do not believe in unnecessary procedures or pushing treatments that a patient does not require.',
+  'In a world where misinformation and unqualified advice can often influence healthcare decisions, we strive to provide something different: **scientific, evidence-based and patient-tailored dermatological care.**',
+  'Every treatment is chosen based on the individual — their condition, concerns, needs and expectations — with an emphasis on **medical necessity, safety and realistic outcomes.**',
 ];
 
-export const FIRST_VISIT = [
-  { time: '0 min', title: 'A warm welcome', text: 'Check in at our quiet reception. Tea, water and zero waiting-room chaos.', image: IMG.visit1 },
-  { time: '5 min', title: 'Meet your dermatologist', text: 'Not a nurse or a junior — the specialist who will lead your care.', image: IMG.visit2 },
-  { time: '20 min', title: 'Imaging & examination', text: 'Dermoscopy and 3D imaging reveal what is really going on beneath the surface.', image: IMG.visit3 },
-  { time: '35 min', title: 'Your plan, explained', text: 'We walk through options, costs and timelines — and answer every question.', image: IMG.visit4 },
-  { time: '45 min', title: 'Leave with clarity', text: 'A written plan in your inbox, prescriptions sent, and a follow-up booked.', image: IMG.visit5 },
+/*
+ * Facilities — based on the procedures the clinic offers in-house.
+ * Add verified equipment names (make / model) here when the clinic supplies them.
+ */
+export const FACILITIES = [
+  { icon: 'zap', title: 'Laser hair reduction', text: 'Laser treatment for long-term reduction of unwanted facial and body hair.' },
+  { icon: 'shield', title: 'Electrocautery & minor dermatosurgery', text: 'For removal of moles, warts, cysts and skin tags, and for ear lobe repair.' },
+  { icon: 'drop', title: 'PRP / GFC', text: 'Regenerative treatments prepared from your own blood, for hair thinning and selected skin goals.' },
+  { icon: 'spark', title: 'Chemical peels & medifacials', text: 'Medically supervised peels and facials for acne, pigmentation, tanning and dull skin.' },
 ];
 
-export const CHECKLIST = [
-  'A list of current medications and supplements',
-  'Photos of any flare-ups that come and go',
-  'Skincare products you use (a photo is fine)',
-  'Your insurance card, if claiming',
-  'Arrive with clean skin — no makeup if possible',
-  'Questions you would like answered',
+/*
+ * Awards & accreditations — from Dr. Saranya's supplied profile.
+ * Add the issuing body / year and a link to the certificate when available.
+ */
+export const AWARDS = [
+  { icon: 'award', title: 'Gold Medalist in Surgery', detail: 'Undergraduate medical training' },
+  { icon: 'award', title: 'Best Outgoing Student', detail: 'Undergraduate medical training' },
+  { icon: 'plan', title: 'MD — Dermatology, Venereology & Leprosy', detail: 'Govt. Stanley Medical College, Chennai' },
+  { icon: 'plan', title: 'Fellowship in Laser Medicine, Aesthetic Dermatology & Dermatosurgery' },
+  { icon: 'shield', title: 'Life Member — IADVL', detail: 'Indian Association of Dermatologists, Venereologists & Leprologists' },
+  { icon: 'shield', title: 'Life Member — ACSI', detail: 'Association of Cutaneous Surgeons of India' },
+  { icon: 'check', title: 'Registered Medical Practitioner', detail: 'Tamil Nadu Medical Council · Reg. No. 141779' },
 ];
 
-export const TECH = [
-  { title: '3D Skin Imaging', text: 'Maps pigment, redness and texture in three dimensions for precise planning.', image: IMG.tech1, icon: 'scan' },
-  { title: 'Digital Dermoscopy', text: 'Magnified, stored images of every mole so tiny changes are never missed.', image: IMG.tech2, icon: 'spark' },
-  { title: 'Multi-Platform Lasers', text: 'Fractional, vascular and pigment lasers safe for all skin tones.', image: IMG.tech3, icon: 'leaf' },
-  { title: 'Trichoscopy', text: 'Follicle-level imaging that diagnoses hair loss accurately.', image: IMG.tech4, icon: 'plan' },
+/* "Why choose this clinic?" — the clinic's own statement, shown as one paragraph */
+export const WHY_US =
+  'A board-certified dermatologist with 10+ years of experience in treating all skin, hair and nail related conditions — in an evidence-based manner. No treatment is pushed unless it is actually needed.';
+
+/* Care philosophy — "Listen. Understand. Treat." (text supplied by the clinic) */
+export const PHILOSOPHY_INTRO = [
+  'At The Mirrors Dermatology Clinic, we believe good dermatology begins with understanding the person behind the problem.',
+  'Every patient is different. Every skin, hair and nail concern has its own story. Our approach is to listen carefully, diagnose accurately and recommend only what is genuinely needed.',
 ];
 
-export const PAYMENT = [
-  { title: 'Insurance', text: 'Most medical dermatology is claimable. We process claims for major insurers on the spot.' },
-  { title: 'Clear pricing', text: 'You receive a written quote before any procedure — no surprises, ever.' },
-  { title: 'Payment plans', text: 'Spread the cost of longer treatment programmes with interest-free plans.' },
-];
+// Shown in bold inside the intro
+export const PHILOSOPHY_HIGHLIGHT = 'listen carefully, diagnose accurately and recommend only what is genuinely needed.';
 
-export const TIMELINE = [
-  { year: '2009', title: 'A small clinic opens', text: 'Dr. Elena Marsh opens a two-room practice with one promise: time, honesty, a clear plan.' },
-  { year: '2013', title: 'Skin cancer service', text: 'Dr. Arjun Mehta joins and launches Mohs surgery and full-body mole mapping.' },
-  { year: '2017', title: 'The laser suite', text: 'A dedicated laser suite opens with devices chosen for every skin tone.' },
-  { year: '2020', title: 'Tele-dermatology', text: 'Secure video consults let patients see their own doctor from anywhere.' },
-  { year: '2023', title: '3D skin imaging', text: 'We introduce 3D imaging for more precise diagnosis and planning.' },
-  { year: '2026', title: 'Our new home', text: 'A calm, light-filled clinic on Avinashi Road, Neelambur, designed around patients.' },
-];
+export const PROMISE = {
+  lines: ['The right diagnosis.', 'The right treatment.', 'For the right patient.'],
+  note: 'No unnecessary treatments. No pressure. Just ethical, evidence-based dermatological care.',
+  sign: 'Rooted in Science. Reflected in Your Skin.',
+};
 
 export const VALUES = [
-  { icon: 'shield', title: 'Specialists only', text: 'Every consultation and procedure is performed by a board-certified dermatologist.' },
-  { icon: 'chat', title: 'Honest advice', text: 'If you don’t need a treatment, we’ll tell you. No upselling, ever.' },
-  { icon: 'leaf', title: 'Every skin tone', text: 'Devices, protocols and expertise that are safe and effective for all skin types.' },
-  { icon: 'clock', title: 'Time to listen', text: 'Longer appointments, because good diagnosis can’t be rushed.' },
+  { icon: 'plan', title: 'Evidence over trends', text: 'Our treatments are guided by scientific evidence, established dermatological principles and medical expertise.' },
+  { icon: 'chat', title: 'Patient over procedure', text: 'We do not believe in pushing unnecessary treatments. If a procedure is not needed, we will tell you.' },
+  { icon: 'check', title: 'Individual over one-size-fits-all', text: 'Treatment plans are tailored to your condition, skin type, lifestyle, concerns and expectations.' },
+  { icon: 'shield', title: 'Honest expectations', text: 'We believe in explaining what treatment can—and cannot—achieve, so you can make informed decisions about your care.' },
+  { icon: 'clock', title: 'Long-term skin health', text: 'Our goal is not simply to change how your skin looks today, but to help you maintain healthier skin for the years ahead.' },
 ];
 
-export const CREDENTIALS = [
-  'Board Certified Dermatologists',
-  'Mohs Surgery Fellowship',
-  'Accredited Skin Cancer Clinic',
-  'Laser Safety Certified',
-  'Hair & Scalp Specialists',
-  'Skin of Colour Expertise',
-];
-
-export const CASES = [
+/*
+ * FAQs — one list. The first two are the clinic owner's questions with approved answers;
+ * the rest cover the topics the clinic asked for (treatment expectations, payments,
+ * follow-up, age groups, languages) and are for the doctor to review.
+ */
+export const FAQ_LIST = [
   {
-    id: 'acne',
-    label: 'Acne',
-    title: 'Inflammatory acne',
-    text: 'A 12-week combined prescription and peel programme cleared active breakouts and faded post-acne marks.',
-    image: IMG.caseAcne,
-    effect: 'acne',
-    stats: [
-      { to: 87, suffix: '%', label: 'fewer active breakouts' },
-      { to: 12, suffix: ' wks', label: 'average programme' },
-    ],
+    q: 'What should I bring to my first consultation?',
+    a: 'Please bring any lab reports and prescriptions of medications you are already taking.',
+    approved: true,
   },
   {
-    id: 'pigment',
-    label: 'Pigmentation',
-    title: 'Sun spots & melasma',
-    text: 'Three pigment-laser sessions with a tailored brightening routine evened tone and reduced dark patches.',
-    image: IMG.faceSmile,
-    effect: 'pigment',
-    stats: [
-      { to: 72, suffix: '%', label: 'less visible pigment' },
-      { to: 3, suffix: ' sessions', label: 'laser treatments' },
-    ],
+    q: 'Do I need to book in advance?',
+    a: 'Appointments are preferred, to avoid long waiting hours and unexpected holidays.',
+    approved: true,
   },
   {
-    id: 'redness',
-    label: 'Redness',
-    title: 'Rosacea & redness',
-    text: 'Medical therapy plus two IPL sessions calmed flushing and visible vessels across the cheeks and nose.',
-    image: IMG.faceFair,
-    effect: 'redness',
-    stats: [
-      { to: 64, suffix: '%', label: 'reduction in redness' },
-      { to: 2, suffix: ' sessions', label: 'IPL treatments' },
-    ],
+    q: 'Can I walk in without an appointment?',
+    a: 'The doctor sees patients by appointment, so please book ahead — online, by phone or on WhatsApp. If you come in without one, we will fit you in when a slot is free.',
+  },
+  {
+    q: 'How many sessions will I need?',
+    a: 'It depends on your condition and skin. Many treatments, such as chemical peels, laser hair reduction, acne scar revision and PRP / GFC, work over several sessions, and some conditions need a combination of treatments. Your dermatologist will explain this after assessing your skin.',
+  },
+  {
+    q: 'When will I start to see results?',
+    a: 'Some treatments show a change within a few weeks; others, like PRP / GFC or pigmentation treatment, improve gradually over several sessions. You will be given a realistic timeline for your treatment at your consultation.',
+  },
+  {
+    q: 'Are the results permanent?',
+    a: 'Not always. Laser hair removal gives long-term reduction rather than guaranteed permanent removal, and conditions like melasma or keloids can come back. Following the aftercare advice and attending maintenance sessions helps results last.',
+  },
+  {
+    q: 'Is there any downtime after a procedure?',
+    a: 'Most treatments need little or no time off — you may have mild redness or flaking for a few days. You will get clear aftercare advice, such as daily sunscreen and gentle skincare, before you leave.',
+  },
+  {
+    q: 'How much does a consultation or treatment cost?',
+    a: 'Fees depend on your consultation and the treatment you need, so we share them directly. Please call or WhatsApp us on +91 93612 61413.',
+  },
+  {
+    q: 'Will I need a follow-up visit?',
+    a: 'For most conditions and procedures, yes. Your dermatologist will tell you when to come back so your progress can be checked and treatment adjusted if needed.',
+  },
+  {
+    q: 'Do you treat children and older adults?',
+    a: 'Yes, we see patients of all age groups. Children should come with a parent or guardian.',
+  },
+  {
+    q: 'Which languages does the doctor speak?',
+    a: 'English, Tamil and Hindi.',
   },
 ];
 
-export const OUTCOMES = [
-  { label: 'Acne clearance at 6 months', value: 89 },
-  { label: 'Patients happy with laser results', value: 94 },
-  { label: 'Eczema flares reduced', value: 81 },
-  { label: 'Hair density improved (PRP)', value: 76 },
-];
-
-export const GALLERY = [
-  { image: IMG.gal2, caption: 'Our waiting lounge', tall: true },
-  { image: IMG.gal1, caption: 'Medical-grade actives' },
-  { image: IMG.gal3, caption: 'Fresh linen, every visit' },
-  { image: IMG.gal4, caption: 'Gentle, fragrance-free care', tall: true },
-  { image: IMG.range, caption: 'Our curated range' },
-  { image: IMG.gal5, caption: 'Serums, precisely dosed' },
-  { image: IMG.spa, caption: 'Treatment suite details', tall: true },
-  { image: IMG.gal6, caption: 'Prescribed home care' },
-];
-
-export const RESULTS_GALLERY = [
-  { image: IMG.rg1, caption: 'Textures we trust', tall: true },
-  { image: IMG.rg2, caption: 'Calming masks' },
-  { image: IMG.rg3, caption: 'Daily SPF, non-negotiable' },
-  { image: IMG.rg4, caption: 'Gentle cleansing', tall: true },
-  { image: IMG.rg5, caption: 'Barrier repair' },
-  { image: IMG.rg6, caption: 'Post-treatment care' },
-  { image: IMG.rg7, caption: 'Lymphatic massage', tall: true },
-  { image: IMG.rg8, caption: 'Targeted serums' },
-];
-
-export const FAQS = [
-  { q: 'Do I need a referral to book?', a: 'No — you can book directly with us. A GP referral may increase your insurance rebate for medical conditions, so bring one if you have it.' },
-  { q: 'How soon can I be seen?', a: 'Most new patients are seen within the same week. Urgent skin cancer concerns are prioritised, often within 48 hours.' },
-  { q: 'What does a first consultation cost?', a: 'A new patient consultation is ₹500 and includes a written plan and an 8-week review. Many insurers cover part of this.' },
-  { q: 'Do you treat children?', a: 'Yes, we see patients of all ages, including babies with eczema and teenagers with acne.' },
-  { q: 'Can I have a video consultation?', a: 'Yes. Follow-ups and many new concerns can be handled by secure video. Skin checks need an in-person visit.' },
-  { q: 'What is your cancellation policy?', a: 'Please give us 24 hours’ notice so we can offer the time to someone else. Late cancellations may incur a fee.' },
-];
+/* Short list for the Contact page */
+export const FAQS = FAQ_LIST.slice(0, 4);

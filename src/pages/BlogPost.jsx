@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { TEAM, img } from '../data';
-import { formatDate, useApi } from '../backend';
+import { formatDate, usePost, usePosts } from '../backend';
 import { useChat } from '../chat/ChatProvider';
 import Page from '../components/Page';
 import PageHeader from '../components/PageHeader';
@@ -13,8 +13,8 @@ import NotFound from './NotFound';
 export default function BlogPostPage() {
   const { slug } = useParams();
   const chat = useChat();
-  const { data: post, error, reload } = useApi(`/posts/${encodeURIComponent(slug)}`);
-  const { data: all } = useApi('/posts');
+  const { data: post, error, reload } = usePost(slug);
+  const { data: all } = usePosts();
   useReveal(post ? `post-${post.slug}-${all ? 'all' : ''}` : null);
 
   if (error?.status === 404) return <NotFound />;
@@ -53,6 +53,7 @@ export default function BlogPostPage() {
         title={post.title}
         text={`${formatDate(post.publishedAt)} · ${post.readTime} · By ${post.author}`}
         image={post.cover}
+        cover
         crumbs={[{ to: '/blog', label: 'Blog' }]}
       />
 
@@ -82,7 +83,7 @@ export default function BlogPostPage() {
             </div>
             <div className="article__card article__card--navy reveal">
               <strong>Need advice for your skin?</strong>
-              <span>Book a consultation with one of our dermatologists.</span>
+              <span>Book a consultation with our dermatologist.</span>
               <button className="btn btn--white" onClick={() => chat.openBooking()}>
                 Book appointment <Icon name="arrow" size={18} />
               </button>

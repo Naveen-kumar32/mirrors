@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+
 export function scrollToId(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -25,4 +27,14 @@ export function clinicStatus(now = new Date()) {
   if (day !== 'Sun' && mins < OPEN) return { open: false, text: 'Opens today at 3 pm' };
   if (day === 'Sat' || day === 'Sun') return { open: false, text: 'Opens Monday at 3 pm' };
   return { open: false, text: 'Opens tomorrow at 3 pm' };
+}
+
+/** Live open/closed status that updates every minute */
+export function useClinicStatus() {
+  const [status, setStatus] = useState(() => clinicStatus());
+  useEffect(() => {
+    const id = setInterval(() => setStatus(clinicStatus()), 60000);
+    return () => clearInterval(id);
+  }, []);
+  return status;
 }

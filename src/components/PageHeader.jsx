@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom';
 import { CONTACT, img } from '../data';
 import { useChat } from '../chat/ChatProvider';
-import { useReviewSummary } from '../backend';
+import { useGoogle, useReviewSummary } from '../backend';
 import { Icon } from './ui';
 
 const POINTS = [
-  { icon: 'shield', text: 'Board-certified doctors' },
+  { icon: 'shield', text: 'Board-certified dermatologist' },
   { icon: 'clock', text: 'Mon – Sat · 3 – 7 pm' },
-  { icon: 'check', text: 'No referral needed' },
+  { icon: 'check', text: 'Consultations by appointment' },
 ];
 
 /*
@@ -18,11 +18,15 @@ const POINTS = [
 // `image` is a built-in photo name (see IMG) or a full URL such as an uploaded blog cover
 const src = (image, w) => (image.startsWith('/') || image.startsWith('http') ? image : img(image, w));
 
-export default function PageHeader({ eyebrow, title, text, image, image2, crumbs = [], preset }) {
+export default function PageHeader({ eyebrow, title, text, image, image2, crumbs = [], preset, cover = false }) {
   const chat = useChat();
-  const reviews = useReviewSummary();
+  const site = useReviewSummary();
+  const google = useGoogle();
+  const reviews = google.has
+    ? { average: google.rating, total: google.count, label: 'on Google' }
+    : site && { ...site, label: site.total === 1 ? 'review' : 'reviews' };
   return (
-    <section className="phead">
+    <section className={`phead ${cover ? 'phead--cover' : ''}`}>
       <div className="container phead__grid">
         <div className="phead__content">
           <nav className="crumbs" aria-label="Breadcrumb">
@@ -75,7 +79,7 @@ export default function PageHeader({ eyebrow, title, text, image, image2, crumbs
                 <strong>{reviews.average.toFixed(1)}</strong>
                 <span>
                   <span className="stars">★★★★★</span>
-                  {reviews.total} {reviews.total === 1 ? 'review' : 'reviews'}
+                  {reviews.total} {reviews.label}
                 </span>
               </div>
             )}

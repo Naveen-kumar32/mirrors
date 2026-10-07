@@ -5,6 +5,8 @@ import { api } from '../backend';
 import { Icon } from '../components/ui';
 import { PostEditor, PostsList } from './Posts';
 import ReviewsAdmin from './ReviewsAdmin';
+import Requests from './Requests';
+import GalleryAdmin from './Gallery';
 import { Account, UsersAdmin } from './Users';
 import './admin.css';
 
@@ -14,9 +16,13 @@ export const useAuth = () => useContext(AuthContext);
 
 function AuthProvider({ children }) {
   const [user, setUser] = useState(undefined); // undefined = checking, null = logged out
+  const [offline, setOffline] = useState(false); // the Node server isn't running on this host
 
   useEffect(() => {
-    api('/auth/me').then(setUser, () => setUser(null));
+    api('/auth/me').then(setUser, (err) => {
+      setOffline(!!err.offline);
+      setUser(null);
+    });
   }, []);
 
   const login = useCallback(async (email, password) => {
@@ -33,12 +39,12 @@ function AuthProvider({ children }) {
     if (err?.status === 401) setUser(null);
   }, []);
 
-  return <AuthContext.Provider value={{ user, login, logout, onAuthError }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, offline, login, logout, onAuthError }}>{children}</AuthContext.Provider>;
 }
 
 /* ---------- Login ---------- */
 function Login() {
-  const { user, login } = useAuth();
+  const { user, offline, login } = useAuth();
   const { state } = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -65,6 +71,12 @@ function Login() {
         <img src={BRAND.logo} alt="" width="56" height="56" />
         <h1>Staff login</h1>
         <p>The Mirrors Dermatology Clinic</p>
+        {offline && (
+          <p className="bf__fail">
+            The staff area can’t reach the clinic server. It only works where the website’s Node server is running
+            (see “Deploying” in the README).
+          </p>
+        )}
         <label className="bf__field">
           <span className="bf__label">Email</span>
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" required autoFocus />
@@ -99,8 +111,10 @@ function Layout() {
 
   const isAdmin = user.role === 'admin';
   const links = [
-    { to: '/admin', label: 'Blog posts', icon: 'plan', end: true },
+    { to: '/admin', label: 'Appointments', icon: 'clock', end: true },
+    { to: '/admin/posts', label: 'Blog posts', icon: 'plan', end: true },
     { to: '/admin/posts/new', label: 'Write a post', icon: 'plus' },
+    { to: '/admin/gallery', label: 'Gallery', icon: 'spark' },
     ...(isAdmin
       ? [
           { to: '/admin/reviews', label: 'Reviews', icon: 'chat' },
@@ -180,7 +194,9 @@ export default function AdminApp() {
       <Routes>
         <Route path="login" element={<Login />} />
         <Route element={<Layout />}>
-          <Route index element={<PostsList />} />
+          <Route index element={<Requests />} />
+          <Route path="posts" element={<PostsList />} />
+          <Route path="gallery" element={<GalleryAdmin />} />
           <Route path="posts/new" element={<PostEditor />} />
           <Route path="posts/:id" element={<PostEditor />} />
           <Route path="reviews" element={<AdminOnly><ReviewsAdmin /></AdminOnly>} />

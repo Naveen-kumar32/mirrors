@@ -27,7 +27,7 @@ export default function Treatments({ items = SERVICES, heading = true }) {
           <header className="section__head">
             <Eyebrow>Treatments</Eyebrow>
             <h2 className="title reveal">
-              Care for <em>every</em> skin concern
+              Care for <em>skin, hair</em> &amp; nails
             </h2>
           </header>
         )}

@@ -1,19 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CONTACT, HOURS, PRICING, SERVICES, img } from '../data';
+import { CONTACT, COORDINATOR, HOURS, HOURS_NOTE, SERVICES, img } from '../data';
 import { Icon } from '../components/ui';
 import { useChat } from './ChatProvider';
+import { useClinicStatus } from '../lib';
 
 /* ---------- Rich message cards ---------- */
 function Confirm({ d, kind }) {
   const copy = {
     callback: {
       title: 'Call back booked',
-      text: `We’ll call you on ${d.phone} (${String(d.callTime).toLowerCase()}).`,
+      text: `${COORDINATOR.name} from our team will call you on ${d.phone} (${String(d.callTime).toLowerCase()}).`,
     },
     enquiry: {
       title: 'Question sent',
-      text: `We’ll reply to ${d.email}, usually within one business day.`,
+      text: `${COORDINATOR.name} from our team will reply to ${d.email}, usually within one working day.`,
     },
   }[kind];
 
@@ -40,37 +41,13 @@ function TreatmentCard({ slug }) {
       <div>
         <p className="cc__title">{s.title}</p>
         <p>{s.text}</p>
-        <ul className="cc__facts">
-          <li>From {s.facts.from}</li>
-          <li>{s.facts.duration}</li>
-          <li>Downtime: {s.facts.downtime}</li>
-        </ul>
+        <p>
+          <strong>Ideal for:</strong> {s.idealFor}
+        </p>
         <Link className="cc__link" to={`/treatments/${s.slug}`}>
           Read more <Icon name="arrow" size={14} />
         </Link>
       </div>
-    </div>
-  );
-}
-
-function Prices() {
-  return (
-    <div className="cc">
-      <p className="cc__title">Consultation fees</p>
-      <ul className="cc__list">
-        {PRICING.map((p) => (
-          <li key={p.name}>
-            <span>{p.name}</span>
-            <strong>{p.price}</strong>
-          </li>
-        ))}
-        {SERVICES.map((s) => (
-          <li key={s.slug}>
-            <span>{s.title}</span>
-            <strong>from {s.facts.from}</strong>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }
@@ -89,6 +66,7 @@ function Hours() {
           </li>
         ))}
       </ul>
+      <p className="cc__note">{HOURS_NOTE}</p>
       <a className="cc__link" href={CONTACT.mapsHref} target="_blank" rel="noreferrer">
         <Icon name="pin" size={14} /> {CONTACT.address}, {CONTACT.area}
       </a>
@@ -108,8 +86,12 @@ function ContactCard() {
         Instagram
       </a>
       <a href={CONTACT.whatsapp} target="_blank" rel="noreferrer">
-        <span><Icon name="chat" size={17} /></span>
+        <span><Icon name="whatsapp" size={17} /></span>
         WhatsApp
+      </a>
+      <a href={CONTACT.emailHref}>
+        <span><Icon name="mail" size={17} /></span>
+        Email
       </a>
     </div>
   );
@@ -133,7 +115,6 @@ function Message({ m }) {
   switch (m.type) {
     case 'confirm': body = <Confirm d={d} kind={m.kind} />; break;
     case 'treatment': body = <TreatmentCard slug={m.slug} />; break;
-    case 'prices': body = <Prices />; break;
     case 'hours': body = <Hours />; break;
     case 'contact': body = <ContactCard />; break;
     case 'alert': body = <Alert />; break;
@@ -158,6 +139,7 @@ export default function ChatWidget() {
   const { isOpen, messages, typing, prompt } = chat;
   const [text, setText] = useState('');
   const [nudge, setNudge] = useState(false);
+  const clinic = useClinicStatus();
   const scroller = useRef(null);
   const inputRef = useRef(null);
 
@@ -227,8 +209,10 @@ export default function ChatWidget() {
             ×
           </button>
           <button className="chat-nudge__body" onClick={() => chat.open()}>
-            <strong>Have a question?</strong>
-            Our care assistant is here to help.
+            <strong>May I help you?</strong>
+            {clinic.open
+              ? 'Talk to us — ask anything about your skin, hair or nails.'
+              : `We’re closed right now (${clinic.text.toLowerCase()}), but you can still ask a question or book — we’ll reply once we open.`}
           </button>
         </div>
       )}

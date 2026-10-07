@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { formatDate, useApi } from '../backend';
+import { formatDate, usePosts } from '../backend';
 import { Eyebrow, Icon, useReveal } from './ui';
 
 export function BlogCard({ post, i = 0 }) {
@@ -25,7 +25,7 @@ export function BlogCard({ post, i = 0 }) {
 
 /* "From our blog" strip with the latest articles, used on the home page */
 export default function BlogPreview({ count = 3 }) {
-  const { data } = useApi('/posts');
+  const { data } = usePosts();
   useReveal(data ? 'blog-preview' : null);
   if (!data?.length) return null;
 
@@ -35,7 +35,7 @@ export default function BlogPreview({ count = 3 }) {
         <header className="section__head">
           <Eyebrow>From our blog</Eyebrow>
           <h2 className="title reveal">
-            Skin <em>advice</em> from our doctors
+            Skin <em>advice</em> from our clinic
           </h2>
         </header>
         <div className="treatments">

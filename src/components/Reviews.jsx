@@ -1,20 +1,25 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useApi, useReviewSummary } from '../backend';
+import { useApi, useGoogle, useReviewSummary } from '../backend';
 import { Stars } from './ui';
+import { ReviewModal } from './ReviewCard';
 
-/* The latest good patient reviews, one at a time, cross-fading every few seconds */
+const SOURCE = { google: 'Google review', whatsapp: 'via WhatsApp', 'in-person': 'shared in clinic', website: 'website review' };
+
+/* Testimonials chosen by staff (Admin → Reviews → Feature), one at a time, cross-fading */
 export default function Reviews() {
-  const { data } = useApi('/reviews');
+  const { data } = useApi('/reviews/featured');
   const summary = useReviewSummary();
-  const quotes = (data?.items || []).filter((r) => r.rating >= 4).slice(0, 5);
+  const google = useGoogle();
+  const quotes = data || [];
   const [i, setI] = useState(0);
+  const [open, setOpen] = useState(null); // review shown in full
 
   useEffect(() => {
-    if (quotes.length < 2) return;
+    if (quotes.length < 2 || open) return; // don't move on while someone is reading
     const id = setTimeout(() => setI((n) => (n + 1) % quotes.length), 6000);
     return () => clearTimeout(id);
-  }, [i, quotes.length]);
+  }, [i, quotes.length, open]);
 
   if (!quotes.length) return null;
 
@@ -25,8 +30,15 @@ export default function Reviews() {
         <div className="reviews__stage">
           {quotes.map((t, k) => (
             <figure key={t.id} className={`review ${k === i ? 'is-active' : ''}`} aria-hidden={k !== i}>
-              <blockquote>“{t.text}”</blockquote>
-              <figcaption>{t.name}</figcaption>
+              <blockquote className="review__text">“{t.text}”</blockquote>
+              {t.text.length > 220 && (
+                <button className="review__more" tabIndex={k === i ? 0 : -1} onClick={() => setOpen(t)}>
+                  Read the full review
+                </button>
+              )}
+              <figcaption>
+                {t.name} <span>· {SOURCE[t.source] || 'patient review'}</span>
+              </figcaption>
             </figure>
           ))}
         </div>
@@ -44,11 +56,20 @@ export default function Reviews() {
             ))}
           </div>
         )}
+        {open && (
+          <ReviewModal review={{ ...open, meta: SOURCE[open.source] || 'patient review' }} onClose={() => setOpen(null)} />
+        )}
         <p className="reviews__score">
-          {summary?.total > 0 && (
+          {google.has ? (
             <>
-              Rated <strong>{summary.average.toFixed(1)} / 5</strong> by our patients ·{' '}
+              <strong>{google.rating.toFixed(1)} / 5</strong> on Google from {google.count} reviews ·{' '}
             </>
+          ) : (
+            summary?.total > 0 && (
+              <>
+                Rated <strong>{summary.average.toFixed(1)} / 5</strong> by our patients ·{' '}
+              </>
+            )
           )}
           <Link to="/reviews">Read all reviews</Link>
         </p>

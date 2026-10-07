@@ -1,0 +1,27 @@
+# One-click setup on Render (https://render.com): New → Blueprint → pick this repo.
+# Runs the website + API together and keeps the database/uploads on a persistent disk.
+services:
+  - type: web
+    name: mirrors-clinic
+    runtime: node
+    plan: starter            # persistent disks need a paid plan
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/reviews/summary
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: DATA_DIR
+        value: /var/data
+      - key: ADMIN_NAME
+        value: Clinic Owner
+      - key: ADMIN_EMAIL
+        sync: false          # you'll be asked for these when creating the service
+      - key: ADMIN_PASSWORD
+        sync: false
+    disk:
+      name: mirrors-data
+      mountPath: /var/data
+      sizeGB: 1

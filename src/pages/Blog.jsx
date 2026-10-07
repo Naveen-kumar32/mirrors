@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { IMG } from '../data';
-import { formatDate, useApi } from '../backend';
+import { formatDate, usePosts } from '../backend';
 import Page from '../components/Page';
 import PageHeader from '../components/PageHeader';
 import { BlogCard } from '../components/Blog';
@@ -9,7 +9,7 @@ import CTA from '../components/CTA';
 import { Icon, useReveal } from '../components/ui';
 
 export default function BlogPage() {
-  const { data: all, error, loading, reload } = useApi('/posts');
+  const { data: all, error, loading, reload } = usePosts();
   const [cat, setCat] = useState('All');
   const categories = ['All', ...new Set((all || []).map((p) => p.category))];
   const posts = !all ? [] : cat === 'All' ? all : all.filter((p) => p.category === cat);
@@ -20,10 +20,10 @@ export default function BlogPage() {
     <Page title="Blog">
       <PageHeader
         eyebrow="Blog"
-        title="Skin advice from our dermatologists"
-        text="Simple, trustworthy guides on skin, hair and treatments — written by the doctors who treat you."
+        title="Skin advice from our dermatologist"
+        text="Simple, trustworthy guides on skin, hair and treatments — from the clinic that treats you."
         image={IMG.dq2}
-        image2={IMG.dropper}
+        image2={IMG.dq5}
       />
 
       <section className="section section--sand">

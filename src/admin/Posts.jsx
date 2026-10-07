@@ -6,6 +6,28 @@ import ArticleBody from '../components/ArticleBody';
 import { Icon } from '../components/ui';
 import { useAuth } from './AdminApp';
 
+/* Blog covers are cropped to one shape (16:10, max 1600×1000) so every post looks the same on the website */
+const COVER_W = 1600;
+const COVER_H = 1000;
+async function cropCover(file) {
+  const bmp = await createImageBitmap(file);
+  const target = COVER_W / COVER_H;
+  let sw = bmp.width;
+  let sh = bmp.height;
+  if (sw / sh > target) sw = sh * target;
+  else sh = sw / target;
+  const sx = (bmp.width - sw) / 2;
+  const sy = (bmp.height - sh) / 2;
+  const scale = Math.min(1, COVER_W / sw);
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(sw * scale);
+  canvas.height = Math.round(sh * scale);
+  canvas.getContext('2d').drawImage(bmp, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  bmp.close?.();
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', 0.85));
+  return new File([blob], file.name.replace(/\.\w+$/, '') + '.webp', { type: 'image/webp' });
+}
+
 const DEFAULT_CATEGORIES = ['Skin conditions', 'Skincare', 'Hair & scalp', 'Treatments', 'Clinic news'];
 
 /* ---------- All posts ---------- */
@@ -138,7 +160,7 @@ export function PostEditor() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return setError('Cover must be a JPG, PNG or WebP image.');
-    if (file.size > 5 * 1024 * 1024) return setError('Cover image must be smaller than 5 MB.');
+    if (file.size > 20 * 1024 * 1024) return setError('That image is too large — please choose one under 20 MB.');
     setError('');
     setCover(file);
   };
@@ -150,10 +172,10 @@ export function PostEditor() {
     const form = new FormData();
     Object.entries(f).forEach(([k, v]) => form.append(k, v));
     form.append('status', status);
-    if (cover) form.append('cover', cover);
+    if (cover) form.append('cover', await cropCover(cover));
     try {
       await api(id ? `/admin/posts/${id}` : '/admin/posts', { method: id ? 'PUT' : 'POST', form });
-      navigate('/admin', {
+      navigate('/admin/posts', {
         state: { flash: status === 'draft' ? 'Draft saved.' : 'Post published — it is now live on the website.' },
       });
     } catch (err) {
@@ -173,7 +195,7 @@ export function PostEditor() {
     <section className="apage">
       <header className="apage__head">
         <div>
-          <Link to="/admin" className="aback">
+          <Link to="/admin/posts" className="aback">
             ← All posts
           </Link>
           <h1>{id ? 'Edit post' : 'Write a post'}</h1>

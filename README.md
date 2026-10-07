@@ -74,23 +74,60 @@ npm run create-admin -- "Staff Name" staff@example.com "strong-password" employe
 
 After that, the owner adds employees from **Staff accounts** in `/admin`.
 
+### Appointments & time slots
+
+1. A patient books on the website (name, contact number, date of birth, preferred date & time).
+   They see an instant confirmation; the request appears under **Appointments → New requests**
+   in `/admin`, and (if SMTP is set in `.env`) the clinic gets an email.
+2. Staff call the patient, then press **Confirm booking** — adjusting the date/time and adding a
+   note if needed. The slot is now taken: on the website it shows as **Booked** and can't be chosen.
+3. **Reschedule**, **Visited** or **Cancel** (cancelling frees the slot). Staff can also
+   **Book appointment** directly for patients who phone in.
+
+Opening days, hours, slot length (30 min), notice (from tomorrow) and how far ahead patients can
+book (2 weeks) are set in `server/booking-rules.js` — the website and server both read it.
+
 ### Data & backups
 
 Everything (database `mirrors.db` + uploaded cover images in `uploads/`) is in `server/data/`,
 or in `DATA_DIR` if set. **Back up this folder regularly.** It is git-ignored. The six starter
 articles are loaded from `server/seed-posts.json` the first time the database is created.
 
+## Images & permissions
+
+- Every photo the website uses comes from **Unsplash** (free for commercial use, no credit
+  required — https://unsplash.com/license). Each photo's Unsplash ID is recorded in
+  `public/images/site/SOURCES.json` (view one at `https://images.unsplash.com/photo-<ID>`).
+  Only use photos listed there, or the clinic's own.
+- Stock photos are illustrations only — the Medical disclaimer on `/policies` says so. Replace
+  them with the clinic's own photos as they arrive.
+- **Patient photos (including before/after) must be the clinic's own, with the patient's written
+  consent.** The gallery upload in `/admin` requires staff to confirm ownership and consent.
+
 ## Deploying
 
-The site now needs a Node server (Node 22.13+), because the database lives on disk:
+### Option A — Vercel only (what is live now): website without the server
+
+Vercel serves the pages but cannot run the Node server or keep a database. The site handles this:
+
+- Blog shows the six built-in articles (posts written in `/admin` will not appear).
+- The booking form sends the patient to WhatsApp with their details pre-filled.
+- Reviews page shows a “Review us on Google” button instead of the form.
+- `/admin` shows a notice that the staff area needs the server.
+
+### Option B — full site with the server (recommended)
+
+Host on a service that runs Node **and** keeps files between restarts. Easiest: **Render**
+(`render.yaml` is included — New → Blueprint → choose this repo, enter `ADMIN_EMAIL` and
+`ADMIN_PASSWORD`). Railway with a volume, or any VPS, also works:
 
 ```bash
-npm install
+npm ci
 npm run build     # builds the website into dist/
-npm start         # serves the website AND the API on $PORT (default 3001)
+npm start         # serves the website AND the API on $PORT
 ```
 
-Use a host that runs Node and keeps files between restarts: a VPS, Render or Railway with a
-persistent disk, etc. Point `DATA_DIR` at that disk and set `NODE_ENV=production` (secure
-cookies need HTTPS). Static-only hosting (Vercel, Netlify) cannot run the database, so
-`vercel.json` and `public/_redirects` only apply if you split the site and API later.
+Set `DATA_DIR` to the persistent disk and `NODE_ENV=production` (needs HTTPS for secure
+cookies). Then point the domain (themirrorsdermclinic.com) at the new host instead of Vercel.
+
+Bookings, call-back requests and questions appear for staff under **Appointments** in `/admin`.

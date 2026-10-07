@@ -2,18 +2,18 @@ import { FAQS, IMG } from '../data';
 import Page from '../components/Page';
 import PageHeader from '../components/PageHeader';
 import Contact from '../components/Contact';
+import { Link } from 'react-router-dom';
+import Faqs from '../components/Faqs';
 import { Eyebrow, Icon } from '../components/ui';
-import { useState } from 'react';
 
 export default function ContactPage() {
-  const [open, setOpen] = useState(0);
   return (
     <Page title="Contact">
       <PageHeader
         eyebrow="Contact"
         title="We’d love to see you"
-        text="Book online, call, or drop in during clinic hours."
-        image={IMG.contactHero}
+        text="Call, WhatsApp or book online — consultations are by appointment."
+        image={IMG.bentoRoom}
         image2={IMG.aboutHero}
       />
       <Contact />
@@ -25,24 +25,12 @@ export default function ContactPage() {
               Before you <em>visit</em>
             </h2>
           </header>
-          <div className="faqs">
-            {FAQS.slice(0, 5).map((f, i) => {
-              const isOpen = open === i;
-              return (
-                <div key={f.q} className={`faq reveal ${isOpen ? 'is-open' : ''}`}>
-                  <button className="faq__q" aria-expanded={isOpen} onClick={() => setOpen(isOpen ? -1 : i)}>
-                    {f.q}
-                    <Icon name="plus" size={18} />
-                  </button>
-                  <div className="faq__a" inert={!isOpen}>
-                    <div>
-                      <p>{f.a}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          <Faqs items={FAQS} />
+          <p className="section__more reveal">
+            <Link to="/faqs" className="text-link">
+              All FAQs <Icon name="arrow" size={16} />
+            </Link>
+          </p>
         </div>
       </section>
     </Page>
