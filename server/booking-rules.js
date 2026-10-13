@@ -9,7 +9,7 @@ export const BOOKING = {
   end: '19:00', // clinic closes (last slot starts one slot earlier)
   slotMinutes: 30,
   minNoticeDays: 1, // patients can book from tomorrow onwards
-  daysAhead: 14, // …up to two weeks ahead
+  daysAhead: 60, // …up to two months ahead
 };
 
 const toMinutes = (hhmm) => {

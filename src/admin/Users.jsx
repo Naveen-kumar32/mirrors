@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { api, useApi } from '../backend';
-import { useAuth } from './AdminApp';
+import { useAuth, RefreshButton } from './AdminApp';
 
 /* ---------- Admin only: staff accounts ---------- */
 const NEW_USER = { name: '', email: '', role: 'employee', password: '' };
 
 export function UsersAdmin() {
   const { user: me, onAuthError } = useAuth();
-  const { data, error, reload } = useApi('/admin/users');
+  const { data, loading, error, reload } = useApi('/admin/users');
   const [f, setF] = useState(NEW_USER);
   const [formError, setFormError] = useState('');
   const [flash, setFlash] = useState('');
@@ -50,6 +50,9 @@ export function UsersAdmin() {
 
   return (
     <section className="apage">
+      <div className="apage__topbar no-print">
+        <RefreshButton onRefresh={reload} loading={loading} />
+      </div>
       <header className="apage__head">
         <div>
           <h1>Staff accounts</h1>

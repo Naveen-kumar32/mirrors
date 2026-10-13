@@ -274,15 +274,19 @@ app.post(
       phone: clean(b.phone, 25),
       email: clean(b.email, 120).toLowerCase(),
       dob: clean(b.dob, 10),
+      gender: ['male', 'female', 'other'].includes(b.gender) ? b.gender : null,
       date: clean(b.date, 10),
       time: clean(b.time, 20),
       concern: clean(b.concern, 120),
       message: clean(b.message, 2000),
+      existingRef: clean(b.existingRef, 20).toUpperCase(),
+      visitType: ['first', 'revisit', 'rescheduled_first'].includes(b.visitType) ? b.visitType : 'first',
     };
     if (!type) return bad(res, 'Unknown request type.');
     if (r.name.length < 2) return bad(res, 'Please enter your name.');
-    if (type !== 'enquiry' && !isPhone(r.phone)) return bad(res, 'Please enter a valid phone number.');
+    if (!isPhone(r.phone)) return bad(res, 'Please enter a valid mobile number.');
     if (type === 'enquiry' && !isEmail(r.email)) return bad(res, 'Please enter a valid email address.');
+    if (r.email && !isEmail(r.email)) return bad(res, 'Please enter a valid email address.');
     if (type === 'appointment') {
       if (!isISODate(r.dob) || r.dob > todayISO()) return bad(res, 'Please enter your date of birth.');
       if (!isBookable(r.date, r.time)) return bad(res, 'Please choose an available date and time.');
@@ -290,13 +294,52 @@ app.post(
         return res.status(409).json({ error: 'Sorry, that time has just been booked. Please choose another slot.', code: 'slot_taken' });
     }
     if (type === 'enquiry' && r.message.length < 5) return bad(res, 'Please type your question.');
-    r.ref = makeRef();
+
+    let visitType = r.visitType;
+    let visitNumber = 1;
+    let parentId = null;
+    let ref = makeRef();
+
+    if (type === 'appointment' && r.existingRef) {
+      const prev = db
+        .prepare("SELECT id, ref, visit_number, status FROM requests WHERE UPPER(ref) = UPPER(?) ORDER BY visit_number DESC, id DESC LIMIT 1")
+        .get(r.existingRef);
+      if (prev) {
+        ref = prev.ref;
+        parentId = prev.id;
+        if (r.visitType === 'first' || r.visitType === 'rescheduled_first' || prev.status === 'cancelled') {
+          visitType = 'rescheduled_first';
+          visitNumber = 1;
+        } else {
+          visitType = 'revisit';
+          visitNumber = (prev.visit_number || 1) + 1;
+        }
+      }
+    }
+
+    r.ref = ref;
     db.prepare(
-      `INSERT INTO requests (ref, type, name, phone, email, dob, date, time, concern, message, ip)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).run(r.ref, type, r.name, r.phone || null, r.email || null, r.dob || null, r.date || null, r.time || null, r.concern || null, r.message || null, req.ip);
+      `INSERT INTO requests (ref, type, name, phone, email, dob, gender, date, time, concern, message, visit_type, visit_number, parent_id, ip)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).run(
+      r.ref,
+      type,
+      r.name,
+      r.phone || null,
+      r.email || null,
+      r.dob || null,
+      r.gender || null,
+      r.date || null,
+      r.time || null,
+      r.concern || null,
+      r.message || null,
+      visitType,
+      visitNumber,
+      parentId,
+      req.ip
+    );
     notifyClinic(r);
-    res.status(201).json({ ref: r.ref });
+    res.status(201).json({ ref: r.ref, visitType, visitNumber });
   }
 );
 
@@ -422,8 +465,49 @@ app.delete('/api/admin/posts/:id', requireStaff, (req, res) => {
 /* ==========================================================================
    Staff: appointments & requests (admins and employees)
    ========================================================================== */
-const REQUEST_FIELDS = `id, ref, type, name, phone, email, dob, date, time, concern, message, note, status, source,
+const REQUEST_FIELDS = `id, ref, type, name, phone, email, dob, gender, date, time, concern, message, note, status, source,
+  visit_type AS visitType, visit_number AS visitNumber, parent_id AS parentId,
+  pain, diagnosis, treatments, medicines, advice, follow_up_date AS followUpDate,
+  consultation_fee AS consultationFee, treatment_cost AS treatmentCost, medicine_cost AS medicineCost,
+  discount, amount_paid AS amountPaid, payment_mode AS paymentMode, payment_status AS paymentStatus,
   confirmed_at AS confirmedAt, created_at AS createdAt`;
+
+function parseMedicines(raw) {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return String(raw)
+      .split('\n')
+      .map((l) => l.trim())
+      .filter(Boolean)
+      .map((name) => ({ name, dosage: '', duration: '', notes: '' }));
+  }
+}
+
+function hydrateRequest(r) {
+  if (!r) return null;
+  const visitCount = r.ref
+    ? db.prepare("SELECT COUNT(*) AS n FROM requests WHERE ref = ? AND type = 'appointment'").get(r.ref).n
+    : 1;
+  return {
+    ...r,
+    visitType: r.visitType || 'first',
+    visitNumber: Number(r.visitNumber) || 1,
+    medicinesList: parseMedicines(r.medicines),
+    consultationFee: Number(r.consultationFee) || 0,
+    treatmentCost: Number(r.treatmentCost) || 0,
+    medicineCost: Number(r.medicineCost) || 0,
+    discount: Number(r.discount) || 0,
+    amountPaid: Number(r.amountPaid) || 0,
+    visitCount,
+  };
+}
+
+function hydrateRequests(rows) {
+  return rows.map(hydrateRequest);
+}
 
 // Tabs: new = waiting for staff, confirmed = upcoming booked appointments, closed = done/cancelled
 const VIEWS = {
@@ -436,17 +520,136 @@ const VIEWS = {
 app.get('/api/admin/requests', requireStaff, (req, res) => {
   const perPage = 20;
   const view = VIEWS[req.query.view] || VIEWS.new;
-  const total = db.prepare(`SELECT COUNT(*) AS n FROM requests WHERE ${view.where}`).get().n;
+  const q = clean(req.query.q, 80);
+  const clauses = [view.where];
+  const params = [];
+  if (q) {
+    clauses.push('(ref LIKE ? OR name LIKE ? OR phone LIKE ? OR email LIKE ? OR concern LIKE ? OR diagnosis LIKE ?)');
+    const like = `%${q}%`;
+    params.push(like, like, like, like, like, like);
+  }
+  const whereSql = clauses.join(' AND ');
+  const total = db.prepare(`SELECT COUNT(*) AS n FROM requests WHERE ${whereSql}`).get(...params).n;
   const pages = Math.max(1, Math.ceil(total / perPage));
   const page = Math.min(pages, Math.max(1, parseInt(req.query.page, 10) || 1));
-  const items = db
-    .prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE ${view.where} ORDER BY ${view.order} LIMIT ? OFFSET ?`)
-    .all(perPage, (page - 1) * perPage);
+  const items = hydrateRequests(
+    db
+      .prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE ${whereSql} ORDER BY ${view.order} LIMIT ? OFFSET ?`)
+      .all(...params, perPage, (page - 1) * perPage)
+  );
   const counts = {
+    total: db.prepare('SELECT COUNT(*) AS n FROM requests').get().n,
     new: db.prepare("SELECT COUNT(*) AS n FROM requests WHERE status = 'new'").get().n,
     confirmed: db.prepare("SELECT COUNT(*) AS n FROM requests WHERE status = 'confirmed'").get().n,
+    done: db.prepare("SELECT COUNT(*) AS n FROM requests WHERE status = 'done'").get().n,
+    cancelled: db.prepare("SELECT COUNT(*) AS n FROM requests WHERE status = 'cancelled'").get().n,
   };
   res.json({ items, page, pages, total, counts });
+});
+
+// Lookup patient history by Ref ID or search query (for linking revisits and viewing past case sheets)
+app.get('/api/admin/patients/lookup', requireStaff, (req, res) => {
+  const ref = clean(req.query.ref, 30).toUpperCase();
+  const q = clean(req.query.q, 80);
+  if (ref) {
+    const visits = hydrateRequests(
+      db
+        .prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE UPPER(ref) = ? ORDER BY date DESC, created_at DESC`)
+        .all(ref)
+    );
+    return res.json({ visits });
+  }
+  const clauses = ["type = 'appointment'"];
+  const params = [];
+  if (q) {
+    clauses.push('(ref LIKE ? OR name LIKE ? OR phone LIKE ? OR email LIKE ?)');
+    const like = `%${q}%`;
+    params.push(like, like, like, like);
+  }
+  const rows = hydrateRequests(
+    db
+      .prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE ${clauses.join(' AND ')} ORDER BY created_at DESC LIMIT 40`)
+      .all(...params)
+  );
+  // Group unique patients by ref so staff can pick an existing customer easily
+  const byRef = new Map();
+  for (const r of rows) {
+    if (!byRef.has(r.ref)) {
+      byRef.set(r.ref, {
+        ref: r.ref,
+        name: r.name,
+        phone: r.phone,
+        email: r.email,
+        dob: r.dob,
+        lastDate: r.date,
+        lastConcern: r.concern,
+        lastStatus: r.status,
+        visitCount: r.visitCount,
+        latestId: r.id,
+      });
+    }
+  }
+  res.json({ patients: [...byRef.values()] });
+});
+
+// Appointment reports: filter by period (upcoming, today, all, custom date range), status, and search query
+app.get('/api/admin/reports', requireStaff, (req, res) => {
+  const period = clean(req.query.period, 20) || 'upcoming';
+  const status = clean(req.query.status, 20) || 'all';
+  const from = clean(req.query.from, 10);
+  const to = clean(req.query.to, 10);
+  const q = clean(req.query.q, 80);
+  const today = todayISO();
+
+  const clauses = ["type = 'appointment'"];
+  const params = [];
+
+  if (period === 'upcoming') {
+    clauses.push('date >= ?');
+    params.push(today);
+  } else if (period === 'today') {
+    clauses.push('date = ?');
+    params.push(today);
+  } else if (period === 'custom') {
+    if (isISODate(from)) {
+      clauses.push('date >= ?');
+      params.push(from);
+    }
+    if (isISODate(to)) {
+      clauses.push('date <= ?');
+      params.push(to);
+    }
+  }
+
+  if (['new', 'confirmed', 'done', 'cancelled'].includes(status)) {
+    clauses.push('status = ?');
+    params.push(status);
+  }
+
+  if (q) {
+    clauses.push('(ref LIKE ? OR name LIKE ? OR phone LIKE ? OR concern LIKE ? OR note LIKE ? OR diagnosis LIKE ? OR treatments LIKE ?)');
+    const like = `%${q}%`;
+    params.push(like, like, like, like, like, like, like);
+  }
+
+  const whereSql = clauses.join(' AND ');
+  const items = hydrateRequests(
+    db
+      .prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE ${whereSql} ORDER BY date ASC, time ASC, created_at DESC`)
+      .all(...params)
+  );
+
+  const summary = {
+    total: items.length,
+    confirmed: items.filter((r) => r.status === 'confirmed').length,
+    new: items.filter((r) => r.status === 'new').length,
+    done: items.filter((r) => r.status === 'done').length,
+    cancelled: items.filter((r) => r.status === 'cancelled').length,
+    revisits: items.filter((r) => r.visitType === 'revisit').length,
+    revenue: items.reduce((sum, r) => sum + (Number(r.amountPaid) || 0), 0),
+  };
+
+  res.json({ items, summary, today });
 });
 
 // Slots for the staff "confirm booking" picker: today onwards, showing who holds each booked slot
@@ -460,7 +663,12 @@ app.get('/api/admin/slots', requireStaff, (req, res) => {
 });
 
 function readBooking(b) {
-  return { date: clean(b.date, 10), time: clean(b.time, 20), note: clean(b.note, 1000) };
+  return {
+    date: clean(b.date, 10),
+    time: clean(b.time, 20),
+    concern: clean(b.concern, 120),
+    note: clean(b.note, 1000),
+  };
 }
 
 // Two staff confirming the same slot at once: the database's unique slot index rejects the second
@@ -471,45 +679,280 @@ app.post('/api/admin/requests/:id/confirm', requireStaff, (req, res) => {
   const r = db.prepare('SELECT * FROM requests WHERE id = ?').get(req.params.id);
   if (!r) return bad(res, 'Request not found.', 404);
   if (r.type !== 'appointment') return bad(res, 'Only appointments can be confirmed.');
-  const { date, time, note } = readBooking(req.body || {});
+  const { date, time, concern, note } = readBooking(req.body || {});
   if (!isBookable(date, time, { staff: true })) return bad(res, 'Please choose an open day (today or later) and a time slot.');
   if (slotTaken(date, time, r.id)) return bad(res, 'That slot is already booked for another patient.', 409);
   try {
     db.prepare(
-      `UPDATE requests SET status = 'confirmed', date = ?, time = ?, note = ?, confirmed_by = ?, confirmed_at = ? WHERE id = ?`
-    ).run(date, time, note || null, req.user.id, now(), r.id);
+      `UPDATE requests SET status = 'confirmed', date = ?, time = ?, concern = COALESCE(?, concern), note = ?, confirmed_by = ?, confirmed_at = ? WHERE id = ?`
+    ).run(date, time, concern || null, note || null, req.user.id, now(), r.id);
   } catch (err) {
     if (isSlotClash(err)) return bad(res, 'That slot has just been booked for someone else.', 409);
     throw err;
   }
-  res.json(db.prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE id = ?`).get(r.id));
+  res.json(hydrateRequest(db.prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE id = ?`).get(r.id)));
 });
 
-// Staff book an appointment directly, e.g. for a patient who phoned in
+// Staff book an appointment directly (either new patient OR existing patient revisit sharing the same ref ID)
 app.post('/api/admin/appointments', requireStaff, (req, res) => {
   const b = req.body || {};
   const name = clean(b.name, 80);
   const phone = clean(b.phone, 25);
+  const email = clean(b.email, 120).toLowerCase();
   const dob = clean(b.dob, 10);
-  const { date, time, note } = readBooking(b);
+  const gender = ['male', 'female', 'other'].includes(b.gender) ? b.gender : null;
+  const existingRef = clean(b.existingRef, 30).toUpperCase();
+  const requestedVisitType = ['first', 'revisit', 'rescheduled_first'].includes(b.visitType) ? b.visitType : 'first';
+  const { date, time, concern, note } = readBooking(b);
+
   if (name.length < 2) return bad(res, 'Please enter the patient’s name.');
   if (!isPhone(phone)) return bad(res, 'Please enter a valid phone number.');
+  if (email && !isEmail(email)) return bad(res, 'Please enter a valid email address.');
   if (dob && (!isISODate(dob) || dob > todayISO())) return bad(res, 'Please check the date of birth.');
   if (!isBookable(date, time, { staff: true })) return bad(res, 'Please choose an open day (today or later) and a time slot.');
   if (slotTaken(date, time)) return bad(res, 'That slot is already booked for another patient.', 409);
+
+  let ref = makeRef();
+  let visitType = requestedVisitType;
+  let visitNumber = 1;
+  let parentId = null;
+
+  if (existingRef) {
+    const prev = db
+      .prepare('SELECT id, ref, visit_number FROM requests WHERE UPPER(ref) = ? ORDER BY visit_number DESC, id DESC LIMIT 1')
+      .get(existingRef);
+    if (prev) {
+      ref = prev.ref;
+      parentId = prev.id;
+      if (requestedVisitType === 'first' || requestedVisitType === 'rescheduled_first') {
+        visitType = 'rescheduled_first';
+        visitNumber = 1;
+      } else {
+        visitType = 'revisit';
+        visitNumber = (prev.visit_number || 1) + 1;
+      }
+    } else {
+      ref = existingRef;
+    }
+  }
+
   let info;
   try {
     info = db
       .prepare(
-        `INSERT INTO requests (ref, type, name, phone, dob, date, time, note, status, source, confirmed_by, confirmed_at)
-         VALUES (?, 'appointment', ?, ?, ?, ?, ?, ?, 'confirmed', 'staff', ?, ?)`
+        `INSERT INTO requests (ref, type, name, phone, email, dob, gender, date, time, concern, note, status, source, visit_type, visit_number, parent_id, confirmed_by, confirmed_at)
+         VALUES (?, 'appointment', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'confirmed', 'staff', ?, ?, ?, ?, ?)`
       )
-      .run(makeRef(), name, phone, dob || null, date, time, note || null, req.user.id, now());
+      .run(
+        ref,
+        name,
+        phone,
+        email || null,
+        dob || null,
+        gender || null,
+        date,
+        time,
+        concern || null,
+        note || null,
+        visitType,
+        visitNumber,
+        parentId,
+        req.user.id,
+        now()
+      );
   } catch (err) {
     if (isSlotClash(err)) return bad(res, 'That slot has just been booked for someone else.', 409);
     throw err;
   }
-  res.status(201).json(db.prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE id = ?`).get(info.lastInsertRowid));
+  res.status(201).json(hydrateRequest(db.prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE id = ?`).get(info.lastInsertRowid)));
+});
+
+/*
+ * Flexible Reopen / Revisit / Reschedule endpoint:
+ * - mode === 'revisit': Creates a new linked appointment for an existing patient using the SAME ref ID,
+ *   incrementing visit_number (Visit #2, #3...) while preserving the previous visit in history.
+ * - mode === 'reschedule_first_update': Reopens this existing/cancelled appointment as a First Visit
+ *   (or Rescheduled First Visit) using the SAME ref ID and updates its date/time/status.
+ * - mode === 'reschedule_first_new': Creates a new First Appointment record with the SAME ref ID while
+ *   keeping the cancelled record in history.
+ * - mode === 'link_existing': Links this appointment to an existing patient's ref ID (as revisit or first visit).
+ */
+app.post('/api/admin/requests/:id/reopen', requireStaff, (req, res) => {
+  const r = db.prepare('SELECT * FROM requests WHERE id = ?').get(req.params.id);
+  if (!r) return bad(res, 'Appointment not found.', 404);
+  const b = req.body || {};
+  const mode = clean(b.mode, 40) || 'revisit';
+  const targetStatus = b.status === 'new' ? 'new' : 'confirmed';
+  const { date, time, concern, note } = readBooking(b);
+
+  if (mode === 'link_existing') {
+    const targetRef = clean(b.targetRef, 30).toUpperCase();
+    if (!targetRef) return bad(res, 'Please enter or select the existing Customer Ref ID (e.g. MD-...).');
+    const prev = db
+      .prepare('SELECT id, ref, name, phone, email, dob, visit_number FROM requests WHERE UPPER(ref) = ? AND id != ? ORDER BY visit_number DESC, id DESC LIMIT 1')
+      .get(targetRef, r.id);
+    const asFirst = b.visitType === 'first' || b.visitType === 'rescheduled_first';
+    const newVisitType = asFirst ? 'rescheduled_first' : 'revisit';
+    const newVisitNumber = asFirst ? 1 : (prev?.visit_number || 1) + 1;
+    db.prepare(
+      `UPDATE requests SET ref = ?, visit_type = ?, visit_number = ?, parent_id = COALESCE(?, parent_id),
+         dob = COALESCE(dob, ?), email = COALESCE(email, ?) WHERE id = ?`
+    ).run(prev ? prev.ref : targetRef, newVisitType, newVisitNumber, prev?.id || null, prev?.dob || null, prev?.email || null, r.id);
+    return res.json(hydrateRequest(db.prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE id = ?`).get(r.id)));
+  }
+
+  // Validate date & time if confirming immediately
+  if (targetStatus === 'confirmed') {
+    if (!isBookable(date, time, { staff: true })) {
+      return bad(res, 'Please choose an open day (today or later) and an available time slot.');
+    }
+    const exceptId = mode === 'reschedule_first_update' ? r.id : 0;
+    if (slotTaken(date, time, exceptId)) {
+      return bad(res, 'That slot is already booked for another patient.', 409);
+    }
+  }
+
+  if (mode === 'reschedule_first_update') {
+    const visitType = b.asPureFirst ? 'first' : 'rescheduled_first';
+    try {
+      db.prepare(
+        `UPDATE requests
+         SET status = ?, visit_type = ?, visit_number = 1,
+             date = COALESCE(?, date), time = COALESCE(?, time),
+             concern = COALESCE(?, concern), note = ?,
+             confirmed_by = ?, confirmed_at = ?
+         WHERE id = ?`
+      ).run(
+        targetStatus,
+        visitType,
+        date || null,
+        time || null,
+        concern || null,
+        note !== undefined ? note || null : r.note,
+        targetStatus === 'confirmed' ? req.user.id : r.confirmed_by,
+        targetStatus === 'confirmed' ? now() : r.confirmed_at,
+        r.id
+      );
+    } catch (err) {
+      if (isSlotClash(err)) return bad(res, 'That slot has just been booked for someone else.', 409);
+      throw err;
+    }
+    return res.json(hydrateRequest(db.prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE id = ?`).get(r.id)));
+  }
+
+  // Both 'revisit' and 'reschedule_first_new' create a new linked appointment sharing the SAME ref ID
+  const maxRow = db
+    .prepare('SELECT MAX(visit_number) AS maxV FROM requests WHERE ref = ?')
+    .get(r.ref);
+  const isFirstMode = mode === 'reschedule_first_new';
+  const visitType = isFirstMode ? 'rescheduled_first' : 'revisit';
+  const visitNumber = isFirstMode ? 1 : Math.max(1, Number(maxRow?.maxV) || 1) + 1;
+
+  let info;
+  try {
+    info = db
+      .prepare(
+        `INSERT INTO requests (
+           ref, type, name, phone, email, dob, date, time, concern, note,
+           status, source, visit_type, visit_number, parent_id, confirmed_by, confirmed_at
+         ) VALUES (?, 'appointment', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'staff', ?, ?, ?, ?, ?)`
+      )
+      .run(
+        r.ref,
+        r.name,
+        r.phone,
+        r.email,
+        r.dob,
+        date || r.date,
+        time || r.time,
+        concern || r.concern,
+        note || null,
+        targetStatus,
+        visitType,
+        visitNumber,
+        r.id,
+        targetStatus === 'confirmed' ? req.user.id : null,
+        targetStatus === 'confirmed' ? now() : null
+      );
+  } catch (err) {
+    if (isSlotClash(err)) return bad(res, 'That slot has just been booked for someone else.', 409);
+    throw err;
+  }
+
+  res.status(201).json(hydrateRequest(db.prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE id = ?`).get(info.lastInsertRowid)));
+});
+
+// Save clinical diagnosis, pain/symptoms, treatments, medicines, follow-up and billing for an individual patient report
+app.put('/api/admin/requests/:id/clinical', requireStaff, (req, res) => {
+  const r = db.prepare('SELECT * FROM requests WHERE id = ?').get(req.params.id);
+  if (!r) return bad(res, 'Patient record not found.', 404);
+  const b = req.body || {};
+
+  const pain = clean(b.pain, 1000);
+  const diagnosis = clean(b.diagnosis, 1500);
+  const treatments = clean(b.treatments, 1500);
+  const advice = clean(b.advice, 1500);
+  const followUpDate = clean(b.followUpDate, 20);
+  const concern = clean(b.concern, 160);
+  const note = clean(b.note, 1000);
+
+  let medicinesJson = '';
+  if (Array.isArray(b.medicinesList)) {
+    const cleaned = b.medicinesList
+      .map((m) => ({
+        name: clean(m?.name, 120),
+        dosage: clean(m?.dosage, 80),
+        duration: clean(m?.duration, 60),
+        notes: clean(m?.notes, 160),
+      }))
+      .filter((m) => m.name);
+    medicinesJson = JSON.stringify(cleaned);
+  } else if (typeof b.medicines === 'string') {
+    medicinesJson = clean(b.medicines, 5000);
+  }
+
+  const consultationFee = Math.max(0, Number(b.consultationFee) || 0);
+  const treatmentCost = Math.max(0, Number(b.treatmentCost) || 0);
+  const medicineCost = Math.max(0, Number(b.medicineCost) || 0);
+  const discount = Math.max(0, Number(b.discount) || 0);
+  const amountPaid =
+    b.amountPaid !== undefined && b.amountPaid !== ''
+      ? Math.max(0, Number(b.amountPaid) || 0)
+      : Math.max(0, consultationFee + treatmentCost + medicineCost - discount);
+  const paymentMode = clean(b.paymentMode, 40) || 'UPI';
+  const paymentStatus = ['paid', 'partial', 'pending'].includes(b.paymentStatus) ? b.paymentStatus : 'paid';
+  const visitType = ['first', 'revisit', 'rescheduled_first'].includes(b.visitType) ? b.visitType : r.visit_type || 'first';
+  const visitNumber = Math.max(1, parseInt(b.visitNumber, 10) || r.visit_number || 1);
+
+  db.prepare(
+    `UPDATE requests
+     SET pain = ?, diagnosis = ?, treatments = ?, medicines = ?, advice = ?, follow_up_date = ?,
+         consultation_fee = ?, treatment_cost = ?, medicine_cost = ?, discount = ?, amount_paid = ?,
+         payment_mode = ?, payment_status = ?,
+         concern = COALESCE(?, concern), note = ?, visit_type = ?, visit_number = ?
+     WHERE id = ?`
+  ).run(
+    pain || null,
+    diagnosis || null,
+    treatments || null,
+    medicinesJson || null,
+    advice || null,
+    followUpDate || null,
+    consultationFee,
+    treatmentCost,
+    medicineCost,
+    discount,
+    amountPaid,
+    paymentMode,
+    paymentStatus,
+    concern || null,
+    note || null,
+    visitType,
+    visitNumber,
+    r.id
+  );
+
+  res.json(hydrateRequest(db.prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE id = ?`).get(r.id)));
 });
 
 // Status changes: mark done, cancel (frees the slot), reopen; and edit the staff note
@@ -518,13 +961,16 @@ app.patch('/api/admin/requests/:id', requireStaff, (req, res) => {
   if (!r) return bad(res, 'Request not found.', 404);
   const b = req.body || {};
   if (b.note !== undefined) db.prepare('UPDATE requests SET note = ? WHERE id = ?').run(clean(b.note, 1000) || null, r.id);
+  if (b.visitType !== undefined && ['first', 'revisit', 'rescheduled_first'].includes(b.visitType)) {
+    db.prepare('UPDATE requests SET visit_type = ? WHERE id = ?').run(b.visitType, r.id);
+  }
   if (b.status !== undefined) {
     if (!['new', 'done', 'cancelled'].includes(b.status)) return bad(res, 'Invalid status.');
     if (b.status === 'done' && r.status === 'cancelled') return bad(res, 'Reopen the appointment first.');
     // Reopening a cancelled appointment goes back to "new" so its slot is checked again on confirm
     db.prepare('UPDATE requests SET status = ? WHERE id = ?').run(b.status, r.id);
   }
-  res.json(db.prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE id = ?`).get(r.id));
+  res.json(hydrateRequest(db.prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE id = ?`).get(r.id)));
 });
 
 app.delete('/api/admin/requests/:id', requireStaff, requireAdmin, (req, res) => {

@@ -1567,6 +1567,69 @@ button {
   grid-template-columns: minmax(0, 1fr);
   margin: 16px 0 0;
 }
+.article__h3 {
+  margin: 28px 0 10px;
+  font-family: var(--serif);
+  font-size: clamp(1.35rem, 2vw, 1.65rem);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--navy);
+}
+.article__olist {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding-left: 22px;
+}
+.article__quote {
+  margin: 22px 0;
+  padding: 16px 20px;
+  border-left: 4px solid var(--navy);
+  border-radius: 0 12px 12px 0;
+  background: var(--sand);
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--navy);
+}
+.article__mark {
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: #fef08a;
+  color: var(--navy);
+}
+.article__hr {
+  margin: 28px 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+.article__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0 1.4em;
+  font-size: 0.9375rem;
+}
+.article__table th,
+.article__table td {
+  border: 1.5px solid var(--line);
+  padding: 9px 14px;
+  text-align: left;
+  vertical-align: top;
+}
+.article__table th {
+  background: var(--sand);
+  font-weight: 600;
+  color: var(--navy);
+}
+.article__table tr:nth-child(even) td { background: #fafaf9; }
+.article__size-lg {
+  font-size: 1.18em;
+  line-height: 1.5;
+}
+.article__size-sm {
+  font-size: 0.88em;
+}
 .article__note {
   margin-top: 44px;
   padding: 16px 20px;

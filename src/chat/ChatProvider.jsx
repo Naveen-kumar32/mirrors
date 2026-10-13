@@ -126,12 +126,12 @@ export function ChatProvider({ children }) {
 
   /** Answer the current prompt (from a quick-reply chip or validated text). */
   const answer = useCallback(
-    (value, label, { silent = false } = {}) => {
+    (value, label, { silent = false, nav = false } = {}) => {
       const node = NODES[promptId];
       if (!node) return;
       const d = data.current;
       if (!silent) push({ from: 'user', text: label ?? String(value) });
-      if (node.field) {
+      if (node.field && !nav) {
         d[node.field] = value;
         d[`${node.field}Label`] = label ?? value;
       }

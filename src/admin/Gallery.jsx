@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, useApi } from '../backend';
 import Pagination from '../components/Pagination';
 import { Icon } from '../components/ui';
-import { useAuth } from './AdminApp';
+import { RefreshButton, useAuth } from './AdminApp';
 
 const MAX_FILES = 10;
 const MAX_SIDE = 1600; // photos are shrunk to at most 1600px before upload
@@ -121,7 +121,7 @@ export default function GalleryAdmin() {
   const { onAuthError } = useAuth();
   const [page, setPage] = useState(1);
   const [flash, setFlash] = useState('');
-  const { data, error, reload } = useApi(`/gallery?page=${page}`);
+  const { data, error, refreshing, reload } = useApi(`/gallery?page=${page}`);
 
   const act = async (fn, message) => {
     try {
@@ -141,6 +141,9 @@ export default function GalleryAdmin() {
 
   return (
     <section className="apage">
+      <div className="apage__topbar no-print">
+        <RefreshButton onRefresh={reload} refreshing={refreshing} />
+      </div>
       <header className="apage__head">
         <div>
           <h1>Gallery</h1>
@@ -149,9 +152,11 @@ export default function GalleryAdmin() {
             name is shown under each photo.
           </p>
         </div>
-        <a href="/gallery" target="_blank" rel="noreferrer" className="btn btn--ghost">
-          View gallery
-        </a>
+        <div className="apage__actions">
+          <a href="/gallery" target="_blank" rel="noreferrer" className="btn btn--ghost">
+            View gallery
+          </a>
+        </div>
       </header>
 
       {flash && (

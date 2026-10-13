@@ -1,14 +1,41 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, Outlet, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { BRAND } from '../data';
-import { api } from '../backend';
+import { api, notifyDataChange } from '../backend';
 import { Icon } from '../components/ui';
 import { PostEditor, PostsList } from './Posts';
 import ReviewsAdmin from './ReviewsAdmin';
 import Requests from './Requests';
+import Reports from './Reports';
 import GalleryAdmin from './Gallery';
 import { Account, UsersAdmin } from './Users';
 import './admin.css';
+
+/* ---------- Compact In-app Refresh button (placed in top-left of the main content box) ---------- */
+export function RefreshButton({ onRefresh, refreshing = false, loading = false, label = 'Refresh' }) {
+  const [justUpdated, setJustUpdated] = useState(false);
+  const busy = refreshing || loading;
+
+  const handleClick = () => {
+    if (onRefresh) onRefresh();
+    else notifyDataChange('admin-refresh');
+    setJustUpdated(true);
+    setTimeout(() => setJustUpdated(false), 1200);
+  };
+
+  return (
+    <button
+      type="button"
+      className={`arefresh-mini ${busy ? 'is-spinning' : ''} ${justUpdated ? 'is-done' : ''}`}
+      onClick={handleClick}
+      disabled={busy}
+      title="Refresh data from the clinic server"
+    >
+      <Icon name="refresh" size={12} />
+      <span>{busy ? 'Syncing…' : justUpdated ? 'Updated ✓' : label}</span>
+    </button>
+  );
+}
 
 /* ---------- Logged-in staff member ---------- */
 const AuthContext = createContext(null);
@@ -112,6 +139,7 @@ function Layout() {
   const isAdmin = user.role === 'admin';
   const links = [
     { to: '/admin', label: 'Appointments', icon: 'clock', end: true },
+    { to: '/admin/reports', label: 'Reports', icon: 'download' },
     { to: '/admin/posts', label: 'Blog posts', icon: 'plan', end: true },
     { to: '/admin/posts/new', label: 'Write a post', icon: 'plus' },
     { to: '/admin/gallery', label: 'Gallery', icon: 'spark' },
@@ -126,7 +154,7 @@ function Layout() {
 
   return (
     <div className="admin">
-      <aside className={`admin__side ${menu ? 'is-open' : ''}`}>
+      <aside className={`admin__side no-print ${menu ? 'is-open' : ''}`}>
         <Link to="/admin" className="admin__brand">
           <img src={BRAND.logoWhite} alt="" width="36" height="36" />
           <span>
@@ -160,11 +188,20 @@ function Layout() {
         </div>
       </aside>
       <div className="admin__main">
-        <header className="admin__bar">
+        <header className="admin__bar no-print">
           <button className="admin__menu" onClick={() => setMenu((m) => !m)} aria-label="Menu" aria-expanded={menu}>
             <Icon name={menu ? 'close' : 'menu'} size={22} />
           </button>
           <span>Staff area</span>
+          <button
+            type="button"
+            className="admin__bar-refresh"
+            onClick={() => notifyDataChange('admin-bar-refresh')}
+            aria-label="Refresh data"
+            title="Refresh data"
+          >
+            <Icon name="refresh" size={18} />
+          </button>
         </header>
         <Outlet />
       </div>
@@ -195,6 +232,7 @@ export default function AdminApp() {
         <Route path="login" element={<Login />} />
         <Route element={<Layout />}>
           <Route index element={<Requests />} />
+          <Route path="reports" element={<Reports />} />
           <Route path="posts" element={<PostsList />} />
           <Route path="gallery" element={<GalleryAdmin />} />
           <Route path="posts/new" element={<PostEditor />} />
@@ -208,3 +246,4 @@ export default function AdminApp() {
     </AuthProvider>
   );
 }
+

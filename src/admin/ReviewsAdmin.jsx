@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { api, formatDate, invalidateReviewSummary, useApi } from '../backend';
 import Pagination from '../components/Pagination';
 import { Icon } from '../components/ui';
-import { useAuth } from './AdminApp';
+import { RefreshButton, useAuth } from './AdminApp';
 import { permissionMessage } from './messages';
 
 const SOURCES = [
@@ -17,7 +17,7 @@ const SOURCE_LABEL = Object.fromEntries(SOURCES.map((s) => [s.value, s.label]));
 /* Add an approved testimonial from Google, WhatsApp etc. — only with the patient's permission */
 function TestimonialDialog({ onClose, onSaved }) {
   const { onAuthError } = useAuth();
-  const [f, setF] = useState({ name: '', text: '', rating: 5, source: 'google', permission: false });
+  const [f, setF] = useState({ name: '', text: '', rating: 5, source: 'google', permission: true });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -103,15 +103,11 @@ function TestimonialDialog({ onClose, onSaved }) {
               ))}
             </select>
           </label>
-          <label className="acheck">
-            <input type="checkbox" checked={f.permission} onChange={set('permission')} />
-            The patient has given permission to show this testimonial with this name on the website.
-          </label>
           <div className="bf__actions">
             <button type="button" className="btn btn--ghost" onClick={onClose}>
               Cancel
             </button>
-            <button className="btn btn--navy" disabled={busy || !f.permission}>
+            <button className="btn btn--navy" disabled={busy}>
               {busy ? 'Saving…' : 'Add & feature'}
             </button>
           </div>
@@ -128,7 +124,7 @@ export default function ReviewsAdmin() {
   const [page, setPage] = useState(1);
   const [adding, setAdding] = useState(false);
   const [flash, setFlash] = useState('');
-  const { data, error, loading, reload } = useApi(`/admin/reviews?page=${page}`);
+  const { data, error, loading, refreshing, reload } = useApi(`/admin/reviews?page=${page}`);
 
   useEffect(() => {
     if (error) onAuthError(error);
@@ -161,6 +157,9 @@ export default function ReviewsAdmin() {
 
   return (
     <section className="apage">
+      <div className="apage__topbar no-print">
+        <RefreshButton onRefresh={reload} refreshing={refreshing} />
+      </div>
       <header className="apage__head">
         <div>
           <h1>Reviews</h1>
@@ -170,9 +169,11 @@ export default function ReviewsAdmin() {
             emails are only visible here.
           </p>
         </div>
-        <button className="btn btn--navy" onClick={() => setAdding(true)}>
-          <Icon name="plus" size={18} /> Add testimonial
-        </button>
+        <div className="apage__actions">
+          <button className="btn btn--navy" onClick={() => setAdding(true)}>
+            <Icon name="plus" size={18} /> Add testimonial
+          </button>
+        </div>
       </header>
 
       {flash && (

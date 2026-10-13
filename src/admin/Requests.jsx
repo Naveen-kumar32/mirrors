@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { api, useApi } from '../backend';
+import { DateCalendar } from '../chat/BookingModal';
 import Pagination from '../components/Pagination';
 import { Icon } from '../components/ui';
-import { useAuth } from './AdminApp';
+import { RefreshButton, useAuth } from './AdminApp';
 import { confirmationMessage, replyMessage, reviewRequestMessage, smsTo, whatsappTo } from './messages';
+import { PatientReportModal, ReopenVisitDialog, VisitBadge } from './PatientModals';
 
 const TYPE = { appointment: 'Appointment', callback: 'Call back', enquiry: 'Question' };
-const STATUS = { new: 'New', confirmed: 'Confirmed', done: 'Done', cancelled: 'Cancelled' };
+const STATUS = { new: 'New', confirmed: 'Confirmed', done: 'Visited', cancelled: 'Cancelled' };
 const VIEWS = [
   { value: 'new', label: 'New requests', count: 'new' },
   { value: 'confirmed', label: 'Confirmed', count: 'confirmed' },
-  { value: 'closed', label: 'Done & cancelled' },
+  { value: 'closed', label: 'Visited & cancelled' },
   { value: 'all', label: 'All' },
 ];
 
@@ -21,17 +23,33 @@ const dob = (iso) =>
   iso ? new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
 const received = (iso) =>
   new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+const age = (iso) => {
+  if (!iso) return null;
+  const today = new Date();
+  const d = new Date(`${iso}T00:00:00`);
+  let a = today.getFullYear() - d.getFullYear();
+  const m = today.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < d.getDate())) a--;
+  return a;
+};
+const GENDER_LABEL = { male: 'M', female: 'F', other: 'Other' };
 
-
-/* ---------- Confirm / reschedule / new booking dialog ---------- */
+/* ---------- Confirm / reschedule / new booking dialog (with Existing Patient Revisit & Same ID support) ---------- */
 function BookingDialog({ request, onClose, onSaved }) {
   const { onAuthError } = useAuth();
-  const isNew = !request; // staff booking for a patient who phoned in
+  const isNew = !request; // staff booking for a patient who phoned in or walked in
   const slots = useApi(`/admin/slots${request ? `?except=${request.id}` : ''}`);
+  const patients = useApi(isNew ? '/admin/patients/lookup' : null);
+  const [patientMode, setPatientMode] = useState('new'); // 'new' | 'existing'
   const [f, setF] = useState({
-    name: '',
-    phone: '',
-    dob: '',
+    existingRef: '',
+    visitType: 'first',
+    name: request?.name || '',
+    phone: request?.phone || '',
+    email: request?.email || '',
+    gender: request?.gender || '',
+    dob: request?.dob || '',
+    concern: request?.concern || 'General consultation',
     date: request?.date || '',
     time: request?.time || '',
     note: request?.note || '',
@@ -47,23 +65,58 @@ function BookingDialog({ request, onClose, onSaved }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  // The requested day may no longer be in the list (e.g. it has passed) — then staff pick again
   const days = slots.data?.days || [];
   const selected = days.find((d) => d.date === f.date);
-  const set = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value, ...(k === 'date' && { time: '' }) }));
+  const set = (k) => (e) => {
+    let value = e.target.value;
+    if (k === 'phone') value = value.replace(/[^+()[\]\d\s.\-]/g, '');
+    setF((x) => ({ ...x, [k]: value, ...(k === 'date' && { time: '' }) }));
+  };
+
+  const selectExistingPatient = (refCode) => {
+    const cleanRef = refCode.trim().toUpperCase();
+    const match = (patients.data?.patients || []).find((p) => p.ref.toUpperCase() === cleanRef);
+    setF((x) => ({
+      ...x,
+      existingRef: cleanRef,
+      visitType: x.visitType === 'first' ? 'revisit' : x.visitType,
+      ...(match
+        ? {
+            name: match.name || x.name,
+            phone: match.phone || x.phone,
+            email: match.email || x.email,
+            gender: match.gender || x.gender,
+            dob: match.dob || x.dob,
+            concern: match.lastConcern || x.concern,
+          }
+        : {}),
+    }));
+  };
 
   const save = async (e) => {
     e.preventDefault();
     setBusy(true);
     setError('');
     try {
-      const body = { date: f.date, time: f.time, note: f.note };
+      const body = { date: f.date, time: f.time, concern: f.concern, note: f.note };
       const r = isNew
-        ? await api('/admin/appointments', { method: 'POST', body: { ...body, name: f.name, phone: f.phone, dob: f.dob } })
+        ? await api('/admin/appointments', {
+            method: 'POST',
+            body: {
+              ...body,
+              name: f.name,
+              phone: f.phone,
+              email: f.email,
+              gender: f.gender || undefined,
+              dob: f.dob,
+              existingRef: patientMode === 'existing' ? f.existingRef : '',
+              visitType: patientMode === 'existing' ? f.visitType : 'first',
+            },
+          })
         : await api(`/admin/requests/${request.id}/confirm`, { method: 'POST', body });
       setSaved(r);
       setBusy(false);
-      onSaved(`Appointment confirmed for ${r.name} — ${day(r.date)}, ${r.time}.`);
+      onSaved(`Appointment confirmed for ${r.name} (${r.ref}) — ${day(r.date)}, ${r.time}.`);
     } catch (err) {
       onAuthError(err);
       setError(err.message);
@@ -83,7 +136,9 @@ function BookingDialog({ request, onClose, onSaved }) {
         <div className="bf" role="dialog" aria-modal="true" aria-label="Send confirmation">
           <header className="bf__head">
             <div>
-              <p className="bf__eyebrow">{saved.name}</p>
+              <p className="bf__eyebrow">
+                {saved.name} · Ref ID: <strong>{saved.ref}</strong>
+              </p>
               <h2>Appointment confirmed</h2>
             </div>
             <button type="button" className="bf__close" onClick={onClose} aria-label="Close">
@@ -97,7 +152,7 @@ function BookingDialog({ request, onClose, onSaved }) {
                 <strong>
                   {day(saved.date)} · {saved.time}
                 </strong>{' '}
-                is now booked. Send {saved.name.split(' ')[0]} the confirmation:
+                is now booked under ID <strong>{saved.ref}</strong>. Send {saved.name.split(' ')[0]} the confirmation:
               </span>
             </p>
             <pre className="amsg">{text}</pre>
@@ -127,7 +182,9 @@ function BookingDialog({ request, onClose, onSaved }) {
       <form className="bf" role="dialog" aria-modal="true" aria-label={title} onSubmit={save}>
         <header className="bf__head">
           <div>
-            <p className="bf__eyebrow">{isNew ? 'Phone or walk-in booking' : request.name}</p>
+            <p className="bf__eyebrow">
+              {isNew ? 'Phone or walk-in booking' : `${request.name} · Ref ID: ${request.ref}`}
+            </p>
             <h2>{title}</h2>
           </div>
           <button type="button" className="bf__close" onClick={onClose} aria-label="Close">
@@ -148,14 +205,84 @@ function BookingDialog({ request, onClose, onSaved }) {
 
           {isNew && (
             <>
-              <label className="bf__field">
-                <span className="bf__label">Patient name</span>
-                <input value={f.name} onChange={set('name')} required autoFocus />
-              </label>
+              <div className="abody__tabs" style={{ alignSelf: 'flex-start' }}>
+                <button
+                  type="button"
+                  className={patientMode === 'new' ? 'is-on' : ''}
+                  onClick={() => {
+                    setPatientMode('new');
+                    setF((x) => ({ ...x, existingRef: '', visitType: 'first' }));
+                  }}
+                >
+                  New Patient (1st Visit)
+                </button>
+                <button
+                  type="button"
+                  className={patientMode === 'existing' ? 'is-on' : ''}
+                  onClick={() => {
+                    setPatientMode('existing');
+                    setF((x) => ({ ...x, visitType: 'revisit' }));
+                  }}
+                >
+                  Existing Customer (Revisit / Same ID)
+                </button>
+              </div>
+
+              {patientMode === 'existing' && (
+                <div className="bf__row">
+                  <label className="bf__field">
+                    <span className="bf__label">Existing Customer Ref ID (auto-fills details)</span>
+                    <input
+                      list="staff-existing-patients"
+                      value={f.existingRef}
+                      onChange={(e) => selectExistingPatient(e.target.value)}
+                      placeholder="Select or type MD-... code"
+                      required
+                    />
+                    <datalist id="staff-existing-patients">
+                      {(patients.data?.patients || []).map((p) => (
+                        <option key={p.ref} value={p.ref}>
+                          {p.name} · {p.phone} ({p.visitCount} visit{p.visitCount > 1 ? 's' : ''})
+                        </option>
+                      ))}
+                    </datalist>
+                  </label>
+                  <label className="bf__field">
+                    <span className="bf__label">Visit type</span>
+                    <select value={f.visitType} onChange={set('visitType')}>
+                      <option value="revisit">Existing Customer Revisit (Follow-up)</option>
+                      <option value="rescheduled_first">Reopened / Rescheduled 1st Visit</option>
+                    </select>
+                  </label>
+                </div>
+              )}
+
               <div className="bf__row">
                 <label className="bf__field">
-                  <span className="bf__label">Contact number</span>
+                  <span className="bf__label">Patient name</span>
+                  <input value={f.name} onChange={set('name')} required autoFocus={patientMode === 'new'} />
+                </label>
+                <label className="bf__field">
+                  <span className="bf__label">Mobile number</span>
                   <input type="tel" value={f.phone} onChange={set('phone')} required />
+                </label>
+              </div>
+
+              <div className="bf__row">
+                <label className="bf__field">
+                  <span className="bf__label">
+                    Email <em>(optional)</em>
+                  </span>
+                  <input type="email" value={f.email} onChange={set('email')} />
+                </label>
+                <label className="bf__field">
+                  <span className="bf__label">Gender <em>(optional)</em></span>
+                  <select value={f.gender} onChange={set('gender')} autoComplete="sex">
+                    <option value="">Not specified</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
                 </label>
                 <label className="bf__field">
                   <span className="bf__label">
@@ -167,18 +294,15 @@ function BookingDialog({ request, onClose, onSaved }) {
             </>
           )}
 
-          <label className="bf__field">
+          <div className="bf__field">
             <span className="bf__label">Date</span>
-            <select value={selected ? f.date : ''} onChange={set('date')} required>
-              <option value="">{slots.loading && !slots.data ? 'Loading…' : 'Choose a day…'}</option>
-              {days.map((d) => (
-                <option key={d.date} value={d.date}>
-                  {d.label}
-                  {d.booked.length ? ` — ${d.booked.length} booked` : ''}
-                </option>
-              ))}
-            </select>
-          </label>
+            <DateCalendar
+              schedule={slots.data}
+              value={f.date}
+              onChange={(iso) => setF((x) => ({ ...x, date: iso, time: '' }))}
+            />
+            {slots.loading && !slots.data && <p className="slots__hint">Loading available days…</p>}
+          </div>
 
           <div className="bf__field">
             <span className="bf__label">Time</span>
@@ -211,7 +335,7 @@ function BookingDialog({ request, onClose, onSaved }) {
               Note for the clinic <em>(optional)</em>
             </span>
             <textarea
-              rows={3}
+              rows={2}
               value={f.note}
               onChange={set('note')}
               maxLength={1000}
@@ -239,19 +363,18 @@ export default function Requests() {
   const { user, onAuthError } = useAuth();
   const [view, setView] = useState('new');
   const [page, setPage] = useState(1);
+  const [q, setQ] = useState('');
   const [dialog, setDialog] = useState(null); // { request } — or { request: null } for a new booking
+  const [reportTarget, setReportTarget] = useState(null); // individual patient report modal
+  const [reopenTarget, setReopenTarget] = useState(null); // flexible reopen / revisit modal
   const [flash, setFlash] = useState('');
-  const { data, error, loading, reload } = useApi(`/admin/requests?view=${view}&page=${page}`);
+  const { data, error, loading, refreshing, reload } = useApi(
+    `/admin/requests?view=${view}&page=${page}${q.trim() ? `&q=${encodeURIComponent(q.trim())}` : ''}`
+  );
 
   useEffect(() => {
     if (error) onAuthError(error);
   }, [error, onAuthError]);
-
-  // New bookings arrive while the page is open
-  useEffect(() => {
-    const id = setInterval(reload, 60000);
-    return () => clearInterval(id);
-  }, [reload]);
 
   const act = async (fn, message) => {
     try {
@@ -275,20 +398,39 @@ export default function Requests() {
 
   // Confirmed appointments get the full confirmation; everything else a short hello
   const reply = (r) => whatsappTo(r.phone, r.status === 'confirmed' ? confirmationMessage(r) : replyMessage(r));
+  const counts = data?.counts || { total: 0, new: 0, confirmed: 0, done: 0, cancelled: 0 };
 
   return (
-    <section className="apage">
-      <header className="apage__head">
-        <div>
+    <section className="apage areport--compact">
+      <header className="areport__top no-print">
+        <div className="areport__top-left">
+          <RefreshButton onRefresh={reload} refreshing={refreshing} loading={loading} />
           <h1>Appointments</h1>
-          <p>
-            New bookings from the website wait here. Call the patient, then <strong>Confirm booking</strong> — the time
-            slot then shows as booked on the website, so no one else can take it.
-          </p>
         </div>
-        <button className="btn btn--navy" onClick={() => setDialog({ request: null })}>
-          <Icon name="plus" size={18} /> Book appointment
-        </button>
+
+        <div className="areport__top-right">
+          <div className="astats-mini" aria-label="Appointments summary">
+            <span className="astat-pill">
+              Total <strong>{counts.total || 0}</strong>
+            </span>
+            <span className="astat-pill astat-pill--confirmed">
+              Confirmed <strong>{counts.confirmed || 0}</strong>
+            </span>
+            <span className="astat-pill astat-pill--new">
+              New (Pending) <strong>{counts.new || 0}</strong>
+            </span>
+            <span className="astat-pill astat-pill--done">
+              Visited <strong>{counts.done || 0}</strong>
+            </span>
+            <span className="astat-pill">
+              Cancelled <strong>{counts.cancelled || 0}</strong>
+            </span>
+          </div>
+
+          <button className="abtn abtn--primary" onClick={() => setDialog({ request: null })}>
+            <Icon name="plus" size={15} /> Book appointment
+          </button>
+        </div>
       </header>
 
       {flash && (
@@ -300,30 +442,45 @@ export default function Requests() {
         </p>
       )}
 
-      <div className="filters filters--left" role="tablist" aria-label="Show">
-        {VIEWS.map((v) => (
-          <button
-            key={v.value}
-            role="tab"
-            aria-selected={view === v.value}
-            className={view === v.value ? 'is-on' : ''}
-            onClick={() => (setView(v.value), setPage(1))}
-          >
-            {v.label}
-            {v.count && data?.counts[v.count] > 0 && <span className="acount">{data.counts[v.count]}</span>}
-          </button>
-        ))}
+      <div className="areport__bar">
+        <div className="filters filters--compact" role="tablist" aria-label="Show">
+          {VIEWS.map((v) => (
+            <button
+              key={v.value}
+              role="tab"
+              aria-selected={view === v.value}
+              className={view === v.value ? 'is-on' : ''}
+              onClick={() => (setView(v.value), setPage(1))}
+            >
+              {v.label}
+              {v.count && counts[v.count] > 0 && <span className="acount">{counts[v.count]}</span>}
+            </button>
+          ))}
+        </div>
+        <input
+          type="search"
+          className="areport__search-input"
+          value={q}
+          onChange={(e) => {
+            setQ(e.target.value);
+            setPage(1);
+          }}
+          placeholder="Search by Ref ID (e.g. MD-...), patient name, phone or email…"
+          aria-label="Search requests"
+        />
       </div>
 
       {loading && !data && <p className="state">Loading…</p>}
       {error && <p className="bf__fail">{error.message}</p>}
       {data && !data.total && (
         <p className="state">
-          {view === 'new'
-            ? 'No new requests — you’re all caught up.'
-            : view === 'confirmed'
-              ? 'No upcoming appointments.'
-              : 'Nothing here yet.'}
+          {q.trim()
+            ? `No requests matching “${q.trim()}”.`
+            : view === 'new'
+              ? 'No new requests — you’re all caught up.'
+              : view === 'confirmed'
+                ? 'No upcoming appointments.'
+                : 'Nothing here yet.'}
         </p>
       )}
 
@@ -333,20 +490,41 @@ export default function Requests() {
           return (
             <li key={r.id} className={`alist__row areq areq--${r.status}`}>
               <div className="alist__main">
-                <strong>
-                  <span className={`badge badge--${r.type}`}>{TYPE[r.type]}</span>
-                  <span className={`badge badge--st-${r.status}`}>{STATUS[r.status]}</span>
-                  {r.name}
-                </strong>
+                <div className="areq__head">
+                  <span className="areq__name">
+                    {r.name}
+                    {(r.dob || r.gender) && (
+                      <span className="areq__meta">
+                        {r.dob && age(r.dob) !== null && <span>{age(r.dob)} yrs</span>}
+                        {r.gender && <span>{GENDER_LABEL[r.gender] || r.gender}</span>}
+                      </span>
+                    )}
+                  </span>
+                  <div className="areq__badges">
+                    <span className={`badge badge--${r.type}`}>{TYPE[r.type]}</span>
+                    <span className={`badge badge--st-${r.status}`}>{STATUS[r.status]}</span>
+                    {r.ref && <code className="aref" title="Customer reference ID">{r.ref}</code>}
+                    {appt && <VisitBadge r={r} onOpenHistory={(item) => setReportTarget(item)} />}
+                  </div>
+                </div>
                 {appt && (
                   <p className="areq__when">
                     <Icon name="clock" size={15} /> {day(r.date)} · {r.time}
                     {r.status === 'new' && <em>(requested)</em>}
                     {r.concern && <span>· {r.concern}</span>}
+                    {Number(r.amountPaid) > 0 && (
+                      <span className="badge badge--published">Paid ₹{Number(r.amountPaid).toLocaleString('en-IN')}</span>
+                    )}
                   </p>
                 )}
                 {r.type === 'callback' && r.message && <p className="areq__when">Best time to call: {r.message}</p>}
                 {r.type === 'enquiry' && <p className="areview__text">{r.message}</p>}
+                {(r.diagnosis || r.treatments) && (
+                  <p className="areq__note">
+                    {r.diagnosis && <><strong>Dx:</strong> {r.diagnosis} </>}
+                    {r.treatments && <>· <strong>Tx:</strong> {r.treatments}</>}
+                  </p>
+                )}
                 {r.note && <p className="areq__note">Note: {r.note}</p>}
                 <span>
                   {r.phone && <a href={`tel:${r.phone.replace(/[^\d+]/g, '')}`}>{r.phone}</a>}
@@ -367,10 +545,28 @@ export default function Requests() {
                     <button className="abtn" onClick={() => setDialog({ request: r })}>
                       Reschedule
                     </button>
-                    <button className="abtn" onClick={() => setStatus(r, 'done', `${r.name} marked as visited.`)}>
+                    <button className="abtn abtn--primary" onClick={() => setStatus(r, 'done', `${r.name} marked as visited.`)}>
                       Visited
                     </button>
                   </>
+                )}
+                {appt && (
+                  <button
+                    className="abtn"
+                    onClick={() => setReportTarget(r)}
+                    title="Open clinical report, diagnosis, medicines & billing PDF"
+                  >
+                    Patient Report / ℞
+                  </button>
+                )}
+                {appt && (
+                  <button
+                    className="abtn"
+                    onClick={() => setReopenTarget(r)}
+                    title="Reopen as 1st appointment, add existing customer revisit (same ID), or link ID"
+                  >
+                    Reopen / Revisit
+                  </button>
                 )}
                 {r.phone && (
                   <a className="abtn" href={reply(r)} target="_blank" rel="noreferrer">
@@ -388,11 +584,11 @@ export default function Requests() {
                   </button>
                 )}
                 {appt && r.status === 'done' && r.phone && (
-                  <a className="abtn abtn--primary" href={whatsappTo(r.phone, reviewRequestMessage(r))} target="_blank" rel="noreferrer">
-                    Ask for a Google review
+                  <a className="abtn" href={whatsappTo(r.phone, reviewRequestMessage(r))} target="_blank" rel="noreferrer">
+                    Ask for review
                   </a>
                 )}
-                {['done', 'cancelled'].includes(r.status) && (
+                {!appt && ['done', 'cancelled'].includes(r.status) && (
                   <button className="abtn" onClick={() => setStatus(r, 'new', 'Moved back to New requests.')}>
                     Reopen
                   </button>
@@ -413,6 +609,28 @@ export default function Requests() {
         <BookingDialog
           request={dialog.request}
           onClose={() => setDialog(null)}
+          onSaved={(message) => {
+            setFlash(message);
+            reload();
+          }}
+        />
+      )}
+
+      {reportTarget && (
+        <PatientReportModal
+          request={reportTarget}
+          onClose={() => setReportTarget(null)}
+          onSaved={(message) => {
+            setFlash(message);
+            reload();
+          }}
+        />
+      )}
+
+      {reopenTarget && (
+        <ReopenVisitDialog
+          request={reopenTarget}
+          onClose={() => setReopenTarget(null)}
           onSaved={(message) => {
             setFlash(message);
             reload();

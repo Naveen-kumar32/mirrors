@@ -77,24 +77,41 @@ db.exec(`
  */
 const REQUESTS_TABLE = `
   CREATE TABLE IF NOT EXISTS requests (
-    id           INTEGER PRIMARY KEY,
-    ref          TEXT NOT NULL UNIQUE,
-    type         TEXT NOT NULL CHECK (type IN ('appointment', 'callback', 'enquiry')),
-    name         TEXT NOT NULL,
-    phone        TEXT,
-    email        TEXT,
-    dob          TEXT,
-    date         TEXT,
-    time         TEXT,
-    concern      TEXT,
-    message      TEXT,
-    note         TEXT,
-    status       TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'confirmed', 'done', 'cancelled')),
-    source       TEXT NOT NULL DEFAULT 'website' CHECK (source IN ('website', 'staff')),
-    confirmed_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
-    confirmed_at TEXT,
-    ip           TEXT,
-    created_at   TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    id               INTEGER PRIMARY KEY,
+    ref              TEXT NOT NULL,
+    type             TEXT NOT NULL CHECK (type IN ('appointment', 'callback', 'enquiry')),
+    name             TEXT NOT NULL,
+    phone            TEXT,
+    email            TEXT,
+    dob              TEXT,
+    gender           TEXT,
+    date             TEXT,
+    time             TEXT,
+    concern          TEXT,
+    message          TEXT,
+    note             TEXT,
+    status           TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'confirmed', 'done', 'cancelled')),
+    source           TEXT NOT NULL DEFAULT 'website' CHECK (source IN ('website', 'staff')),
+    visit_type       TEXT NOT NULL DEFAULT 'first',
+    visit_number     INTEGER NOT NULL DEFAULT 1,
+    parent_id        INTEGER REFERENCES requests(id) ON DELETE SET NULL,
+    pain             TEXT,
+    diagnosis        TEXT,
+    treatments       TEXT,
+    medicines        TEXT,
+    advice           TEXT,
+    follow_up_date   TEXT,
+    consultation_fee REAL NOT NULL DEFAULT 0,
+    treatment_cost   REAL NOT NULL DEFAULT 0,
+    medicine_cost    REAL NOT NULL DEFAULT 0,
+    discount         REAL NOT NULL DEFAULT 0,
+    amount_paid      REAL NOT NULL DEFAULT 0,
+    payment_mode     TEXT NOT NULL DEFAULT 'UPI',
+    payment_status   TEXT NOT NULL DEFAULT 'paid',
+    confirmed_by     INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    confirmed_at     TEXT,
+    ip               TEXT,
+    created_at       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
   )`;
 
 // Upgrade databases created before appointments could be confirmed
@@ -109,8 +126,54 @@ if (existing && !existing.sql.includes("'confirmed'")) {
   db.exec('COMMIT');
 }
 db.exec(REQUESTS_TABLE);
+
+// Ensure clinical, billing, and visit-linking columns exist on existing databases
+const reqCols = new Set(db.prepare('PRAGMA table_info(requests)').all().map((c) => c.name));
+const extraReqCols = [
+  ["gender", "TEXT"],
+  ["visit_type", "TEXT NOT NULL DEFAULT 'first'"],
+  ["visit_number", "INTEGER NOT NULL DEFAULT 1"],
+  ["parent_id", "INTEGER"],
+  ["pain", "TEXT"],
+  ["diagnosis", "TEXT"],
+  ["treatments", "TEXT"],
+  ["medicines", "TEXT"],
+  ["advice", "TEXT"],
+  ["follow_up_date", "TEXT"],
+  ["consultation_fee", "REAL NOT NULL DEFAULT 0"],
+  ["treatment_cost", "REAL NOT NULL DEFAULT 0"],
+  ["medicine_cost", "REAL NOT NULL DEFAULT 0"],
+  ["discount", "REAL NOT NULL DEFAULT 0"],
+  ["amount_paid", "REAL NOT NULL DEFAULT 0"],
+  ["payment_mode", "TEXT NOT NULL DEFAULT 'UPI'"],
+  ["payment_status", "TEXT NOT NULL DEFAULT 'paid'"],
+];
+for (const [col, def] of extraReqCols) {
+  if (!reqCols.has(col)) db.exec(`ALTER TABLE requests ADD COLUMN ${col} ${def}`);
+}
+
+// If an older table had UNIQUE on ref, migrate it so revisits can share the same customer ref ID
+const currentReqSql = db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'requests'").get()?.sql || '';
+if (/ref\s+TEXT\s+NOT\s+NULL\s+UNIQUE/i.test(currentReqSql)) {
+  const copyCols = [
+    'id', 'ref', 'type', 'name', 'phone', 'email', 'dob', 'date', 'time', 'concern', 'message', 'note',
+    'status', 'source', 'visit_type', 'visit_number', 'parent_id', 'pain', 'diagnosis', 'treatments',
+    'medicines', 'advice', 'follow_up_date', 'consultation_fee', 'treatment_cost', 'medicine_cost',
+    'discount', 'amount_paid', 'payment_mode', 'payment_status', 'confirmed_by', 'confirmed_at', 'ip', 'created_at',
+  ].join(', ');
+  db.exec('PRAGMA foreign_keys = OFF');
+  db.exec('BEGIN');
+  db.exec(REQUESTS_TABLE.replace('requests (', 'requests_v3 ('));
+  db.exec(`INSERT INTO requests_v3 (${copyCols}) SELECT ${copyCols} FROM requests`);
+  db.exec('DROP TABLE requests');
+  db.exec('ALTER TABLE requests_v3 RENAME TO requests');
+  db.exec('COMMIT');
+  db.exec('PRAGMA foreign_keys = ON');
+}
+
 db.exec(`
   CREATE INDEX IF NOT EXISTS requests_recent ON requests (status, created_at DESC);
+  CREATE INDEX IF NOT EXISTS requests_ref ON requests (ref);
   -- One confirmed appointment per date + time slot
   CREATE UNIQUE INDEX IF NOT EXISTS requests_slot ON requests (date, time)
     WHERE type = 'appointment' AND status IN ('confirmed', 'done');

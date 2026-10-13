@@ -5,6 +5,20 @@ import { useCallback, useEffect, useState } from 'react';
 import STARTER_POSTS from '../server/seed-posts.json';
 import { GOOGLE } from './data';
 
+const SYNC_EVENT = 'mirrors:sync';
+const syncChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel(SYNC_EVENT) : null;
+
+export function notifyDataChange(source = 'manual') {
+  const payload = { source, at: Date.now() };
+  window.dispatchEvent(new CustomEvent(SYNC_EVENT, { detail: payload }));
+  try {
+    syncChannel?.postMessage(payload);
+    localStorage.setItem(SYNC_EVENT, JSON.stringify(payload));
+  } catch {
+    /* ignore storage restrictions */
+  }
+}
+
 export async function api(path, { method = 'GET', body, form } = {}) {
   const init = { method, credentials: 'same-origin', headers: {} };
   if (form) init.body = form;
@@ -22,6 +36,7 @@ export async function api(path, { method = 'GET', body, form } = {}) {
   if (!(res.headers.get('content-type') || '').includes('application/json')) throw unavailable();
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw Object.assign(new Error(data.error || 'Something went wrong. Please try again.'), { status: res.status, code: data.code });
+  if (method !== 'GET') notifyDataChange(path);
   return data;
 }
 
@@ -31,23 +46,65 @@ const unavailable = () =>
     offline: true,
   });
 
-/** Fetch JSON for a component: { data, error, loading, reload } */
+/** Fetch JSON for a component: { data, error, loading, refreshing, lastUpdated, reload } */
 export function useApi(path) {
-  const [state, setState] = useState({ data: null, error: null, loading: true });
+  const [state, setState] = useState({ data: null, error: null, loading: true, refreshing: false, lastUpdated: null });
   const [n, setN] = useState(0);
+
+  const reload = useCallback(() => setN((x) => x + 1), []);
+
   useEffect(() => {
     if (!path) return;
     let live = true;
-    setState((s) => ({ ...s, loading: true, error: null }));
+    setState((s) => ({
+      ...s,
+      loading: s.data === null,
+      refreshing: true,
+      error: null,
+    }));
     api(path).then(
-      (data) => live && setState({ data, error: null, loading: false }),
-      (error) => live && setState({ data: null, error, loading: false })
+      (data) => live && setState({ data, error: null, loading: false, refreshing: false, lastUpdated: new Date() }),
+      (error) => live && setState((s) => ({ data: s.data, error, loading: false, refreshing: false, lastUpdated: s.lastUpdated }))
     );
     return () => {
       live = false;
     };
   }, [path, n]);
-  const reload = useCallback(() => setN((x) => x + 1), []);
+
+  // Instant sync across tabs & within the admin panel whenever data changes
+  useEffect(() => {
+    if (!path) return;
+    const onSync = () => reload();
+    const onStorage = (e) => {
+      if (e.key === SYNC_EVENT) reload();
+    };
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') reload();
+    };
+    window.addEventListener(SYNC_EVENT, onSync);
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+    syncChannel?.addEventListener('message', onSync);
+
+    // In the staff area, also poll gently so bookings/reviews from other devices appear automatically
+    let timer;
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin')) {
+      timer = setInterval(() => {
+        if (document.visibilityState === 'visible') reload();
+      }, 15000);
+    }
+
+    return () => {
+      window.removeEventListener(SYNC_EVENT, onSync);
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onFocus);
+      syncChannel?.removeEventListener('message', onSync);
+      if (timer) clearInterval(timer);
+    };
+  }, [path, reload]);
+
   return { ...state, reload };
 }
 

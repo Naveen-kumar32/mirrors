@@ -3,16 +3,18 @@
  *
  * Each node can:
  *   say      – messages (strings or rich cards) the bot sends on arrival
- *   options  – quick-reply chips [{ label, value }]
+ *   options  – quick-reply chips [{ label, value, nav }]
  *   input    – free-text prompt { placeholder, type, validate(v) → true | 'error' }
+ *              (The chat text box is ONLY enabled on nodes that define `input`.)
  *   field    – key in `data` where the answer is stored
  *   next     – next node id, or (value, data) => id
  *   enter    – (data) => void, runs on arrival
  *   skipIf   – (data) => bool, skip straight to `next`
- *   run      – async (data) => void, e.g. submit the request
- *   openForm – open the booking form modal on arrival
+ *   run      – async (data) => void, e.g. fetch slots or submit the request
  */
 import { submitRequest } from '../api';
+import { api } from '../backend';
+import { bookableDays, dayLabel, isISODate, timeSlots, todayISO } from '../../server/booking-rules.js';
 import { COORDINATOR, SERVICES } from '../data';
 
 export const first = (n = '') => n.trim().split(/\s+/)[0];
@@ -25,30 +27,71 @@ export const MAIN_OPTIONS = [
   { label: 'Contact the clinic', value: 'contact' },
 ];
 
-const opt = (label, value = label) => ({ label, value });
+const opt = (label, value = label, nav = false) => ({ label, value, nav });
+const backOpt = (label = '← Back to menu', value = 'menu') => ({ label, value, nav: true });
 
-export const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim()) || 'Hmm, that email doesn’t look quite right — could you check it?';
-export const isPhone = (v) => (v.replace(/\D/g, '').length >= 7 && /^[+()\d\s.-]+$/.test(v.trim())) || 'That doesn’t look like a phone number — could you try again?';
+export const isEmail = (v) =>
+  /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(v.trim()) ||
+  `That email doesn’t look right — please use the format name@example.com.`;
+export const isPhone = (v) => {
+  const trimmed = v.trim();
+  if (trimmed && !/^[+()[\]\d\s.\-]+$/.test(trimmed))
+    return `Please enter digits only (e.g. 9876543210).`;
+  const digits = trimmed.replace(/\D/g, '');
+  const local = digits.startsWith('91') && digits.length === 12 ? digits.slice(2) : digits;
+  return local.length === 10 || `Please enter a valid 10-digit mobile number.`;
+};
 export const isName = (v) => v.trim().length >= 2 || 'Please tell me your name so our team knows who to contact.';
+
+export function normalizeDob(raw = '') {
+  const s = raw.trim();
+  const dmy = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (dmy) {
+    const [, d, m, y] = dmy;
+    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+  }
+  return s;
+}
+
+export const isDob = (v) => {
+  const iso = normalizeDob(v);
+  if (!isISODate(iso) || iso > todayISO() || iso < '1900-01-01') {
+    return 'Please select or enter a valid date of birth.';
+  }
+  return true;
+};
+
+const getOfflineSlots = () => ({
+  times: timeSlots(),
+  days: bookableDays().map((date) => ({ date, label: dayLabel(date), booked: [] })),
+});
+
+async function loadSlots(d) {
+  try {
+    d._slots = await api('/slots');
+  } catch {
+    d._slots = getOfflineSlots();
+  }
+}
 
 export const NODES = {
   welcome: {
     say: (d) => [
       `Hi${d.name ? ` ${first(d.name)}` : ''}! I’m Aura, the virtual care assistant at The Mirrors Dermatology Clinic. 👋`,
-      'I can answer common questions, open our booking form or put you in touch with our team. What can I help with?',
+      'I can book your appointment right here in the chat, answer treatment questions or connect you with our team. Please choose an option below:',
     ],
     options: MAIN_OPTIONS,
     next: (v) => v,
     menu: true,
   },
   menu: {
-    say: ['Is there anything else I can help you with?'],
+    say: ['Is there anything else I can help you with? Please select an option below:'],
     options: MAIN_OPTIONS,
     next: (v) => v,
     menu: true,
   },
   fallback: {
-    say: ['Sorry, I didn’t quite catch that — I’m a simple assistant, not a doctor. 🙂', 'Here’s what I can help with:'],
+    say: ['Please select one of the options below so I can help you right away:'],
     options: MAIN_OPTIONS,
     next: (v) => v,
     menu: true,
@@ -62,53 +105,251 @@ export const NODES = {
     next: 'menu',
   },
 
-  /* ---------- Booking (handled by the booking form, not the chat) ---------- */
+  /* ---------- In-chat Appointment Booking ---------- */
   book: {
+    enter: (d) => {
+      d._flow = 'appointment';
+      delete d.date;
+      delete d.dateLabel;
+      delete d.time;
+      delete d._slotTaken;
+      delete d.visitType;
+      delete d.existingRef;
+    },
+    run: async (d) => {
+      await loadSlots(d);
+    },
+    next: (_, d) => (d.concern ? 'bookVisitType' : 'bookConcern'),
+  },
+  bookConcern: {
+    say: ['Let’s book your appointment right here. What would you like to see the doctor for?'],
+    options: [
+      opt('General consultation (Skin / Hair / Nails)', 'General consultation'),
+      ...SERVICES.map((s) => opt(s.title, s.title)),
+      backOpt(),
+    ],
+    field: 'concern',
+    next: (v, d) => {
+      if (v === 'menu') {
+        delete d.concern;
+        return 'menu';
+      }
+      return 'bookVisitType';
+    },
+  },
+  bookVisitType: {
+    say: ['Is this your first visit with us, or a follow-up / revisit?'],
+    options: [
+      opt('First-time visit', 'first'),
+      opt('Existing patient — Revisit / Follow-up', 'revisit'),
+      opt('Rebook / Reschedule a cancelled 1st visit', 'rescheduled_first'),
+      opt('Change treatment', 'bookConcern', true),
+      backOpt(),
+    ],
+    field: 'visitType',
+    next: (v, d) => {
+      if (v === 'menu') return 'menu';
+      if (v === 'bookConcern') {
+        delete d.concern;
+        return 'bookConcern';
+      }
+      if (v === 'revisit' || v === 'rescheduled_first') return 'bookRef';
+      d.existingRef = '';
+      return 'bookDate';
+    },
+  },
+  bookRef: {
+    say: [
+      'If you have your previous Reference Code (e.g. MD-7A2F9B), please type it below so we link this visit to your existing patient ID — or tap “Skip” if you don’t have it handy:',
+    ],
+    input: {
+      placeholder: 'Type Ref code (e.g. MD-7A2F9B)…',
+      validate: (v) =>
+        /^MD-[A-Z0-9]{4,10}$/i.test(v.trim()) ||
+        'Please enter a valid code starting with MD- (e.g. MD-7A2F9B), or tap “Skip” above.',
+    },
+    options: [opt('Skip (don’t have code handy)', 'skip', true), backOpt('← Back', 'bookVisitType')],
+    field: 'existingRef',
+    next: (v, d) => {
+      if (v === 'bookVisitType') return 'bookVisitType';
+      if (v === 'skip') {
+        d.existingRef = '';
+        return 'bookDate';
+      }
+      d.existingRef = String(d.existingRef || '').trim().toUpperCase();
+      return 'bookDate';
+    },
+  },
+  bookDate: {
     say: (d) => [
       d.concern
-        ? `Appointments are booked through a quick form — I’ve opened it for you with ${d.concern} selected. 📝`
-        : 'Appointments are booked through a quick form — I’ve opened it for you. 📝',
+        ? `Booking for: ${d.concern}. Which day works best for you? (Mon – Sat, 3:00 – 7:00 pm)`
+        : 'Which day works best for your appointment? (Mon – Sat, 3:00 – 7:00 pm)',
     ],
-    openForm: true,
-    options: [opt('Open the booking form', 'book'), opt('Main menu', 'menu')],
-    next: (v) => v,
+    options: (d) => {
+      const s = d._slots || getOfflineSlots();
+      const openDays = s.days.filter((day) => day.booked.length < s.times.length);
+      return [
+        ...openDays.map((day) => opt(day.label, day.date)),
+        opt('Change treatment', 'bookConcern', true),
+        backOpt(),
+      ];
+    },
+    field: 'date',
+    next: (v, d) => {
+      if (v === 'menu') return 'menu';
+      if (v === 'bookConcern') {
+        delete d.concern;
+        return 'bookConcern';
+      }
+      return 'bookTime';
+    },
+  },
+  bookTime: {
+    say: (d) => [
+      d._slotTaken
+        ? `${d._slotTaken} Please pick another available time on ${d.dateLabel || dayLabel(d.date)}:`
+        : `Which time slot on ${d.dateLabel || dayLabel(d.date)} suits you best?`,
+    ],
+    enter: (d) => {
+      delete d._slotTaken;
+    },
+    options: (d) => {
+      const s = d._slots || getOfflineSlots();
+      const day = s.days.find((x) => x.date === d.date);
+      const booked = day?.booked || [];
+      const free = s.times.filter((t) => !booked.includes(t));
+      return [
+        ...free.map((t) => opt(t, t)),
+        opt('← Choose another day', 'bookDate', true),
+        backOpt(),
+      ];
+    },
+    field: 'time',
+    next: (v) => (v === 'bookDate' || v === 'menu' ? v : 'askName'),
+  },
+  askDob: {
+    skipIf: (d) => !!d.dob,
+    say: ['Please select or type your date of birth below:'],
+    input: { placeholder: 'Select date of birth', type: 'date', autoComplete: 'bday', validate: isDob },
+    options: [backOpt('← Cancel booking', 'menu')],
+    field: 'dob',
+    next: (v, d) => {
+      if (v === 'menu') return 'menu';
+      d.dob = normalizeDob(d.dob);
+      return 'bookConfirm';
+    },
+  },
+  bookConfirm: {
+    say: () => [{ type: 'bookingPreview' }],
+    options: [
+      opt('✅ Confirm & book appointment', 'bookSubmit', true),
+      opt('Change date / time', 'bookDate', true),
+      opt('Change treatment', 'bookConcern', true),
+      backOpt('← Cancel', 'menu'),
+    ],
+    next: (v, d) => {
+      if (v === 'bookConcern') delete d.concern;
+      return v;
+    },
+  },
+  bookSubmit: {
+    run: async (d) => {
+      try {
+        d.ref = await submitRequest('appointment', {
+          name: d.name,
+          phone: d.phone,
+          email: d.email,
+          dob: normalizeDob(d.dob),
+          date: d.date,
+          time: d.time,
+          concern: d.concern,
+          visitType: d.visitType || 'first',
+          existingRef: d.existingRef || '',
+        });
+      } catch (err) {
+        if (err.code === 'slot_taken') {
+          await loadSlots(d);
+          d._slotTaken = err.message;
+          return;
+        }
+        throw err;
+      }
+    },
+    skipIf: () => false,
+    say: (d) => (d._slotTaken ? [] : [{ type: 'confirm', kind: 'appointment' }]),
+    next: (_, d) => {
+      if (d._slotTaken) return 'bookTime';
+      delete d.concern;
+      return 'menu';
+    },
   },
 
-  /* ---------- Shared contact details ---------- */
+  /* ---------- Shared contact details (Name + Mobile Number + Email always collected) ---------- */
   askName: {
     skipIf: (d) => !!d.name,
-    say: ['Perfect. What’s your full name?'],
-    input: { placeholder: 'Full name', autoComplete: 'name', validate: isName },
+    say: ['Perfect. Please type your full name in the box below:'],
+    input: { placeholder: 'Type your full name…', autoComplete: 'name', validate: isName },
+    options: [backOpt('← Cancel', 'menu')],
     field: 'name',
-    next: (_, d) => (d._flow === 'enquiry' ? 'askEmail' : 'askPhone'),
+    next: (v) => (v === 'menu' ? 'menu' : 'askPhone'),
   },
   askPhone: {
-    skipIf: (d) => !!d.phone,
-    say: (d) => [`Thanks, ${first(d.name)}! What’s the best phone number to reach you on?`],
-    input: { placeholder: 'Phone number', type: 'tel', autoComplete: 'tel', validate: isPhone },
+    // For enquiries always ask — the clinic needs a confirmed number for every question.
+    // For bookings / callbacks, reuse a number already given this session.
+    skipIf: (d) => !!d.phone && d._flow !== 'enquiry',
+    say: (d) => [`Thanks, ${first(d.name)}! What mobile number should our team call you on?`],
+    input: { placeholder: 'Type your mobile number…', type: 'tel', autoComplete: 'tel', validate: isPhone },
+    options: [backOpt('← Cancel', 'menu')],
     field: 'phone',
-    next: (_, d) => (d._flow === 'callback' ? 'cbTime' : 'askEmail'),
+    next: (v) => (v === 'menu' ? 'menu' : 'askEmail'),
   },
   askEmail: {
-    skipIf: (d) => !!d.email,
-    say: ['And your email address? We’ll send your confirmation there.'],
+    // Same — enquiries always need a fresh email address.
+    skipIf: (d) => !!d.email && d._flow !== 'enquiry',
+    say: ['And what email address should we reply to?'],
     input: { placeholder: 'you@email.com', type: 'email', autoComplete: 'email', validate: isEmail },
+    options: [backOpt('← Cancel', 'menu')],
     field: 'email',
-    next: 'eqSubmit',
+    next: (v, d) => {
+      if (v === 'menu') return 'menu';
+      if (d._flow === 'callback') return 'cbTime';
+      if (d._flow === 'appointment') return 'askGender';
+      return 'eqSubmit';
+    },
+  },
+  askGender: {
+    skipIf: (d) => !!d.gender,
+    say: ['One more thing — what is your gender? This helps our doctors prepare.'],
+    options: [
+      opt('Male', 'male'),
+      opt('Female', 'female'),
+      opt('Other / Prefer not to say', 'other'),
+      backOpt('← Cancel', 'menu'),
+    ],
+    field: 'gender',
+    next: (v) => (v === 'menu' ? 'menu' : 'askDob'),
   },
 
   /* ---------- Treatment info ---------- */
   treatments: {
     say: ['Which treatment would you like to know about?'],
-    options: [...SERVICES.map((s) => opt(s.title, s.slug)), opt('← Back to menu', 'menu')],
+    options: [...SERVICES.map((s) => opt(s.title, s.slug)), backOpt()],
     field: 'topic',
     next: (v) => (v === 'menu' ? 'menu' : 'treatmentInfo'),
   },
   treatmentInfo: {
     say: (d) => [{ type: 'treatment', slug: d.topic }],
-    options: [opt('Book this treatment', 'book'), opt('Another treatment', 'treatments'), opt('Main menu', 'menu')],
+    options: [
+      opt('Book this treatment', 'book', true),
+      opt('Enquire about this treatment', 'enquiry', true),
+      opt('Another treatment', 'treatments', true),
+      backOpt('Main menu', 'menu'),
+    ],
     next: (v, d) => {
-      if (v === 'book') d.concern = SERVICES.find((s) => s.slug === d.topic)?.title;
+      if (v === 'book' || v === 'enquiry') {
+        d.concern = SERVICES.find((s) => s.slug === d.topic)?.title;
+      }
       return v;
     },
   },
@@ -116,10 +357,14 @@ export const NODES = {
   /* ---------- Info ---------- */
   fees: {
     say: [
-      'Fees depend on your consultation and any treatment you need, so our team shares them directly. Please call or WhatsApp us and we’ll be happy to help.',
+      'Fees depend on your consultation and any treatment you need, so our team shares them directly. Please call or WhatsApp us, or send an enquiry right here.',
       { type: 'contact' },
     ],
-    options: [opt('Book an appointment', 'book'), opt('Main menu', 'menu')],
+    options: [
+      opt('Book an appointment', 'book', true),
+      opt('Send a fee enquiry', 'enquiry', true),
+      backOpt('Main menu', 'menu'),
+    ],
     next: (v) => v,
   },
   hours: {
@@ -127,7 +372,7 @@ export const NODES = {
       { type: 'hours' },
       'We’re on the first floor at 1/95D, Avinashi Road, Neelambur — about 200 metres from Neelambur bus stop, with roadside parking. Please note there is no lift. Tap the address above for directions.',
     ],
-    options: [opt('Book an appointment', 'book'), opt('Contact the clinic', 'contact'), opt('Main menu', 'menu')],
+    options: [opt('Book an appointment', 'book', true), opt('Contact the clinic', 'contact', true), backOpt('Main menu', 'menu')],
     next: (v) => v,
   },
   contact: {
@@ -136,7 +381,7 @@ export const NODES = {
       { type: 'contact' },
       'Or I can ask her to call you back.',
     ],
-    options: [opt('📞 Request a call back', 'callback'), opt('Main menu', 'menu')],
+    options: [opt('📞 Request a call back', 'callback', true), opt('Book an appointment', 'book', true), backOpt('Main menu', 'menu')],
     next: (v) => v,
   },
 
@@ -150,13 +395,18 @@ export const NODES = {
   },
   cbTime: {
     say: ['When is the best time to call?'],
-    options: [opt('As soon as possible'), opt('3 – 5 pm'), opt('5 – 7 pm')],
+    options: [opt('As soon as possible'), opt('3 – 5 pm'), opt('5 – 7 pm'), backOpt('← Cancel', 'menu')],
     field: 'callTime',
-    next: 'cbSubmit',
+    next: (v) => (v === 'menu' ? 'menu' : 'cbSubmit'),
   },
   cbSubmit: {
     run: async (d) => {
-      d.ref = await submitRequest('callback', { name: d.name, phone: d.phone, message: d.callTime });
+      d.ref = await submitRequest('callback', {
+        name: d.name,
+        phone: d.phone,
+        email: d.email,
+        message: d.callTime,
+      });
     },
     say: [{ type: 'confirm', kind: 'callback' }],
     next: 'menu',
@@ -167,24 +417,36 @@ export const NODES = {
     enter: (d) => {
       d._flow = 'enquiry';
     },
-    say: [`Of course. Type your question below and ${COORDINATOR.name} from our team will reply by email, usually within one working day.`],
+    say: (d) => [
+      d.concern
+        ? `Please type your question about ${d.concern} in the box below, and we’ll collect your mobile number and email so ${COORDINATOR.name} can get back to you:`
+        : `Of course. Please type your question in the box below, and we’ll collect your mobile number and email so ${COORDINATOR.name} can reply promptly:`,
+    ],
     input: {
-      placeholder: 'Your question…',
+      placeholder: 'Type your question…',
       validate: (v) => v.trim().length > 4 || 'Could you tell me a little more?',
     },
+    options: [backOpt('← Cancel', 'menu')],
     field: 'question',
-    next: 'askName',
+    next: (v) => (v === 'menu' ? 'menu' : 'askName'),
   },
   eqSubmit: {
     run: async (d) => {
-      d.ref = await submitRequest('enquiry', { name: d.name, email: d.email, message: d.question });
+      d.ref = await submitRequest('enquiry', {
+        name: d.name,
+        phone: d.phone,
+        email: d.email,
+        concern: d.concern,
+        message: d.concern ? `[${d.concern}] ${d.question}` : d.question,
+      });
+      delete d.concern;
     },
     say: [{ type: 'confirm', kind: 'enquiry' }],
     next: 'menu',
   },
 };
 
-/* ---------- Free-text understanding (keyword based) ---------- */
+/* ---------- Emergency keyword check ---------- */
 export const EMERGENCY =
   /(emergenc|can'?t breathe|cannot breathe|anaphyla|throat (is )?(closing|swelling)|bleeding (a lot|heavily|won'?t stop)|severe (pain|swelling|reaction)|suicid)/i;
 
@@ -227,3 +489,4 @@ NODES.thanks = {
   say: ['You’re very welcome! 😊'],
   next: 'menu',
 };
+
