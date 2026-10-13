@@ -109,25 +109,23 @@ function TBtn({ onClick, active, title, children, disabled }) {
   );
 }
 
-/* Toggle a text mark at cursor while preserving other active marks.
-   Standard toggleMark can overwrite the stored-mark set; this preserves it. */
+const MARK_CMD = {
+  bold:        'toggleBold',
+  italic:      'toggleItalic',
+  underline:   'toggleUnderline',
+  strike:      'toggleStrike',
+  subscript:   'toggleSubscript',
+  superscript: 'toggleSuperscript',
+};
+
 function useMark(editor, markName) {
-  const isActive = editor.isActive(markName);
-  const toggle = () => {
-    const { state, view } = editor;
-    const markType = state.schema.marks[markName];
-    if (!markType) return;
-    const { empty, $head } = state.selection;
-    if (!empty) {
-      editor.chain().toggleMark(markName).run();
-      return;
-    }
-    const base = state.storedMarks ?? $head.marks();
-    const removing = !!markType.isInSet(base);
-    const next = removing ? markType.removeFromSet(base) : markType.create().addToSet(base);
-    view.dispatch(state.tr.setStoredMarks(next));
+  return {
+    isActive: editor.isActive(markName),
+    toggle: () => {
+      const cmd = MARK_CMD[markName];
+      if (cmd) editor.chain().focus()[cmd]().run();
+    },
   };
-  return { isActive, toggle };
 }
 
 function ColorRow({ editor }) {
@@ -678,7 +676,7 @@ export function PostEditor() {
   const navigate = useNavigate();
   const existing = useApi(id ? `/admin/posts/${id}` : null);
   const all = useApi('/admin/posts');
-  const [f, setF] = useState({ ...EMPTY, author: user.name });
+  const [f, setF] = useState({ ...EMPTY, author: TEAM[0]?.name || user.name });
   const [cover, setCover] = useState(null); // File
   const [coverUrl, setCoverUrl] = useState('');
   const [fullPreview, setFullPreview] = useState(false);
@@ -791,21 +789,16 @@ export function PostEditor() {
         <div className="bf__row">
           <label className="bf__field">
             <span className="bf__label">Category</span>
-            <input list="post-categories" value={f.category} onChange={set('category')} maxLength={40} required placeholder="Choose or type a category" />
-            <datalist id="post-categories">
+            <select value={f.category} onChange={set('category')} required>
+              <option value="" disabled>Choose a category</option>
               {categories.map((c) => (
-                <option key={c} value={c} />
+                <option key={c} value={c}>{c}</option>
               ))}
-            </datalist>
+            </select>
           </label>
           <label className="bf__field">
             <span className="bf__label">Author</span>
-            <input list="post-authors" value={f.author} onChange={set('author')} maxLength={80} required />
-            <datalist id="post-authors">
-              {TEAM.map((t) => (
-                <option key={t.name} value={t.name} />
-              ))}
-            </datalist>
+            <input value={f.author} onChange={set('author')} maxLength={80} required placeholder="Author name" />
           </label>
         </div>
 

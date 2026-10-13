@@ -236,7 +236,8 @@ function BookingDialog({ request, onClose, onSaved }) {
                       list="staff-existing-patients"
                       value={f.existingRef}
                       onChange={(e) => selectExistingPatient(e.target.value)}
-                      placeholder="Select or type MD-... code"
+                      onFocus={(e) => e.target.select()}
+                      placeholder="Type MD-... ref code"
                       required
                     />
                     <datalist id="staff-existing-patients">

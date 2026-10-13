@@ -739,18 +739,12 @@ export function PatientReportModal({ request: initialRequest, onClose, onSaved }
             </label>
             <label className="bf__field">
               <span className="bf__label">Consultation / Treatment for</span>
-              <input
-                list="csheet-services"
-                value={f.concern}
-                onChange={set('concern')}
-                placeholder="e.g. Acne Scar Revision"
-              />
-              <datalist id="csheet-services">
-                <option value="General consultation" />
+              <select value={f.concern} onChange={set('concern')}>
+                <option value="General consultation">General consultation</option>
                 {SERVICES.map((s) => (
-                  <option key={s.slug} value={s.title} />
+                  <option key={s.slug} value={s.title}>{s.title}</option>
                 ))}
-              </datalist>
+              </select>
             </label>
           </div>
 
@@ -821,6 +815,7 @@ export function PatientReportModal({ request: initialRequest, onClose, onSaved }
                     list="med-dosages"
                     value={m.dosage}
                     onChange={(e) => setMed(idx, 'dosage', e.target.value)}
+                    onFocus={(e) => e.target.select()}
                     placeholder="Dosage (e.g. 1-0-1)"
                   />
                   <input
@@ -894,7 +889,7 @@ export function PatientReportModal({ request: initialRequest, onClose, onSaved }
                 <span className="bf__label">Total Amount Paid (₹)</span>
                 <input type="number" min={0} value={f.amountPaid} onChange={set('amountPaid')} />
               </label>
-              <label className="bf__field">
+              <label className="bf__field csheet__pay-mode">
                 <span className="bf__label">Payment Mode</span>
                 <select value={f.paymentMode} onChange={set('paymentMode')}>
                   <option value="UPI">UPI (GPay / PhonePe)</option>
@@ -903,7 +898,7 @@ export function PatientReportModal({ request: initialRequest, onClose, onSaved }
                   <option value="UPI + Cash">UPI + Cash</option>
                 </select>
               </label>
-              <label className="bf__field">
+              <label className="bf__field csheet__pay-status">
                 <span className="bf__label">Payment Status</span>
                 <select value={f.paymentStatus} onChange={set('paymentStatus')}>
                   <option value="paid">Paid</option>
@@ -1148,7 +1143,8 @@ export function ReopenVisitDialog({ request, onClose, onSaved }) {
                   list="existing-patient-refs"
                   value={f.targetRef}
                   onChange={set('targetRef')}
-                  placeholder="Type or select MD-... code"
+                  onFocus={(e) => e.target.select()}
+                  placeholder="Type MD-... ref code"
                   required
                 />
                 <datalist id="existing-patient-refs">
@@ -1179,18 +1175,12 @@ export function ReopenVisitDialog({ request, onClose, onSaved }) {
                 </label>
                 <label className="bf__field">
                   <span className="bf__label">Treatment / Concern</span>
-                  <input
-                    list="reopen-services"
-                    value={f.concern}
-                    onChange={set('concern')}
-                    placeholder="General consultation"
-                  />
-                  <datalist id="reopen-services">
-                    <option value="General consultation" />
+                  <select value={f.concern} onChange={set('concern')}>
+                    <option value="General consultation">General consultation</option>
                     {SERVICES.map((s) => (
-                      <option key={s.slug} value={s.title} />
+                      <option key={s.slug} value={s.title}>{s.title}</option>
                     ))}
-                  </datalist>
+                  </select>
                 </label>
               </div>
 

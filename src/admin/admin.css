@@ -512,10 +512,11 @@
   margin-bottom: 2px;
 }
 .areq__name {
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1.2rem;
+  font-weight: 800;
   color: var(--navy);
   line-height: 1.2;
+  letter-spacing: -0.01em;
   display: flex;
   align-items: baseline;
   gap: 8px;
@@ -1533,6 +1534,7 @@
 /* ── Tables ── */
 .rich-prose table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   margin: 1em 0 1.2em;
   font-size: 0.93rem;
@@ -1542,6 +1544,8 @@
   padding: 8px 12px;
   text-align: left;
   vertical-align: top;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .rich-prose th {
   background: var(--sand);
@@ -1723,14 +1727,22 @@
 }
 .csheet__bill-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(5, 1fr);
   gap: 10px;
+  align-items: end;
+}
+.csheet__bill-grid .bf__label {
+  min-height: 2.2em;
+  display: flex;
+  align-items: flex-end;
 }
 .csheet__total-field input {
   font-weight: 700 !important;
   border-color: var(--navy) !important;
   background: #fff !important;
 }
+.csheet__pay-mode  { grid-column: span 2; }
+.csheet__pay-status { grid-column: span 2; }
 
 /* Reopen / Revisit Mode Selector Cards */
 .reopen-modes {
