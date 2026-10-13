@@ -910,8 +910,9 @@
 }
 .areport__cmdbar-title {
   font-family: var(--serif);
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: clamp(2rem, 3.4vw, 2.6rem);
+  font-weight: 500;
+  line-height: 1.1;
   color: var(--navy);
   white-space: nowrap;
   margin-right: 4px;
@@ -945,7 +946,7 @@
 .areport__top-left h1 {
   margin: 0;
   font-family: var(--serif);
-  font-size: 1.65rem;
+  font-size: clamp(2rem, 3.4vw, 2.6rem);
   font-weight: 500;
   line-height: 1.1;
   color: var(--navy);
