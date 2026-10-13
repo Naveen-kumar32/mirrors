@@ -10,7 +10,6 @@ import { useClinicStatus } from '../lib';
 import { useChat } from './ChatProvider';
 import { first, isName, isPhone } from './flow';
 
-const AUTO_CLOSE_MS = 3000;
 const TODAY = todayISO();
 
 const blank = () => ({ name: '', phone: '', gender: '', dob: '', date: '', time: '' });
@@ -204,12 +203,6 @@ export default function BookingModal() {
     };
   }, [booking, closeBooking]);
 
-  // After a successful booking, show the confirmation briefly, then close
-  useEffect(() => {
-    if (status !== 'done') return;
-    const t = setTimeout(closeBooking, AUTO_CLOSE_MS);
-    return () => clearTimeout(t);
-  }, [status, closeBooking]);
 
   // Close the date-picker dropdown when clicking outside it
   useEffect(() => {
@@ -304,7 +297,6 @@ export default function BookingModal() {
                 Reference code: <strong>{refCode}</strong>
               </p>
             )}
-            <span className="bf__timer" style={{ animationDuration: `${AUTO_CLOSE_MS}ms` }} aria-hidden="true" />
           </div>
         )}
 
