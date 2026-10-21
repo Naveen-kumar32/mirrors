@@ -359,6 +359,91 @@ function BookingDialog({ request, onClose, onSaved }) {
   );
 }
 
+/* ---------- Edit patient info dialog ---------- */
+function EditPatientDialog({ request, onClose, onSaved }) {
+  const { onAuthError } = useAuth();
+  const [f, setF] = useState({
+    name: request.name || '',
+    phone: request.phone || '',
+    email: request.email || '',
+    dob: request.dob || '',
+    gender: request.gender || '',
+  });
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const set = (k) => (e) => setF((x) => ({ ...x, [k]: e.target.value }));
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      await api(`/admin/requests/${request.id}`, { method: 'PATCH', body: f });
+      onSaved(`Patient info updated for ${f.name}.`);
+    } catch (err) {
+      onAuthError(err);
+      setError(err.message);
+      setBusy(false);
+    }
+  };
+
+  return createPortal(
+    <div className="bf-overlay" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <form className="bf" role="dialog" aria-modal="true" aria-label="Edit patient info" onSubmit={submit}>
+        <header className="bf__head">
+          <div>
+            <p className="bf__eyebrow">Patient info</p>
+            <h2 className="bf__title">Edit details</h2>
+          </div>
+          <button type="button" className="bf__close" onClick={onClose} aria-label="Close">
+            <Icon name="close" size={20} />
+          </button>
+        </header>
+        <div className="bf__form">
+          <label className="bf__field">
+            <span className="bf__label">Full name</span>
+            <input value={f.name} onChange={set('name')} required maxLength={80} />
+          </label>
+          <label className="bf__field">
+            <span className="bf__label">Phone</span>
+            <input value={f.phone} onChange={set('phone')} required maxLength={25} />
+          </label>
+          <label className="bf__field">
+            <span className="bf__label">Email <em>(optional)</em></span>
+            <input type="email" value={f.email} onChange={set('email')} maxLength={120} />
+          </label>
+          <label className="bf__field">
+            <span className="bf__label">Date of birth <em>(optional)</em></span>
+            <input type="date" value={f.dob} onChange={set('dob')} />
+          </label>
+          <label className="bf__field">
+            <span className="bf__label">Gender <em>(optional)</em></span>
+            <select value={f.gender} onChange={set('gender')}>
+              <option value="">— not specified —</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+          {error && <p className="bf__fail">{error}</p>}
+          <div className="bf__actions">
+            <button type="button" className="btn btn--ghost" onClick={onClose}>Cancel</button>
+            <button className="btn btn--navy" disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button>
+          </div>
+        </div>
+      </form>
+    </div>,
+    document.body
+  );
+}
+
 /* ---------- Appointments page ---------- */
 export default function Requests() {
   const { user, onAuthError } = useAuth();
@@ -368,6 +453,7 @@ export default function Requests() {
   const [dialog, setDialog] = useState(null); // { request } — or { request: null } for a new booking
   const [reportTarget, setReportTarget] = useState(null); // individual patient report modal
   const [reopenTarget, setReopenTarget] = useState(null); // flexible reopen / revisit modal
+  const [editTarget, setEditTarget] = useState(null); // edit patient name/phone/email/dob
   const [flash, setFlash] = useState('');
   const { data, error, loading, refreshing, reload } = useApi(
     `/admin/requests?view=${view}&page=${page}${q.trim() ? `&q=${encodeURIComponent(q.trim())}` : ''}`
@@ -428,6 +514,9 @@ export default function Requests() {
             </span>
           </div>
 
+          <a className="abtn" href="/api/admin/requests/export" download>
+            <Icon name="download" size={15} /> Export CSV
+          </a>
           <button className="abtn abtn--primary" onClick={() => setDialog({ request: null })}>
             <Icon name="plus" size={15} /> Book appointment
           </button>
@@ -569,6 +658,9 @@ export default function Requests() {
                     Reopen / Revisit
                   </button>
                 )}
+                <button className="abtn" onClick={() => setEditTarget(r)} title="Correct patient name, phone, email or date of birth">
+                  Edit info
+                </button>
                 {r.phone && (
                   <a className="abtn" href={reply(r)} target="_blank" rel="noreferrer">
                     {r.status === 'confirmed' ? 'Send confirmation' : 'WhatsApp'}
@@ -634,6 +726,18 @@ export default function Requests() {
           onClose={() => setReopenTarget(null)}
           onSaved={(message) => {
             setFlash(message);
+            reload();
+          }}
+        />
+      )}
+
+      {editTarget && (
+        <EditPatientDialog
+          request={editTarget}
+          onClose={() => setEditTarget(null)}
+          onSaved={(message) => {
+            setFlash(message);
+            setEditTarget(null);
             reload();
           }}
         />

@@ -8,8 +8,8 @@ export const img = (name, w = 1200) => {
 };
 
 export const BRAND = {
-  name: 'The Mirrors',
-  full: 'The Mirrors Dermatology Clinic',
+  name: 'THE MIRRORS',
+  full: 'THE MIRRORS DERMATOLOGY CLINIC',
   logo: '/images/brand/logo-color-256.png',
   logoWhite: '/images/brand/logo-white-256.png',
   tagline: 'Rooted in science, reflected in your skin',

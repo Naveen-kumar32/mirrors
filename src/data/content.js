@@ -2,12 +2,12 @@ import { IMG } from './site';
 
 /* About the clinic — a short version of the clinic's introduction */
 export const ABOUT_INTRO =
-  'At The Mirrors Dermatology Clinic, every skin, hair and nail concern is treated with the same care we would give our own. We take time to understand the problem, recommend only what is truly needed, and offer scientific, evidence-based treatment chosen for each patient — with a focus on safety and realistic results.';
+  'At THE MIRRORS DERMATOLOGY CLINIC, every skin, hair and nail concern is treated with the same care we would give our own. We take time to understand the problem, recommend only what is truly needed, and offer scientific, evidence-based treatment chosen for each patient — with a focus on safety and realistic results.';
 export const ABOUT_LINE = 'No unnecessary treatments. No one-size-fits-all approach. Just honest, scientific dermatological care.';
 
 /* About page — the clinic's full introduction, word for word (**text** = bold) */
 export const ABOUT_FULL = [
-  'At **The Mirrors Dermatology Clinic**, we believe every skin, hair, and nail concern deserves to be treated with the same care and attention we would give to our own.',
+  'At **THE MIRRORS DERMATOLOGY CLINIC**, we believe every skin, hair, and nail concern deserves to be treated with the same care and attention we would give to our own.',
   'Our approach is simple — **understand the problem, identify what is truly needed, and treat it appropriately.** We do not believe in unnecessary procedures or pushing treatments that a patient does not require.',
   'In a world where misinformation and unqualified advice can often influence healthcare decisions, we strive to provide something different: **scientific, evidence-based and patient-tailored dermatological care.**',
   'Every treatment is chosen based on the individual — their condition, concerns, needs and expectations — with an emphasis on **medical necessity, safety and realistic outcomes.**',
@@ -44,7 +44,7 @@ export const WHY_US =
 
 /* Care philosophy — "Listen. Understand. Treat." (text supplied by the clinic) */
 export const PHILOSOPHY_INTRO = [
-  'At The Mirrors Dermatology Clinic, we believe good dermatology begins with understanding the person behind the problem.',
+  'At THE MIRRORS DERMATOLOGY CLINIC, we believe good dermatology begins with understanding the person behind the problem.',
   'Every patient is different. Every skin, hair and nail concern has its own story. Our approach is to listen carefully, diagnose accurately and recommend only what is genuinely needed.',
 ];
 

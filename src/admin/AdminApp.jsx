@@ -8,6 +8,7 @@ import ReviewsAdmin from './ReviewsAdmin';
 import Requests from './Requests';
 import Reports from './Reports';
 import GalleryAdmin from './Gallery';
+import SocialAdmin from './SocialAdmin';
 import { Account, UsersAdmin } from './Users';
 import './admin.css';
 
@@ -97,7 +98,7 @@ function Login() {
       <form className="alogin__card" onSubmit={submit}>
         <img src={BRAND.logo} alt="" width="56" height="56" />
         <h1>Staff login</h1>
-        <p>The Mirrors Dermatology Clinic</p>
+        <p>THE MIRRORS DERMATOLOGY CLINIC</p>
         {offline && (
           <p className="bf__fail">
             The staff area can’t reach the clinic server. It only works where the website’s Node server is running
@@ -143,6 +144,7 @@ function Layout() {
     { to: '/admin/posts', label: 'Blog posts', icon: 'plan', end: true },
     { to: '/admin/posts/new', label: 'Write a post', icon: 'plus' },
     { to: '/admin/gallery', label: 'Gallery', icon: 'spark' },
+    { to: '/admin/social', label: 'Social Media', icon: 'instagram' },
     ...(isAdmin
       ? [
           { to: '/admin/reviews', label: 'Reviews', icon: 'chat' },
@@ -158,7 +160,7 @@ function Layout() {
         <Link to="/admin" className="admin__brand">
           <img src={BRAND.logoWhite} alt="" width="36" height="36" />
           <span>
-            The Mirrors
+            THE MIRRORS
             <small>Staff area</small>
           </span>
         </Link>
@@ -221,7 +223,7 @@ export default function AdminApp() {
     meta.name = 'robots';
     meta.content = 'noindex, nofollow';
     document.head.appendChild(meta);
-    document.title = 'Staff area — The Mirrors';
+    document.title = 'Staff area — THE MIRRORS';
     document.documentElement.classList.add('is-ready');
     return () => meta.remove();
   }, []);
@@ -235,6 +237,7 @@ export default function AdminApp() {
           <Route path="reports" element={<Reports />} />
           <Route path="posts" element={<PostsList />} />
           <Route path="gallery" element={<GalleryAdmin />} />
+          <Route path="social" element={<SocialAdmin />} />
           <Route path="posts/new" element={<PostEditor />} />
           <Route path="posts/:id" element={<PostEditor />} />
           <Route path="reviews" element={<AdminOnly><ReviewsAdmin /></AdminOnly>} />

@@ -198,6 +198,39 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS gallery_recent ON gallery (category, created_at DESC);
 `);
 
+/* Social media posts — YouTube (embedded), Instagram and Facebook (link-out) */
+db.exec(`
+  CREATE TABLE IF NOT EXISTS social_posts (
+    id          INTEGER PRIMARY KEY,
+    platform    TEXT NOT NULL CHECK (platform IN ('youtube', 'instagram', 'facebook')),
+    url         TEXT NOT NULL,
+    embed_id    TEXT NOT NULL DEFAULT '',
+    title       TEXT NOT NULL DEFAULT '',
+    description TEXT NOT NULL DEFAULT '',
+    visible     INTEGER NOT NULL DEFAULT 1,
+    created_by  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at  TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+  );
+  CREATE INDEX IF NOT EXISTS social_visible ON social_posts (visible, created_at DESC);
+`);
+const socialCols = db.prepare('PRAGMA table_info(social_posts)').all().map((c) => c.name);
+// Local copy of an Instagram / Facebook post's picture (Meta's own image links expire)
+if (!socialCols.includes('image')) db.exec("ALTER TABLE social_posts ADD COLUMN image TEXT NOT NULL DEFAULT ''");
+
+/* First run: seed a sample social post so the page isn't blank */
+if (db.prepare('SELECT COUNT(*) AS n FROM social_posts').get().n === 0) {
+  db.prepare(
+    `INSERT INTO social_posts (platform, url, embed_id, title, description)
+     VALUES (?, ?, ?, ?, ?)`
+  ).run(
+    'youtube',
+    'https://www.youtube.com/watch?v=OUxfQhpJ5QY',
+    'OUxfQhpJ5QY',
+    'How to treat acne — dermatologist explains',
+    'A dermatologist breaks down the causes of acne and the most effective treatments available.'
+  );
+}
+
 /* First run: load the starter blog articles */
 if (db.prepare('SELECT COUNT(*) AS n FROM posts').get().n === 0) {
   const seed = JSON.parse(readFileSync(path.join(here, 'seed-posts.json'), 'utf8'));
@@ -208,4 +241,9 @@ if (db.prepare('SELECT COUNT(*) AS n FROM posts').get().n === 0) {
   for (const p of seed) insert.run(p.slug, p.title, p.excerpt, p.category, p.author, p.cover, p.body, p.publishedAt);
 }
 
+/* Brand name is shown in capitals; update articles seeded before the change */
+db.prepare("UPDATE posts SET author = 'THE MIRRORS DERMATOLOGY CLINIC' WHERE author = 'The Mirrors Dermatology Clinic'").run();
+
 export const now = () => new Date().toISOString();
+
+

@@ -78,7 +78,7 @@ export default function Footer() {
       </div>
 
       <div className="container site-footer__bottom">
-        <p>© {new Date().getFullYear()} The Mirrors Dermatology Clinic, Coimbatore · Website in English</p>
+        <p>© {new Date().getFullYear()} THE MIRRORS DERMATOLOGY CLINIC, Coimbatore · Website in English</p>
         <nav aria-label="Policies">
           {POLICIES.map((p) => (
             <Link key={p.to} to={p.to}>

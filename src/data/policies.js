@@ -15,7 +15,7 @@ export const POLICIES = [
     id: 'privacy',
     title: 'Privacy policy',
     intro:
-      'The Mirrors Dermatology Clinic respects your privacy. This policy explains what personal information this website collects, why, and how we look after it.',
+      'THE MIRRORS DERMATOLOGY CLINIC respects your privacy. This policy explains what personal information this website collects, why, and how we look after it.',
     blocks: [
       {
         h: 'What we collect and why',
@@ -77,7 +77,7 @@ export const POLICIES = [
       },
       {
         h: 'Contact for privacy questions',
-        p: [`The Mirrors Dermatology Clinic — ${contactLine}`],
+        p: [`THE MIRRORS DERMATOLOGY CLINIC — ${contactLine}`],
       },
     ],
   },
@@ -108,7 +108,7 @@ export const POLICIES = [
       {
         h: 'Content and links',
         p: [
-          'The text, design and logo on this website belong to The Mirrors Dermatology Clinic and may not be copied without permission. Links to other websites are provided for convenience; we are not responsible for their content.',
+          'The text, design and logo on this website belong to THE MIRRORS DERMATOLOGY CLINIC and may not be copied without permission. Links to other websites are provided for convenience; we are not responsible for their content.',
         ],
       },
       {

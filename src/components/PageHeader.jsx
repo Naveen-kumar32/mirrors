@@ -18,7 +18,7 @@ const POINTS = [
 // `image` is a built-in photo name (see IMG) or a full URL such as an uploaded blog cover
 const src = (image, w) => (image.startsWith('/') || image.startsWith('http') ? image : img(image, w));
 
-export default function PageHeader({ eyebrow, title, text, image, image2, crumbs = [], preset, cover = false }) {
+export default function PageHeader({ eyebrow, title, text, image, image2, crumbs = [], preset, cover = false, rating = true }) {
   const chat = useChat();
   const site = useReviewSummary();
   const google = useGoogle();
@@ -74,7 +74,7 @@ export default function PageHeader({ eyebrow, title, text, image, image2, crumbs
                 <img src={src(image2, 480)} alt="" />
               </figure>
             )}
-            {reviews?.total > 0 && (
+            {rating && reviews?.total > 0 && (
               <div className="phead__rating">
                 <strong>{reviews.average.toFixed(1)}</strong>
                 <span>

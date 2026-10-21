@@ -356,6 +356,14 @@ export default function Reports() {
           <button className="abtn" onClick={() => window.print()} disabled={!items.length}>
             <Icon name="printer" size={13} /> Print
           </button>
+          <a
+            className={`abtn${!items.length ? ' abtn--disabled' : ''}`}
+            href={items.length ? `/api/admin/reports/export?${query}` : undefined}
+            download
+            aria-disabled={!items.length}
+          >
+            <Icon name="download" size={13} /> Export Excel
+          </a>
           <button className="abtn abtn--primary" onClick={downloadPdf} disabled={downloading || loading}>
             <Icon name="download" size={13} /> {downloading ? '…' : 'Download PDF'}
           </button>

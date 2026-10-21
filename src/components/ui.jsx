@@ -26,6 +26,7 @@ const ICONS = {
   printer: <path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z" />,
   search: <path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.35-4.35" />,
   calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 9h18M9 14h.01M13 14h.01M17 14h.01M9 18h.01M13 18h.01" /></>,
+  youtube: <><rect x="2" y="5" width="20" height="14" rx="3" /><path d="M10 9l6 3-6 3V9z" /></>,
 };
 
 export function Icon({ name, size = 20, className = '' }) {

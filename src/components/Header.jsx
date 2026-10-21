@@ -12,17 +12,18 @@ export const LINKS = [
   { to: '/gallery', label: 'Gallery' },
   { to: '/reviews', label: 'Reviews' },
   { to: '/blog', label: 'Blog' },
+  { to: '/social', label: 'Social' },
   { to: '/faqs', label: 'FAQs' },
   { to: '/contact', label: 'Contact' },
 ];
 
 export function Logo() {
   return (
-    <Link to="/" className="logo" aria-label="The Mirrors Dermatology Clinic home">
+    <Link to="/" className="logo" aria-label="THE MIRRORS DERMATOLOGY CLINIC home">
       <img src={BRAND.logo} alt="" width="44" height="44" />
       <span>
-        The Mirrors
-        <small>Dermatology Clinic</small>
+        THE MIRRORS
+        <small>DERMATOLOGY CLINIC</small>
       </span>
     </Link>
   );

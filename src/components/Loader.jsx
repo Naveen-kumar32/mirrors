@@ -17,7 +17,7 @@ export default function Loader({ onDone }) {
   return (
     <div className={`loader ${leaving ? 'is-leaving' : ''}`} aria-hidden="true">
       <img className="loader__logo" src={BRAND.logo} alt="" />
-      <p className="loader__name">The Mirrors</p>
+      <p className="loader__name">THE MIRRORS</p>
       <span className="loader__line" />
     </div>
   );

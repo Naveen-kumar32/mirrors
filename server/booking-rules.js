@@ -8,7 +8,7 @@ export const BOOKING = {
   start: '15:00', // first appointment
   end: '19:00', // clinic closes (last slot starts one slot earlier)
   slotMinutes: 30,
-  minNoticeDays: 1, // patients can book from tomorrow onwards
+  minNoticeDays: 0, // patients can book from today (remaining slots) onwards
   daysAhead: 60, // …up to two months ahead
 };
 
@@ -66,3 +66,19 @@ export function isBookable(date, time, { now = new Date(), staff = false } = {})
 /** 'Tue, 6 Oct' */
 export const dayLabel = (iso) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+
+/** Time slots already past for today in the clinic's timezone — used to grey them out for patients */
+export function pastTimeSlots(now = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-IN', {
+    timeZone: BOOKING.timeZone, hour: 'numeric', minute: 'numeric', hour12: false,
+  }).formatToParts(now);
+  const h = Number(parts.find((p) => p.type === 'hour').value);
+  const m = Number(parts.find((p) => p.type === 'minute').value);
+  const nowMins = h * 60 + m;
+  return timeSlots().filter((slot) => {
+    const [timePart, period] = slot.split(' ');
+    const [sh, sm] = timePart.split(':').map(Number);
+    const sH = sh === 12 ? (period === 'am' ? 0 : 12) : (period === 'pm' ? sh + 12 : sh);
+    return sH * 60 + sm <= nowMins;
+  });
+}

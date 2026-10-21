@@ -338,7 +338,7 @@ export default function ChatWidget() {
         <section
           className="chat"
           role="dialog"
-          aria-label="Chat with Aura, the care assistant at The Mirrors Dermatology Clinic"
+          aria-label="Chat with Aura, the care assistant at THE MIRRORS DERMATOLOGY CLINIC"
         >
           <header className="chat__head">
             <Avatar size={40} />

@@ -46,7 +46,7 @@ export function notifyClinic(r) {
 
   transport
     .sendMail({
-      from: `"The Mirrors website" <${SMTP_USER}>`,
+      from: `"THE MIRRORS website" <${SMTP_USER}>`,
       to: NOTIFY_EMAIL || SMTP_USER,
       subject: `${TITLES[r.type]}: ${r.name}${r.date ? ` — ${dayLabel(r.date)}, ${r.time}` : ''}`,
       text: lines.join('\n'),

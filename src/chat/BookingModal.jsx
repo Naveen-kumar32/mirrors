@@ -224,7 +224,7 @@ export default function BookingModal() {
   };
 
   const message = [
-    'Hello, I would like to book an appointment at The Mirrors Dermatology Clinic.',
+    'Hello, I would like to book an appointment at THE MIRRORS DERMATOLOGY CLINIC.',
     `Name: ${form.name.trim()}`,
     `Contact number: ${form.phone.trim()}`,
     form.gender && `Gender: ${{ male: 'Male', female: 'Female', other: 'Other' }[form.gender]}`,
@@ -269,7 +269,7 @@ export default function BookingModal() {
       <div className="bf" role="dialog" aria-modal="true" aria-labelledby="bf-title" ref={dialog}>
         <header className="bf__head">
           <div>
-            <p className="bf__eyebrow">The Mirrors Dermatology Clinic</p>
+            <p className="bf__eyebrow">THE MIRRORS DERMATOLOGY CLINIC</p>
             <h2 id="bf-title">{title}</h2>
           </div>
           <button className="bf__close" onClick={closeBooking} aria-label="Close booking form">

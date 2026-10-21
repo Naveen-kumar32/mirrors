@@ -77,7 +77,7 @@ async function loadSlots(d) {
 export const NODES = {
   welcome: {
     say: (d) => [
-      `Hi${d.name ? ` ${first(d.name)}` : ''}! I’m Aura, the virtual care assistant at The Mirrors Dermatology Clinic. 👋`,
+      `Hi${d.name ? ` ${first(d.name)}` : ''}! I’m Aura, the virtual care assistant at THE MIRRORS DERMATOLOGY CLINIC. 👋`,
       'I can book your appointment right here in the chat, answer treatment questions or connect you with our team. Please choose an option below:',
     ],
     options: MAIN_OPTIONS,

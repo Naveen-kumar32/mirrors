@@ -2,7 +2,6 @@ import { AWARDS, FACILITIES, IMG, PHILOSOPHY_HIGHLIGHT, PHILOSOPHY_INTRO, PROMIS
 import Page from '../components/Page';
 import PageHeader from '../components/PageHeader';
 import About from '../components/About';
-import Reviews from '../components/Reviews';
 import CTA from '../components/CTA';
 import { Eyebrow, Icon } from '../components/ui';
 
@@ -35,6 +34,7 @@ export default function AboutPage() {
         text="Evidence-based, patient-tailored dermatology in Neelambur, Coimbatore."
         image={IMG.aboutHero}
         image2={IMG.dq6}
+        rating={false}
       />
       <About full />
 
@@ -77,7 +77,7 @@ export default function AboutPage() {
             </p>
             <p className="promise__note">{PROMISE.note}</p>
             <p className="promise__sign">
-              <strong>The Mirrors Dermatology Clinic</strong>
+              <strong>THE MIRRORS DERMATOLOGY CLINIC</strong>
               <em>{PROMISE.sign}</em>
             </p>
           </div>
@@ -151,7 +151,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <Reviews />
       <CTA title="Come and meet us" />
     </Page>
   );

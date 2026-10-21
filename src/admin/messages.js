@@ -12,7 +12,7 @@ const bring = 'Please bring any lab reports and prescriptions of medications you
 /** Confirmation sent once an appointment is confirmed (or rescheduled) */
 export function confirmationMessage(r) {
   return [
-    `Hello ${r.name}, your appointment at The Mirrors Dermatology Clinic is confirmed ✅`,
+    `Hello ${r.name}, your appointment at THE MIRRORS DERMATOLOGY CLINIC is confirmed ✅`,
     '',
     `📅 ${day(r.date)}`,
     `🕒 ${r.time}`,
@@ -24,7 +24,7 @@ export function confirmationMessage(r) {
     'If we ever have to close for a festival or family emergency, we’ll let you know — you can also check our WhatsApp status for updates, or call us to confirm before you come.',
     '',
     `Need to change the time? Just reply here or call ${CONTACT.phone}.`,
-    `— ${COORDINATOR.name}, The Mirrors Dermatology Clinic (Ref ${r.ref})`,
+    `— ${COORDINATOR.name}, THE MIRRORS DERMATOLOGY CLINIC (Ref ${r.ref})`,
   ]
     .filter((l) => l !== undefined)
     .join('\n');
@@ -33,7 +33,7 @@ export function confirmationMessage(r) {
 /** After a visit: ask for a Google review (send to every patient, not only happy ones) */
 export const reviewRequestMessage = (r) =>
   [
-    `Hello ${r.name}, thank you for visiting The Mirrors Dermatology Clinic.`,
+    `Hello ${r.name}, thank you for visiting THE MIRRORS DERMATOLOGY CLINIC.`,
     'If you have a minute, we’d be grateful if you could share your experience on Google — it helps other patients find the right care:',
     GOOGLE.reviewUrl,
     `— ${COORDINATOR.name}`,
@@ -41,11 +41,11 @@ export const reviewRequestMessage = (r) =>
 
 /** Ask a patient's permission before showing their review as a testimonial */
 export const permissionMessage = (name) =>
-  `Hello ${name}, thank you for your kind words about The Mirrors Dermatology Clinic. May we show your review on our website, with your first name and initial? Please reply YES if you are happy for us to use it.`;
+  `Hello ${name}, thank you for your kind words about THE MIRRORS DERMATOLOGY CLINIC. May we show your review on our website, with your first name and initial? Please reply YES if you are happy for us to use it.`;
 
 /** A general reply for call-back requests and questions */
 export const replyMessage = (r) =>
-  `Hello ${r.name}, this is ${COORDINATOR.name} from The Mirrors Dermatology Clinic, replying to your request (Ref ${r.ref}).`;
+  `Hello ${r.name}, this is ${COORDINATOR.name} from THE MIRRORS DERMATOLOGY CLINIC, replying to your request (Ref ${r.ref}).`;
 
 // Patient's number in international form: digits only, Indian numbers get the 91 country code
 export function intlNumber(phone = '') {

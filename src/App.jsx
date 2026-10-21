@@ -19,6 +19,7 @@ import Gallery from './pages/Gallery';
 import PatientReviews from './pages/PatientReviews';
 import Faq from './pages/Faq';
 import Policies from './pages/Policies';
+import Social from './pages/Social';
 import NotFound from './pages/NotFound';
 
 // Staff area is loaded only when someone opens /admin
@@ -65,6 +66,7 @@ function PublicSite() {
         <Route path="/reviews" element={<PatientReviews />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
+        <Route path="/social" element={<Social />} />
         <Route path="/faqs" element={<Faq />} />
         <Route path="/faq" element={<Faq />} />
         <Route path="/contact" element={<Contact />} />

@@ -75,7 +75,7 @@ export default function GalleryPage() {
     <Page title="Gallery">
       <PageHeader
         eyebrow="Gallery"
-        title="Step inside The Mirrors"
+        title="Step inside THE MIRRORS"
         text="A look around our clinic, our treatments and our team."
         image={IMG.visit1}
         image2={IMG.dq6}

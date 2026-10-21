@@ -78,7 +78,7 @@ export default function Contact() {
 
         <div className="contact__map reveal">
           <iframe
-            title="Map showing The Mirrors Dermatology Clinic, Neelambur, Coimbatore"
+            title="Map showing THE MIRRORS DERMATOLOGY CLINIC, Neelambur, Coimbatore"
             src={CONTACT.mapsEmbed}
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"

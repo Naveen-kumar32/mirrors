@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useReveal } from './ui';
 
-const BASE_TITLE = 'The Mirrors Dermatology Clinic';
+const BASE_TITLE = 'THE MIRRORS DERMATOLOGY CLINIC';
 
 /* Wraps each route: sets the tab title and starts the scroll fade-ins */
 export default function Page({ title, children }) {

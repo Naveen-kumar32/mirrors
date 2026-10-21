@@ -7,13 +7,14 @@
  * Environment (see .env.example): PORT, DATA_DIR, ADMIN_NAME, ADMIN_EMAIL, ADMIN_PASSWORD
  */
 import { existsSync, unlink } from 'node:fs';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import multer from 'multer';
 import { db, now, UPLOAD_DIR } from './db.js';
-import { bookableDays, dayLabel, isBookable, isISODate, timeSlots, todayISO } from './booking-rules.js';
+import { bookableDays, dayLabel, isBookable, isISODate, pastTimeSlots, timeSlots, todayISO } from './booking-rules.js';
 import { emailEnabled, notifyClinic } from './notify.js';
 import { googleSummary } from './google.js';
 import { GALLERY_PER_PAGE } from './gallery-settings.js';
@@ -161,6 +162,15 @@ app.get('/api/reviews', (req, res) => {
   res.json({ items, page, pages, perPage: REVIEWS_PER_PAGE, ...summary });
 });
 
+// Social media posts (visible only)
+app.get('/api/social', (_req, res) => {
+  const items = db.prepare(
+    `SELECT id, platform, url, embed_id AS embedId, title, description, image, created_at AS createdAt
+     FROM social_posts WHERE visible = 1 ${META_FEED_ENABLED ? '' : "AND image = ''"} ORDER BY created_at DESC`
+  ).all();
+  res.json({ items });
+});
+
 // Gallery: newest first, 10 photos per page
 app.get('/api/gallery', (req, res) => {
   const total = db.prepare('SELECT COUNT(*) AS n FROM gallery').get().n;
@@ -249,11 +259,21 @@ const slotTaken = (date, time, exceptId = 0) =>
 
 // Public: which days/times can be booked, and which are already booked (no patient details)
 app.get('/api/slots', (_req, res) => {
-  const days = bookableDays();
+  const now = new Date();
+  const days = bookableDays({ now });
   const booked = bookedSlots(days);
+  const today = todayISO(now);
+  const past = pastTimeSlots(now);
   res.json({
     times: timeSlots(),
-    days: days.map((date) => ({ date, label: dayLabel(date), booked: (booked[date] || []).map((b) => b.time) })),
+    days: days.map((date) => ({
+      date,
+      label: dayLabel(date),
+      booked: [
+        ...(booked[date] || []).map((b) => b.time),
+        ...(date === today ? past : []),
+      ],
+    })),
   });
 });
 
@@ -547,6 +567,40 @@ app.get('/api/admin/requests', requireStaff, (req, res) => {
   res.json({ items, page, pages, total, counts });
 });
 
+// Bulk export: all appointments as a UTF-8 CSV (BOM included so Excel opens it correctly)
+app.get('/api/admin/requests/export', requireStaff, (req, res) => {
+  const rows = db.prepare(
+    `SELECT ref, type, name, phone, email, dob, gender, date, time, concern, message, note,
+            status, source, visit_type, visit_number, diagnosis, treatments, medicines, advice,
+            follow_up_date, consultation_fee, treatment_cost, medicine_cost, discount, amount_paid,
+            payment_mode, payment_status, created_at
+     FROM requests ORDER BY created_at DESC`
+  ).all();
+  const headers = [
+    'Ref', 'Type', 'Name', 'Phone', 'Email', 'DOB', 'Gender', 'Date', 'Time',
+    'Concern', 'Message', 'Note', 'Status', 'Source', 'Visit Type', 'Visit No.',
+    'Diagnosis', 'Treatments', 'Medicines', 'Advice', 'Follow-up Date',
+    'Consultation Fee', 'Treatment Cost', 'Medicine Cost', 'Discount', 'Amount Paid',
+    'Payment Mode', 'Payment Status', 'Created At',
+  ];
+  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = [
+    headers.map(esc).join(','),
+    ...rows.map((r) => [
+      r.ref, r.type, r.name, r.phone, r.email, r.dob, r.gender,
+      r.date, r.time, r.concern, r.message, r.note, r.status, r.source,
+      r.visit_type, r.visit_number, r.diagnosis, r.treatments, r.medicines,
+      r.advice, r.follow_up_date, r.consultation_fee, r.treatment_cost,
+      r.medicine_cost, r.discount, r.amount_paid, r.payment_mode, r.payment_status,
+      r.created_at,
+    ].map(esc).join(',')),
+  ];
+  const filename = `appointments-${new Date().toISOString().slice(0, 10)}.csv`;
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  res.send('﻿' + lines.join('\r\n'));
+});
+
 // Lookup patient history by Ref ID or search query (for linking revisits and viewing past case sheets)
 app.get('/api/admin/patients/lookup', requireStaff, (req, res) => {
   const ref = clean(req.query.ref, 30).toUpperCase();
@@ -650,6 +704,66 @@ app.get('/api/admin/reports', requireStaff, (req, res) => {
   };
 
   res.json({ items, summary, today });
+});
+
+// Bulk Excel (CSV) export of the filtered reports view
+app.get('/api/admin/reports/export', requireStaff, (req, res) => {
+  const period = clean(req.query.period, 20) || 'all';
+  const status = clean(req.query.status, 20) || 'all';
+  const from = clean(req.query.from, 10);
+  const to = clean(req.query.to, 10);
+  const q = clean(req.query.q, 80);
+  const today = todayISO();
+
+  const clauses = ["type = 'appointment'"];
+  const params = [];
+
+  if (period === 'upcoming') { clauses.push('date >= ?'); params.push(today); }
+  else if (period === 'today') { clauses.push('date = ?'); params.push(today); }
+  else if (period === 'custom') {
+    if (isISODate(from)) { clauses.push('date >= ?'); params.push(from); }
+    if (isISODate(to)) { clauses.push('date <= ?'); params.push(to); }
+  }
+  if (['new', 'confirmed', 'done', 'cancelled'].includes(status)) {
+    clauses.push('status = ?');
+    params.push(status);
+  }
+  if (q) {
+    clauses.push('(ref LIKE ? OR name LIKE ? OR phone LIKE ? OR concern LIKE ? OR diagnosis LIKE ? OR treatments LIKE ?)');
+    const like = `%${q}%`;
+    params.push(like, like, like, like, like, like);
+  }
+
+  const rows = db.prepare(
+    `SELECT ref, type, name, phone, email, dob, gender, date, time, concern, note, status,
+            visit_type, visit_number, diagnosis, treatments, medicines, advice, follow_up_date,
+            consultation_fee, treatment_cost, medicine_cost, discount, amount_paid,
+            payment_mode, payment_status, created_at
+     FROM requests WHERE ${clauses.join(' AND ')} ORDER BY date ASC, time ASC, created_at DESC`
+  ).all(...params);
+
+  const headers = [
+    'Ref ID', 'Date', 'Time', 'Name', 'Phone', 'Email', 'DOB', 'Gender',
+    'Concern', 'Note', 'Status', 'Visit Type', 'Visit No.',
+    'Diagnosis', 'Treatments', 'Medicines', 'Advice', 'Follow-up Date',
+    'Consult Fee (₹)', 'Treatment Cost (₹)', 'Medicine Cost (₹)',
+    'Discount (₹)', 'Amount Paid (₹)', 'Payment Mode', 'Payment Status', 'Booked On',
+  ];
+  const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const lines = [
+    headers.map(esc).join(','),
+    ...rows.map((r) => [
+      r.ref, r.date, r.time, r.name, r.phone, r.email, r.dob, r.gender,
+      r.concern, r.note, r.status, r.visit_type, r.visit_number,
+      r.diagnosis, r.treatments, r.medicines, r.advice, r.follow_up_date,
+      r.consultation_fee, r.treatment_cost, r.medicine_cost,
+      r.discount, r.amount_paid, r.payment_mode, r.payment_status, r.created_at,
+    ].map(esc).join(',')),
+  ];
+  const dateStamp = new Date().toISOString().slice(0, 10);
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="mirrors-report-${period}-${dateStamp}.csv"`);
+  res.send('﻿' + lines.join('\r\n'));
 });
 
 // Slots for the staff "confirm booking" picker: today onwards, showing who holds each booked slot
@@ -955,11 +1069,34 @@ app.put('/api/admin/requests/:id/clinical', requireStaff, (req, res) => {
   res.json(hydrateRequest(db.prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE id = ?`).get(r.id)));
 });
 
-// Status changes: mark done, cancel (frees the slot), reopen; and edit the staff note
+// Status changes, note edits, and patient info corrections
 app.patch('/api/admin/requests/:id', requireStaff, (req, res) => {
   const r = db.prepare('SELECT * FROM requests WHERE id = ?').get(req.params.id);
   if (!r) return bad(res, 'Request not found.', 404);
   const b = req.body || {};
+  // Patient info corrections (admin can fix typos the patient made)
+  if (b.name !== undefined) {
+    const n = clean(b.name, 80);
+    if (n.length < 2) return bad(res, 'Name must be at least 2 characters.');
+    db.prepare('UPDATE requests SET name = ? WHERE id = ?').run(n, r.id);
+  }
+  if (b.phone !== undefined) {
+    const p = clean(b.phone, 25);
+    if (!isPhone(p)) return bad(res, 'Please enter a valid phone number.');
+    db.prepare('UPDATE requests SET phone = ? WHERE id = ?').run(p, r.id);
+  }
+  if (b.email !== undefined) {
+    const e = clean(b.email, 120).toLowerCase();
+    if (e && !isEmail(e)) return bad(res, 'Please enter a valid email address.');
+    db.prepare('UPDATE requests SET email = ? WHERE id = ?').run(e || null, r.id);
+  }
+  if (b.dob !== undefined) {
+    db.prepare('UPDATE requests SET dob = ? WHERE id = ?').run(clean(b.dob, 10) || null, r.id);
+  }
+  if (b.gender !== undefined) {
+    const g = ['male', 'female', 'other'].includes(b.gender) ? b.gender : null;
+    db.prepare('UPDATE requests SET gender = ? WHERE id = ?').run(g, r.id);
+  }
   if (b.note !== undefined) db.prepare('UPDATE requests SET note = ? WHERE id = ?').run(clean(b.note, 1000) || null, r.id);
   if (b.visitType !== undefined && ['first', 'revisit', 'rescheduled_first'].includes(b.visitType)) {
     db.prepare('UPDATE requests SET visit_type = ? WHERE id = ?').run(b.visitType, r.id);
@@ -967,7 +1104,6 @@ app.patch('/api/admin/requests/:id', requireStaff, (req, res) => {
   if (b.status !== undefined) {
     if (!['new', 'done', 'cancelled'].includes(b.status)) return bad(res, 'Invalid status.');
     if (b.status === 'done' && r.status === 'cancelled') return bad(res, 'Reopen the appointment first.');
-    // Reopening a cancelled appointment goes back to "new" so its slot is checked again on confirm
     db.prepare('UPDATE requests SET status = ? WHERE id = ?').run(b.status, r.id);
   }
   res.json(hydrateRequest(db.prepare(`SELECT ${REQUEST_FIELDS} FROM requests WHERE id = ?`).get(r.id)));
@@ -1004,6 +1140,343 @@ app.delete('/api/admin/gallery/:id', requireStaff, (req, res) => {
   if (!photo) return bad(res, 'Photo not found.', 404);
   db.prepare('DELETE FROM gallery WHERE id = ?').run(photo.id);
   removeUpload(photo.image);
+  res.json({ ok: true });
+});
+
+/* ==========================================================================
+   Admin: social media posts
+   ========================================================================== */
+
+// Cache: handle → { playlistId, at }  (channel's uploads playlist ID, 24h)
+const ytPlaylistCache = new Map();
+
+function decodeXmlEntities(s) {
+  return s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+}
+
+async function getUploadPlaylistId(handle, apiKey) {
+  const cached = ytPlaylistCache.get(handle);
+  if (cached && Date.now() - cached.at < 86_400_000) return cached.playlistId;
+
+  const url = `https://www.googleapis.com/youtube/v3/channels?part=contentDetails,id&forHandle=${encodeURIComponent(handle)}&key=${apiKey}`;
+  const r = await fetch(url);
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error?.message || 'YouTube API error');
+  const item = data.items?.[0];
+  if (!item) throw new Error('Channel not found. Check the handle.');
+  const playlistId = item.contentDetails?.relatedPlaylists?.uploads;
+  ytPlaylistCache.set(handle, { playlistId, channelId: item.id, at: Date.now() });
+  return playlistId;
+}
+
+async function getChannelId(handle, apiKey) {
+  const cached = ytPlaylistCache.get(handle);
+  if (cached?.channelId && Date.now() - cached.at < 86_400_000) return cached.channelId;
+  await getUploadPlaylistId(handle, apiKey); // populates cache
+  return ytPlaylistCache.get(handle).channelId;
+}
+
+// Fallback: RSS feed (no API key, max 15 videos)
+async function fetchYtRss(handle) {
+  const pageRes = await fetch(`https://www.youtube.com/@${handle}`, {
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Bot/1.0)', 'Accept-Language': 'en-US,en;q=0.9' },
+  });
+  if (!pageRes.ok) throw new Error('YouTube channel page not reachable.');
+  const html = await pageRes.text();
+  const cidMatch = html.match(/channel_id=(UC[A-Za-z0-9_-]+)/);
+  if (!cidMatch) throw new Error('Channel not found — check the handle.');
+  const rssRes = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${cidMatch[1]}`);
+  if (!rssRes.ok) throw new Error('Could not fetch channel RSS feed.');
+  const xml = await rssRes.text();
+  const videos = [];
+  const re = /<entry>([\s\S]*?)<\/entry>/g;
+  let m;
+  while ((m = re.exec(xml)) !== null) {
+    const e = m[1];
+    const videoId = (e.match(/<yt:videoId>([^<]+)<\/yt:videoId>/) || [])[1];
+    const title   = (e.match(/<title>([^<]+)<\/title>/) || [])[1];
+    const pub     = (e.match(/<published>([^<]+)<\/published>/) || [])[1];
+    if (videoId && title) videos.push({
+      videoId,
+      title: decodeXmlEntities(title),
+      published: pub || '',
+      thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+      url: `https://www.youtube.com/watch?v=${videoId}`,
+    });
+  }
+  return { videos, nextPageToken: null, prevPageToken: null, rssOnly: true };
+}
+
+app.get('/api/admin/social/youtube-feed', requireStaff, async (req, res) => {
+  const handle    = (req.query.handle || '').trim().replace(/^@/, '');
+  const pageToken = (req.query.pageToken || '').trim();
+  const filter    = (req.query.filter || 'all'); // all | short | video
+  if (!handle) return bad(res, 'Channel handle is required.');
+
+  const apiKey = process.env.YOUTUBE_API_KEY || '';
+
+  // Build a map of embedId → postId for already-added YouTube videos
+  const addedMap = new Map(
+    db.prepare("SELECT id, embed_id FROM social_posts WHERE platform='youtube'").all().map((r) => [r.embed_id, r.id])
+  );
+  const markAdded = (v) => ({
+    ...v,
+    added: addedMap.has(v.videoId),
+    postId: addedMap.get(v.videoId) ?? null,
+  });
+
+  // No API key → fall back to RSS (15 videos, no pagination, no filter)
+  if (!apiKey) {
+    try {
+      const result = await fetchYtRss(handle);
+      return res.json({ ...result, videos: result.videos.map(markAdded) });
+    } catch (err) {
+      return res.status(502).json({ error: err.message });
+    }
+  }
+
+  try {
+    // Shorts and Videos tabs use the Search API (server-side type filtering with full pagination)
+    // All tab uses the cheaper playlistItems API
+    if (filter === 'short' || filter === 'video') {
+      const channelId = await getChannelId(handle, apiKey);
+      const searchParams = new URLSearchParams({
+        part: 'snippet',
+        channelId,
+        type: 'video',
+        order: 'date',
+        maxResults: '15',
+        videoDuration: filter === 'short' ? 'short' : 'medium',
+        key: apiKey,
+        ...(pageToken ? { pageToken } : {}),
+      });
+      // For "video" tab also fetch long videos in parallel (> 20 min)
+      const searchP = fetch(`https://www.googleapis.com/youtube/v3/search?${searchParams}`);
+      let longData = { items: [], nextPageToken: null };
+      if (filter === 'video') {
+        const longToken = req.query.longPageToken || '';
+        const longParams = new URLSearchParams({
+          part: 'snippet', channelId, type: 'video', order: 'date',
+          maxResults: '15', videoDuration: 'long', key: apiKey,
+          ...(longToken ? { pageToken: longToken } : {}),
+        });
+        const lr = await fetch(`https://www.googleapis.com/youtube/v3/search?${longParams}`);
+        longData = await lr.json();
+        if (!lr.ok) longData = { items: [], nextPageToken: null };
+      }
+      const sr = await searchP;
+      const sdata = await sr.json();
+      if (!sr.ok) throw new Error(sdata.error?.message || 'YouTube API error');
+
+      // Merge medium + long, sort by date, take first 15
+      const allItems = filter === 'video'
+        ? [...(sdata.items || []), ...(longData.items || [])].sort((a, b) =>
+            new Date(b.snippet.publishedAt) - new Date(a.snippet.publishedAt))
+        : (sdata.items || []);
+
+      const videos = allItems.slice(0, 15).map((item) => {
+        const s = item.snippet;
+        const videoId = s.resourceId?.videoId || item.id?.videoId || '';
+        const isShort = filter === 'short';
+        return markAdded({
+          videoId,
+          title: s.title || '',
+          published: s.publishedAt || '',
+          thumbnail: s.thumbnails?.medium?.url || s.thumbnails?.default?.url || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+          url: isShort ? `https://www.youtube.com/shorts/${videoId}` : `https://www.youtube.com/watch?v=${videoId}`,
+          videoType: isShort ? 'short' : 'video',
+        });
+      });
+
+      return res.json({
+        videos,
+        nextPageToken: sdata.nextPageToken || null,
+        longNextPageToken: longData.nextPageToken || null,
+        prevPageToken: null,
+        totalResults: null,
+        rssOnly: false,
+        filter,
+      });
+    }
+
+    // filter === 'all': use playlistItems (cheapest)
+    const playlistId = await getUploadPlaylistId(handle, apiKey);
+    const params = new URLSearchParams({
+      part: 'snippet',
+      playlistId,
+      maxResults: '15',
+      key: apiKey,
+      ...(pageToken ? { pageToken } : {}),
+    });
+    const r = await fetch(`https://www.googleapis.com/youtube/v3/playlistItems?${params}`);
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error?.message || 'YouTube API error');
+
+    const items = data.items || [];
+    const videoIds = items.map((i) => i.snippet?.resourceId?.videoId).filter(Boolean);
+
+    // Fetch durations to label each item as short or video
+    let durationMap = {};
+    if (videoIds.length) {
+      const vParams = new URLSearchParams({ part: 'contentDetails', id: videoIds.join(','), key: apiKey });
+      const vr = await fetch(`https://www.googleapis.com/youtube/v3/videos?${vParams}`);
+      const vdata = await vr.json();
+      for (const v of (vdata.items || [])) {
+        const iso = v.contentDetails?.duration || '';
+        const m2 = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+        const secs = m2 ? (Number(m2[1]||0)*3600 + Number(m2[2]||0)*60 + Number(m2[3]||0)) : 999;
+        durationMap[v.id] = secs;
+      }
+    }
+
+    const videos = items.map((item) => {
+      const s = item.snippet;
+      const videoId = s.resourceId?.videoId || '';
+      const secs = durationMap[videoId] ?? 999;
+      const isShort = secs <= 60 || s.title?.toLowerCase().includes('#short');
+      return markAdded({
+        videoId,
+        title: s.title || '',
+        published: s.publishedAt || '',
+        thumbnail: s.thumbnails?.medium?.url || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+        url: isShort ? `https://www.youtube.com/shorts/${videoId}` : `https://www.youtube.com/watch?v=${videoId}`,
+        videoType: isShort ? 'short' : 'video',
+      });
+    });
+
+    res.json({
+      videos,
+      nextPageToken: data.nextPageToken || null,
+      prevPageToken: data.prevPageToken || null,
+      totalResults: data.pageInfo?.totalResults || null,
+      rssOnly: false,
+    });
+  } catch (err) {
+    res.status(502).json({ error: err.message });
+  }
+});
+
+/* Instagram + Facebook Page feeds (Meta Graph API).
+   Needs META_ACCESS_TOKEN (a Page token), META_PAGE_ID and META_IG_USER_ID in .env. */
+// Temporarily switched off: the admin shows Instagram / Facebook as not connected and posts
+// added from the feed are hidden (kept in the database). Set to true to turn it all back on.
+const META_FEED_ENABLED = false;
+const META_API = 'https://graph.facebook.com/v23.0';
+const META_IMAGE_HOSTS = /(^|\.)(fbcdn\.net|cdninstagram\.com)$/;
+
+app.get('/api/admin/social/meta-feed', requireStaff, async (req, res) => {
+  const platform = req.query.platform === 'facebook' ? 'facebook' : 'instagram';
+  const { META_ACCESS_TOKEN: token, META_PAGE_ID: pageId, META_IG_USER_ID: igId } = process.env;
+  const id = platform === 'facebook' ? pageId : igId;
+  if (!META_FEED_ENABLED || !token || !id) return res.json({ configured: false, posts: [], next: null });
+
+  const params = new URLSearchParams({
+    access_token: token,
+    limit: '12',
+    fields: platform === 'instagram'
+      ? 'id,caption,media_type,media_url,thumbnail_url,permalink,timestamp'
+      : 'id,message,full_picture,permalink_url,created_time',
+  });
+  if (req.query.after) params.set('after', String(req.query.after));
+
+  try {
+    const r = await fetch(`${META_API}/${id}/${platform === 'instagram' ? 'media' : 'posts'}?${params}`);
+    const data = await r.json();
+    if (!r.ok || data.error) return res.status(502).json({ error: `Meta: ${data.error?.message || `HTTP ${r.status}`}` });
+
+    const added = new Map(
+      db.prepare('SELECT id, url FROM social_posts WHERE platform = ?').all(platform).map((x) => [x.url, x.id])
+    );
+    const posts = (data.data || []).map((m) => {
+      const url = platform === 'instagram' ? m.permalink : m.permalink_url;
+      return {
+        mediaId: m.id,
+        url,
+        caption: (platform === 'instagram' ? m.caption : m.message) || '',
+        image: (platform === 'instagram' ? (m.media_type === 'VIDEO' ? m.thumbnail_url : m.media_url) : m.full_picture) || '',
+        mediaType: m.media_type || 'POST',
+        published: m.timestamp || m.created_time || '',
+        added: added.has(url),
+        postId: added.get(url) || null,
+      };
+    });
+    res.json({ configured: true, posts, next: data.paging?.next ? data.paging.cursors?.after || null : null });
+  } catch (err) {
+    console.error('Meta feed error:', err.message);
+    res.status(502).json({ error: 'Could not reach Facebook / Instagram.' });
+  }
+});
+
+// Saves a Meta CDN picture into /uploads and returns its local URL ('' if none or it fails)
+async function saveMetaImage(src) {
+  try {
+    const u = new URL(String(src || ''));
+    if (u.protocol !== 'https:' || !META_IMAGE_HOSTS.test(u.hostname)) return '';
+    const r = await fetch(u);
+    const type = r.headers.get('content-type') || '';
+    if (!r.ok || !type.startsWith('image/')) return '';
+    const buf = Buffer.from(await r.arrayBuffer());
+    if (buf.length > 10 * 1024 * 1024) return '';
+    const ext = type.includes('png') ? 'png' : type.includes('webp') ? 'webp' : 'jpg';
+    const name = `social-${Date.now()}-${randomBytes(4).toString('hex')}.${ext}`;
+    await writeFile(path.join(UPLOAD_DIR, name), buf);
+    return `/uploads/${name}`;
+  } catch {
+    return '';
+  }
+}
+
+function parseSocialUrl(url) {
+  const s = (url || '').trim();
+  let m = s.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/);
+  if (m) return { platform: 'youtube', embedId: m[1] };
+  m = s.match(/instagram\.com\/(?:p|reel|tv)\/([A-Za-z0-9_-]+)/);
+  if (m) return { platform: 'instagram', embedId: m[1] };
+  if (/facebook\.com|fb\.com|fb\.watch/.test(s)) return { platform: 'facebook', embedId: '' };
+  return null;
+}
+
+app.get('/api/admin/social', requireStaff, (_req, res) => {
+  const items = db.prepare(
+    `SELECT id, platform, url, embed_id AS embedId, title, description, image, visible, created_at AS createdAt
+     FROM social_posts ${META_FEED_ENABLED ? '' : "WHERE image = ''"} ORDER BY created_at DESC`
+  ).all();
+  res.json({ items });
+});
+
+app.post('/api/admin/social', requireStaff, async (req, res) => {
+  const b = req.body || {};
+  const url = (b.url || '').trim();
+  if (!url) return bad(res, 'URL is required.');
+  const parsed = parseSocialUrl(url);
+  if (!parsed) return bad(res, 'URL must be a YouTube, Instagram, or Facebook link.');
+  const title = clean(b.title || '', 120);
+  const description = clean(b.description || '', 300);
+  const image = parsed.platform === 'youtube' || !META_FEED_ENABLED ? '' : await saveMetaImage(b.image);
+  const stmt = db.prepare(
+    `INSERT INTO social_posts (platform, url, embed_id, title, description, image, created_by)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`
+  );
+  const result = stmt.run(parsed.platform, url, parsed.embedId, title, description, image, req.user.id);
+  const item = db.prepare('SELECT id, platform, url, embed_id AS embedId, title, description, image, visible, created_at AS createdAt FROM social_posts WHERE id = ?').get(result.lastInsertRowid);
+  res.status(201).json(item);
+});
+
+app.patch('/api/admin/social/:id', requireStaff, (req, res) => {
+  const item = db.prepare('SELECT * FROM social_posts WHERE id = ?').get(req.params.id);
+  if (!item) return res.status(404).json({ error: 'Not found.' });
+  const b = req.body || {};
+  if (b.title !== undefined) db.prepare('UPDATE social_posts SET title = ? WHERE id = ?').run(clean(b.title, 120), item.id);
+  if (b.description !== undefined) db.prepare('UPDATE social_posts SET description = ? WHERE id = ?').run(clean(b.description, 300), item.id);
+  if (b.visible !== undefined) db.prepare('UPDATE social_posts SET visible = ? WHERE id = ?').run(b.visible ? 1 : 0, item.id);
+  res.json(db.prepare('SELECT id, platform, url, embed_id AS embedId, title, description, image, visible, created_at AS createdAt FROM social_posts WHERE id = ?').get(item.id));
+});
+
+app.delete('/api/admin/social/:id', requireStaff, (req, res) => {
+  const item = db.prepare('SELECT id, image FROM social_posts WHERE id = ?').get(req.params.id);
+  if (!item) return res.status(404).json({ error: 'Not found.' });
+  db.prepare('DELETE FROM social_posts WHERE id = ?').run(item.id);
+  removeUpload(item.image);
   res.json({ ok: true });
 });
 
