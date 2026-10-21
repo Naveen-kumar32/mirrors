@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { FEATURED_TREATMENTS, WHY_US, img } from '../data';
-import { useChat } from '../chat/ChatProvider';
 import { Eyebrow, Icon } from './ui';
 
 /* Home: "Why choose this clinic?" — one statement, not a list */
@@ -27,7 +26,6 @@ export function WhyChoose() {
 
 /* Home: the clinic's featured treatments */
 export function FeaturedTreatments() {
-  const chat = useChat();
   return (
     <section className="section">
       <div className="container">
@@ -48,20 +46,17 @@ export function FeaturedTreatments() {
                   <span className="treatment__title">{t.name}</span>
                   <span className="treatment__text">{t.text}</span>
                   <span className="treatment__link">
-                    {t.slug ? 'Learn more' : 'Book a consultation'} <Icon name="arrow" size={16} />
+                    Learn more <Icon name="arrow" size={16} />
                   </span>
                 </span>
               </>
             );
             const props = { className: 'treatment reveal', style: { '--d': `${(i % 3) * 120}ms` } };
-            return t.slug ? (
-              <Link key={t.name} to={`/treatments/${t.slug}`} {...props}>
+            // Treatments without their own page link to the full treatments list
+            return (
+              <Link key={t.name} to={t.slug ? `/treatments/${t.slug}` : '/treatments'} {...props}>
                 {body}
               </Link>
-            ) : (
-              <button key={t.name} type="button" {...props} onClick={() => chat.openBooking({ concern: t.name })}>
-                {body}
-              </button>
             );
           })}
         </div>
