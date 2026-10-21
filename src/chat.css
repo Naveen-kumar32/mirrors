@@ -1290,3 +1290,6 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Clinic name never splits across lines in chat bubbles */
+.bubble .nowrap { white-space: nowrap; }

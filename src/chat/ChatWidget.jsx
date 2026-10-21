@@ -1,11 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { CONTACT, COORDINATOR, HOURS, HOURS_NOTE, SERVICES, img } from '../data';
+import { BRAND, CONTACT, COORDINATOR, HOURS, HOURS_NOTE, SERVICES, img } from '../data';
 import { todayISO } from '../../server/booking-rules.js';
 import { Icon } from '../components/ui';
 import { useChat } from './ChatProvider';
 
 const TODAY = todayISO();
+
+// Keeps the clinic's full name on one line inside chat bubbles
+const keepName = (text) =>
+  typeof text === 'string' && text.includes(BRAND.full)
+    ? text.split(BRAND.full).flatMap((part, i) => (i ? [<span key={i} className="nowrap">{BRAND.full}</span>, part] : [part]))
+    : text;
 
 const fmtDob = (iso) =>
   iso ? new Date(`${iso}T00:00:00`).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
@@ -218,7 +224,7 @@ function Message({ m }) {
     case 'hours':          body = <Hours />; break;
     case 'contact':        body = <ContactCard />; break;
     case 'alert':          body = <Alert />; break;
-    default:               body = <p className="bubble">{m.text}</p>;
+    default:               body = <p className="bubble">{keepName(m.text)}</p>;
   }
   return (
     <div className={`msg msg--${m.from} ${m.type ? 'msg--card' : ''}`}>{body}</div>
