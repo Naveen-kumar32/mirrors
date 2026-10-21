@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { BRAND } from '../data';
 import { useChat } from '../chat/ChatProvider';
@@ -72,23 +73,29 @@ export default function Header() {
         </button>
       </div>
 
-      {open && (
-        <div className="menu" role="dialog" aria-modal="true" aria-label="Menu">
-          <button className="menu__close" onClick={() => setOpen(false)} aria-label="Close menu">
-            <Icon name="close" size={26} />
-          </button>
-          <nav aria-label="Mobile">
-            {LINKS.map((l, i) => (
-              <NavLink key={l.to} to={l.to} end={l.to === '/'} style={{ '--i': i }}>
-                {l.label}
-              </NavLink>
-            ))}
-          </nav>
-          <button className="btn btn--navy" onClick={book}>
-            Book appointment
-          </button>
-        </div>
-      )}
+      {/* Rendered into <body>: the scrolled header's blur would otherwise trap this
+          full-screen menu inside the header's own height */}
+      {open &&
+        createPortal(
+          <div className="menu" role="dialog" aria-modal="true" aria-label="Menu">
+            <button className="menu__close" onClick={() => setOpen(false)} aria-label="Close menu">
+              <Icon name="close" size={26} />
+            </button>
+            <div className="menu__inner">
+              <nav aria-label="Mobile">
+                {LINKS.map((l, i) => (
+                  <NavLink key={l.to} to={l.to} end={l.to === '/'} style={{ '--i': i }}>
+                    {l.label}
+                  </NavLink>
+                ))}
+              </nav>
+              <button className="btn btn--navy" onClick={book}>
+                Book appointment
+              </button>
+            </div>
+          </div>,
+          document.body
+        )}
     </header>
   );
 }
