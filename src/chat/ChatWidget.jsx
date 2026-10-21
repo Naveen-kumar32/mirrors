@@ -4,7 +4,6 @@ import { CONTACT, COORDINATOR, HOURS, HOURS_NOTE, SERVICES, img } from '../data'
 import { todayISO } from '../../server/booking-rules.js';
 import { Icon } from '../components/ui';
 import { useChat } from './ChatProvider';
-import { useClinicStatus } from '../lib';
 
 const TODAY = todayISO();
 
@@ -241,7 +240,6 @@ export default function ChatWidget() {
   const { isOpen, messages, typing, prompt } = chat;
   const [text, setText] = useState('');
   const [nudge, setNudge] = useState(false);
-  const clinic = useClinicStatus();
   const scroller = useRef(null);
   const inputRef = useRef(null);
 
@@ -317,9 +315,7 @@ export default function ChatWidget() {
           <button className="chat-nudge__close" onClick={() => setNudge(false)} aria-label="Dismiss">×</button>
           <button className="chat-nudge__body" onClick={() => chat.open()}>
             <strong>May I help you?</strong>
-            {clinic.open
-              ? 'Ask anything about your skin, hair or nails.'
-              : `We're closed right now (${clinic.text.toLowerCase()}), but you can still book or ask — we'll reply once we open.`}
+            Talk to us or chat with us about your skin, hair or nails.
           </button>
         </div>
       )}
