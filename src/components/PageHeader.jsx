@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { CONTACT, img } from '../data';
 import { useChat } from '../chat/ChatProvider';
-import { useGoogle, useReviewSummary } from '../backend';
 import { Icon } from './ui';
 
 const POINTS = [
@@ -13,18 +12,13 @@ const POINTS = [
 /*
  * Banner at the top of every inner page.
  * Left: breadcrumbs, title, text, actions. Right: a small photo collage
- * (main photo at its natural shape, a round inset photo and a rating card).
+ * (main photo at its natural shape and a round inset photo).
  */
 // `image` is a built-in photo name (see IMG) or a full URL such as an uploaded blog cover
 const src = (image, w) => (image.startsWith('/') || image.startsWith('http') ? image : img(image, w));
 
-export default function PageHeader({ eyebrow, title, text, image, image2, crumbs = [], preset, cover = false, rating = true }) {
+export default function PageHeader({ eyebrow, title, text, image, image2, crumbs = [], preset, cover = false }) {
   const chat = useChat();
-  const site = useReviewSummary();
-  const google = useGoogle();
-  const reviews = google.has
-    ? { average: google.rating, total: google.count, label: 'on Google' }
-    : site && { ...site, label: site.total === 1 ? 'review' : 'reviews' };
   return (
     <section className={`phead ${cover ? 'phead--cover' : ''}`}>
       <div className="container phead__grid">
@@ -73,15 +67,6 @@ export default function PageHeader({ eyebrow, title, text, image, image2, crumbs
               <figure className="phead__inset">
                 <img src={src(image2, 480)} alt="" />
               </figure>
-            )}
-            {rating && reviews?.total > 0 && (
-              <div className="phead__rating">
-                <strong>{reviews.average.toFixed(1)}</strong>
-                <span>
-                  <span className="stars">★★★★★</span>
-                  {reviews.total} {reviews.label}
-                </span>
-              </div>
             )}
           </div>
         )}

@@ -34,7 +34,6 @@ export default function AboutPage() {
         text="Evidence-based, patient-tailored dermatology in Neelambur, Coimbatore."
         image={IMG.aboutHero}
         image2={IMG.dq6}
-        rating={false}
       />
       <About full />
 
