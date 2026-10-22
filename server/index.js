@@ -1360,7 +1360,7 @@ app.get('/api/admin/social/youtube-feed', requireStaff, async (req, res) => {
    Needs META_ACCESS_TOKEN (a Page token), META_PAGE_ID and META_IG_USER_ID in .env. */
 // Temporarily switched off: the admin shows Instagram / Facebook as not connected and posts
 // added from the feed are hidden (kept in the database). Set to true to turn it all back on.
-const META_FEED_ENABLED = false;
+const META_FEED_ENABLED = true;
 const META_API = 'https://graph.facebook.com/v23.0';
 const META_IMAGE_HOSTS = /(^|\.)(fbcdn\.net|cdninstagram\.com)$/;
 
