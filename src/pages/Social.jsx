@@ -1,17 +1,13 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useApi } from '../backend';
 import Page from '../components/Page';
 import PageHeader from '../components/PageHeader';
+import Reviews from '../components/Reviews';
 import CTA from '../components/CTA';
-import { Icon, useReveal } from '../components/ui';
-import { IMG } from '../data';
+import { Eyebrow, Icon, useReveal } from '../components/ui';
+import { CONTACT, IMG } from '../data';
 
-const PLATFORMS = [
-  { key: 'youtube', label: 'YouTube' },
-  { key: 'instagram', label: 'Instagram' },
-  { key: 'facebook', label: 'Facebook' },
-];
-const PER_PAGE = 12;
+const PER_PAGE = 8;
 
 function YouTubeCard({ item }) {
   const [playing, setPlaying] = useState(false);
@@ -28,20 +24,13 @@ function YouTubeCard({ item }) {
         </div>
       ) : (
         <button className="scard__thumb" onClick={() => setPlaying(true)} aria-label={`Play: ${item.title || 'YouTube video'}`}>
-          <img
-            src={`https://img.youtube.com/vi/${item.embedId}/hqdefault.jpg`}
-            alt={item.title || 'YouTube video thumbnail'}
-            loading="lazy"
-          />
+          <img src={`https://img.youtube.com/vi/${item.embedId}/hqdefault.jpg`} alt="" loading="lazy" />
           <span className="scard__play">
             <Icon name="youtube" size={40} />
           </span>
         </button>
       )}
       <div className="scard__body">
-        <span className="scard__platform scard__platform--youtube">
-          <Icon name="youtube" size={14} /> YouTube
-        </span>
         {item.title && <p className="scard__title">{item.title}</p>}
         {item.description && <p className="scard__desc">{item.description}</p>}
       </div>
@@ -49,50 +38,111 @@ function YouTubeCard({ item }) {
   );
 }
 
-function LinkCard({ item }) {
-  const isInsta = item.platform === 'instagram';
+/* Instagram: square photo tiles, caption on hover */
+function InstagramTile({ item }) {
   return (
-    <a
-      className={`scard scard--${item.platform}`}
-      href={item.url}
-      target="_blank"
-      rel="noopener noreferrer"
-    >
+    <a className="igtile" href={item.url} target="_blank" rel="noopener noreferrer" aria-label={`${item.title || 'Instagram post'} (opens Instagram)`}>
+      {item.image ? <img src={item.image} alt="" loading="lazy" /> : <span className="igtile__blank"><Icon name="instagram" size={40} /></span>}
+      <span className="igtile__over">
+        <Icon name="instagram" size={22} />
+        {item.title && <span className="igtile__cap">{item.title}</span>}
+      </span>
+    </a>
+  );
+}
+
+function FacebookCard({ item }) {
+  return (
+    <a className="scard scard--facebook" href={item.url} target="_blank" rel="noopener noreferrer">
       {item.image ? (
         <div className="scard__photo">
-          <img src={item.image} alt={item.title || `${isInsta ? 'Instagram' : 'Facebook'} post`} loading="lazy" />
+          <img src={item.image} alt="" loading="lazy" />
         </div>
       ) : (
         <div className="scard__link-thumb">
-          <Icon name={item.platform} size={48} />
+          <Icon name="facebook" size={44} />
         </div>
       )}
       <div className="scard__body">
-        <span className={`scard__platform scard__platform--${item.platform}`}>
-          <Icon name={item.platform} size={14} /> {isInsta ? 'Instagram' : 'Facebook'}
-        </span>
         {item.title && <p className="scard__title">{item.title}</p>}
         {item.description && <p className="scard__desc">{item.description}</p>}
-        <span className="scard__cta">View on {isInsta ? 'Instagram' : 'Facebook'} →</span>
+        <span className="scard__cta">View on Facebook →</span>
       </div>
     </a>
   );
 }
 
+/* One platform: heading, up to 8 posts, Previous / Next */
+function SocialSection({ id, platform, eyebrow, title, text, link, linkLabel, items, loading, render, sand, gridClass = '' }) {
+  const ref = useRef(null);
+  const [page, setPage] = useState(1);
+  const pages = Math.max(1, Math.ceil(items.length / PER_PAGE));
+  const current = Math.min(page, pages);
+  const shown = items.slice((current - 1) * PER_PAGE, current * PER_PAGE);
+
+  const go = (n) => {
+    setPage(n);
+    const top = ref.current?.getBoundingClientRect().top ?? 0;
+    if (top < 0) ref.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  return (
+    <section id={id} ref={ref} className={`section soc${sand ? ' section--sand' : ''}`}>
+      <div className="container">
+        <header className="soc__head">
+          <div>
+            <Eyebrow>{eyebrow}</Eyebrow>
+            <h2 className="title reveal">{title}</h2>
+            {text && <p className="soc__text">{text}</p>}
+          </div>
+          {link && (
+            <a className={`soc__follow soc__follow--${platform}`} href={link} target="_blank" rel="noopener noreferrer">
+              <Icon name={platform} size={18} /> {linkLabel}
+            </a>
+          )}
+        </header>
+
+        {loading && <p className="state">Loading…</p>}
+        {!loading && items.length === 0 && (
+          <div className="soc__empty">
+            <Icon name={platform} size={34} />
+            <p>New posts are coming soon.</p>
+            {link && (
+              <a className="btn btn--ghost" href={link} target="_blank" rel="noopener noreferrer">
+                {linkLabel}
+              </a>
+            )}
+          </div>
+        )}
+        {!loading && items.length > 0 && (
+          <div className={`soc__grid ${gridClass}`} key={current}>
+            {shown.map(render)}
+          </div>
+        )}
+
+        {pages > 1 && (
+          <nav className="soc__pager" aria-label={`${eyebrow} pages`}>
+            <button className="btn btn--ghost" onClick={() => go(current - 1)} disabled={current === 1}>
+              ← Previous
+            </button>
+            <span>
+              {current} / {pages}
+            </span>
+            <button className="btn btn--ghost" onClick={() => go(current + 1)} disabled={current === pages}>
+              Next →
+            </button>
+          </nav>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default function Social() {
   const { data, loading } = useApi('/social');
-  const [filter, setFilter] = useState('youtube');
-  const [page, setPage] = useState(1);
-
   const all = data?.items || [];
-  const allFiltered = all.filter((i) => i.platform === filter);
-  const totalPages = Math.max(1, Math.ceil(allFiltered.length / PER_PAGE));
-  const safePage = Math.min(page, totalPages);
-  const items = allFiltered.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
-
-  const switchFilter = (f) => { setFilter(f); setPage(1); };
-
-  useReveal(data ? `social-${filter}-${safePage}` : null);
+  const of = (p) => all.filter((i) => i.platform === p);
+  useReveal(data ? 'social' : null);
 
   return (
     <Page title="Social Media">
@@ -104,61 +154,63 @@ export default function Social() {
         image2={IMG.dq5}
       />
 
-      <section className="section section--sand">
-        <div className="container">
-          <div className="stabs" role="tablist" aria-label="Social media platform">
-            {PLATFORMS.map((p) => (
-              <button
-                key={p.key}
-                role="tab"
-                aria-selected={filter === p.key}
-                className={`stabs__btn stabs__btn--${p.key}${filter === p.key ? ' is-active' : ''}`}
-                onClick={() => switchFilter(p.key)}
-              >
-                <Icon name={p.key} size={18} />
-                {p.label}
-                <span className="stabs__count">{all.filter((i) => i.platform === p.key).length}</span>
-              </button>
-            ))}
-          </div>
+      <nav className="soc-jump container" aria-label="Jump to">
+        <a href="#youtube" className="soc-jump__link soc-jump__link--youtube">
+          <Icon name="youtube" size={18} /> Videos
+        </a>
+        <a href="#instagram" className="soc-jump__link soc-jump__link--instagram">
+          <Icon name="instagram" size={18} /> Instagram
+        </a>
+        <a href="#facebook" className="soc-jump__link soc-jump__link--facebook">
+          <Icon name="facebook" size={18} /> Facebook
+        </a>
+        <a href="#reviews" className="soc-jump__link">
+          <Icon name="star" size={18} /> Reviews
+        </a>
+      </nav>
 
-          {loading && <p className="slist__empty">Loading…</p>}
-          {!loading && allFiltered.length === 0 && (
-            <p className="slist__empty">No posts yet on this platform.</p>
-          )}
-          {!loading && items.length > 0 && (
-            <div className="slist reveal">
-              {items.map((item) =>
-                item.platform === 'youtube' ? (
-                  <YouTubeCard key={item.id} item={item} />
-                ) : (
-                  <LinkCard key={item.id} item={item} />
-                )
-              )}
-            </div>
-          )}
+      <SocialSection
+        id="youtube"
+        platform="youtube"
+        eyebrow="YouTube"
+        title={<>Watch &amp; <em>learn</em></>}
+        text="Short videos from our dermatologist on common skin, hair and nail concerns."
+        items={of('youtube')}
+        loading={loading}
+        render={(item) => <YouTubeCard key={item.id} item={item} />}
+      />
 
-          {!loading && totalPages > 1 && (
-            <div className="spager">
-              <button
-                className="btn btn--outline"
-                onClick={() => { setPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                disabled={safePage === 1}
-              >
-                ← Previous
-              </button>
-              <span className="spager__info">Page {safePage} of {totalPages}</span>
-              <button
-                className="btn btn--outline"
-                onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                disabled={safePage === totalPages}
-              >
-                Next →
-              </button>
-            </div>
-          )}
-        </div>
-      </section>
+      <SocialSection
+        id="instagram"
+        platform="instagram"
+        eyebrow="Instagram"
+        title={<>From our <em>Instagram</em></>}
+        text={`Skin care tips and clinic moments — ${CONTACT.instagramHandle}`}
+        link={CONTACT.instagram}
+        linkLabel="Follow on Instagram"
+        items={of('instagram')}
+        loading={loading}
+        sand
+        gridClass="soc__grid--square"
+        render={(item) => <InstagramTile key={item.id} item={item} />}
+      />
+
+      <SocialSection
+        id="facebook"
+        platform="facebook"
+        eyebrow="Facebook"
+        title={<>On <em>Facebook</em></>}
+        text="Clinic news, updates and patient education."
+        link={CONTACT.facebook}
+        linkLabel="Follow on Facebook"
+        items={of('facebook')}
+        loading={loading}
+        render={(item) => <FacebookCard key={item.id} item={item} />}
+      />
+
+      <div id="reviews" className="soc-reviews">
+        <Reviews />
+      </div>
 
       <CTA />
     </Page>

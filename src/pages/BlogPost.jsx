@@ -6,6 +6,8 @@ import Page from '../components/Page';
 import PageHeader from '../components/PageHeader';
 import ArticleBody from '../components/ArticleBody';
 import { BlogCard } from '../components/Blog';
+import BlogSidebar, { blogLink } from '../components/BlogSidebar';
+import ShareBar from '../components/ShareBar';
 import CTA from '../components/CTA';
 import { Eyebrow, Icon, useReveal } from '../components/ui';
 import NotFound from './NotFound';
@@ -41,10 +43,14 @@ export default function BlogPostPage() {
     );
 
   const author = TEAM.find((t) => t.name === post.author);
+  // Related: most shared tags first, then same category, then newest
+  const tagSet = new Set((post.tags || []).map((t) => t.toLowerCase()));
+  const score = (p) => (p.tags || []).filter((t) => tagSet.has(t.toLowerCase())).length * 2 + (p.category === post.category ? 1 : 0);
   const related = (all || [])
     .filter((p) => p.slug !== post.slug)
-    .sort((a, b) => (b.category === post.category) - (a.category === post.category))
+    .sort((a, b) => score(b) - score(a))
     .slice(0, 3);
+  const shareUrl = `${window.location.origin}/blog/${post.slug}`;
 
   return (
     <Page title={post.title}>
@@ -61,10 +67,25 @@ export default function BlogPostPage() {
         <div className="container article">
           <article className="article__body">
             <p className="article__lead reveal">{post.excerpt}</p>
+            <ShareBar title={post.title} url={shareUrl} compact />
             <ArticleBody text={post.body} />
             <p className="article__note reveal">
               This article is general information, not medical advice. Please see a dermatologist about your own skin.
             </p>
+
+            <div className="article__foot">
+              <div className="article__tags">
+                <Link to={blogLink({ category: post.category })} className="post-card__cat">
+                  {post.category}
+                </Link>
+                {(post.tags || []).map((t) => (
+                  <Link key={t} to={blogLink({ tag: t })} className="blog-tag">
+                    #{t}
+                  </Link>
+                ))}
+              </div>
+              <ShareBar title={post.title} url={shareUrl} />
+            </div>
           </article>
 
           <aside className="article__side">
@@ -88,6 +109,7 @@ export default function BlogPostPage() {
                 Book appointment <Icon name="arrow" size={18} />
               </button>
             </div>
+            {all?.length > 0 && <BlogSidebar posts={all} category={post.category} search recent={false} />}
           </aside>
         </div>
       </section>

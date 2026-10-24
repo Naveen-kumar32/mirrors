@@ -69,6 +69,10 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS posts_public ON posts (status, published_at DESC);
 `);
+// Blog tags, stored comma-separated ("Acne,Sunscreen")
+if (!db.prepare('PRAGMA table_info(posts)').all().some((c) => c.name === 'tags')) {
+  db.exec("ALTER TABLE posts ADD COLUMN tags TEXT NOT NULL DEFAULT ''");
+}
 
 /*
  * Appointment bookings, call-back requests and questions from the website.

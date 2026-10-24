@@ -7,7 +7,7 @@
  * Environment (see .env.example): PORT, DATA_DIR, ADMIN_NAME, ADMIN_EMAIL, ADMIN_PASSWORD
  */
 import { existsSync, unlink } from 'node:fs';
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -34,6 +34,7 @@ import {
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(here, '..', 'dist');
+const BRAND_NAME = 'THE MIRRORS DERMATOLOGY CLINIC';
 const PORT = Number(process.env.PORT) || 3001;
 const REVIEWS_PER_PAGE = 10;
 
@@ -84,6 +85,7 @@ const postOut = (p, full = false) => ({
   title: p.title,
   excerpt: p.excerpt,
   category: p.category,
+  tags: p.tags ? p.tags.split(',') : [],
   author: p.author,
   cover: p.cover,
   status: p.status,
@@ -418,12 +420,24 @@ app.get('/api/admin/posts/:id', requireStaff, (req, res) => {
   res.json(postOut(p, true));
 });
 
+// "acne, Sunscreen ,ACNE" → "acne,Sunscreen": up to 8 tags of 30 characters, no repeats
+function cleanTags(raw) {
+  const seen = new Set();
+  return String(raw || '')
+    .split(',')
+    .map((t) => clean(String(t).trim().replace(/^#+/, ''), 30))
+    .filter((t) => t && !seen.has(t.toLowerCase()) && seen.add(t.toLowerCase()))
+    .slice(0, 8)
+    .join(',');
+}
+
 function readPost(req) {
   const b = req.body || {};
   const p = {
     title: clean(b.title, 160),
     excerpt: clean(b.excerpt, 300),
     category: clean(b.category, 40),
+    tags: cleanTags(b.tags),
     author: clean(b.author, 80),
     body: clean(b.body, 50000),
     status: b.status === 'draft' ? 'draft' : 'published',
@@ -446,11 +460,11 @@ app.post('/api/admin/posts', requireStaff, upload.single('cover'), (req, res) =>
   const t = now();
   const info = db
     .prepare(
-      `INSERT INTO posts (slug, title, excerpt, category, author, cover, body, status, created_by, published_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO posts (slug, title, excerpt, category, tags, author, cover, body, status, created_by, published_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
-      uniqueSlug(post.title), post.title, post.excerpt, post.category, post.author, `/uploads/${req.file.filename}`,
+      uniqueSlug(post.title), post.title, post.excerpt, post.category, post.tags, post.author, `/uploads/${req.file.filename}`,
       post.body, post.status, req.user.id, post.status === 'published' ? t : null, t, t
     );
   res.status(201).json(postOut(db.prepare('SELECT * FROM posts WHERE id = ?').get(info.lastInsertRowid), true));
@@ -466,9 +480,9 @@ app.put('/api/admin/posts/:id', requireStaff, upload.single('cover'), (req, res)
   const cover = req.file ? `/uploads/${req.file.filename}` : existing.cover;
   const publishedAt = post.status === 'published' ? existing.published_at || now() : existing.published_at;
   db.prepare(
-    `UPDATE posts SET title = ?, excerpt = ?, category = ?, author = ?, cover = ?, body = ?, status = ?,
+    `UPDATE posts SET title = ?, excerpt = ?, category = ?, tags = ?, author = ?, cover = ?, body = ?, status = ?,
        published_at = ?, updated_at = ? WHERE id = ?`
-  ).run(post.title, post.excerpt, post.category, post.author, cover, post.body, post.status, publishedAt, now(), existing.id);
+  ).run(post.title, post.excerpt, post.category, post.tags, post.author, cover, post.body, post.status, publishedAt, now(), existing.id);
   if (req.file) removeUpload(existing.cover);
   res.json(postOut(db.prepare('SELECT * FROM posts WHERE id = ?').get(existing.id), true));
 });
@@ -1583,7 +1597,41 @@ app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '30d', immutable: true 
 
 if (existsSync(DIST)) {
   app.use(express.static(DIST, { index: false }));
-  app.get(/.*/, (_req, res) => res.sendFile(path.join(DIST, 'index.html')));
+  const INDEX = path.join(DIST, 'index.html');
+
+  // Article links shared on Facebook, X, LinkedIn or WhatsApp: those sites don't run the
+  // page's JavaScript, so put the article's own title, summary and cover in the HTML.
+  app.get('/blog/:slug', (req, res) => {
+    const p = db.prepare("SELECT * FROM posts WHERE slug = ? AND status = 'published'").get(req.params.slug);
+    if (!p) return res.sendFile(INDEX);
+    const origin = `${req.protocol}://${req.get('host')}`;
+    const esc = (v) => String(v).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    const url = `${origin}/blog/${p.slug}`;
+    const image = p.cover?.startsWith('http') ? p.cover : `${origin}${p.cover || '/images/brand/logo-color-512.png'}`;
+    const meta = [
+      `<meta property="og:type" content="article" />`,
+      `<meta property="og:url" content="${esc(url)}" />`,
+      `<meta property="og:title" content="${esc(p.title)}" />`,
+      `<meta property="og:description" content="${esc(p.excerpt)}" />`,
+      `<meta property="og:image" content="${esc(image)}" />`,
+      `<meta name="twitter:card" content="summary_large_image" />`,
+      `<link rel="canonical" href="${esc(url)}" />`,
+    ].join('\n    ');
+    readFile(INDEX, 'utf8')
+      .then((html) =>
+        res.send(
+          html
+            .replace(/<title>[^<]*<\/title>/, `<title>${esc(p.title)} — ${esc(BRAND_NAME)}</title>`)
+            .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${esc(p.excerpt)}" />`)
+            .replace(/\s*<link rel="canonical"[^>]*>/, '')
+            .replace(/\s*<meta property="og:[^>]*>/g, '')
+            .replace('</head>', `    ${meta}\n  </head>`)
+        )
+      )
+      .catch(() => res.sendFile(INDEX));
+  });
+
+  app.get(/.*/, (_req, res) => res.sendFile(INDEX));
 }
 
 app.use((err, _req, res, _next) => {

@@ -668,7 +668,61 @@ export function PostsList() {
 }
 
 /* ---------- Write / edit a post ---------- */
-const EMPTY = { title: '', excerpt: '', category: '', author: '', body: '' };
+const EMPTY = { title: '', excerpt: '', category: '', tags: [], author: '', body: '' };
+
+/* Tags: type and press Enter or comma; click a suggestion to add one already used */
+function TagInput({ value, onChange, suggestions }) {
+  const [text, setText] = useState('');
+  const has = (t) => value.some((v) => v.toLowerCase() === t.toLowerCase());
+  const add = (raw) => {
+    const t = raw.trim().replace(/^#/, '').slice(0, 30);
+    if (t && !has(t) && value.length < 8) onChange([...value, t]);
+    setText('');
+  };
+  const onKey = (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      add(text);
+    } else if (e.key === 'Backspace' && !text && value.length) {
+      onChange(value.slice(0, -1));
+    }
+  };
+  const unused = suggestions.filter((t) => !has(t)).slice(0, 12);
+
+  return (
+    <div className="atags">
+      <div className="atags__box">
+        {value.map((t) => (
+          <span key={t} className="atags__chip">
+            #{t}
+            <button type="button" onClick={() => onChange(value.filter((v) => v !== t))} aria-label={`Remove tag ${t}`}>
+              ×
+            </button>
+          </span>
+        ))}
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          onKeyDown={onKey}
+          onBlur={() => text.trim() && add(text)}
+          placeholder={value.length >= 8 ? 'Up to 8 tags' : 'Type a tag and press Enter'}
+          disabled={value.length >= 8}
+          maxLength={30}
+        />
+      </div>
+      {unused.length > 0 && (
+        <div className="atags__suggest">
+          <span>Used before:</span>
+          {unused.map((t) => (
+            <button key={t} type="button" onClick={() => add(t)}>
+              #{t}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function PostEditor() {
   const { id } = useParams();
@@ -687,7 +741,7 @@ export function PostEditor() {
   useEffect(() => {
     const p = existing.data;
     if (!p) return;
-    setF({ title: p.title, excerpt: p.excerpt, category: p.category, author: p.author, body: p.body });
+    setF({ title: p.title, excerpt: p.excerpt, category: p.category, tags: p.tags || [], author: p.author, body: p.body });
     setCoverUrl(p.cover);
     if (bodyEditorRef.current) {
       const html = looksLikeHtml(p.body) ? p.body : markdownToHtml(p.body);
@@ -709,6 +763,11 @@ export function PostEditor() {
 
   const categories = useMemo(
     () => [...new Set([...DEFAULT_CATEGORIES, ...(all.data || []).map((p) => p.category)])],
+    [all.data]
+  );
+
+  const tagSuggestions = useMemo(
+    () => [...new Set((all.data || []).flatMap((p) => p.tags || []))].sort((a, b) => a.localeCompare(b)),
     [all.data]
   );
 
@@ -800,6 +859,11 @@ export function PostEditor() {
             <span className="bf__label">Author</span>
             <input value={f.author} onChange={set('author')} maxLength={80} required placeholder="Author name" />
           </label>
+        </div>
+        <div className="bf__field">
+          <span className="bf__label">Tags (optional)</span>
+          <TagInput value={f.tags} onChange={(tags) => setF((x) => ({ ...x, tags }))} suggestions={tagSuggestions} />
+          <span className="abody__help">e.g. acne, sunscreen, hair fall — readers can click a tag to see related articles. Up to 8.</span>
         </div>
 
         <div className="bf__field">
