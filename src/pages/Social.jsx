@@ -8,6 +8,8 @@ import { Eyebrow, Icon, useReveal } from '../components/ui';
 import { CONTACT, IMG } from '../data';
 
 const PER_PAGE = 8;
+// Quick links (Videos · Instagram · Facebook · Reviews) under the banner — hidden for now, set to true to show them
+const SHOW_JUMP_LINKS = false;
 
 function YouTubeCard({ item }) {
   const [playing, setPlaying] = useState(false);
@@ -41,8 +43,20 @@ function YouTubeCard({ item }) {
 /* Instagram: square photo tiles, caption on hover */
 function InstagramTile({ item }) {
   return (
-    <a className="igtile" href={item.url} target="_blank" rel="noopener noreferrer" aria-label={`${item.title || 'Instagram post'} (opens Instagram)`}>
-      {item.image ? <img src={item.image} alt="" loading="lazy" /> : <span className="igtile__blank"><Icon name="instagram" size={40} /></span>}
+    <a
+      className="igtile"
+      href={item.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`${item.title || 'Instagram post'} (opens Instagram)`}
+    >
+      {item.image ? (
+        <img src={item.image} alt="" loading="lazy" />
+      ) : (
+        <span className="igtile__blank">
+          <Icon name="instagram" size={40} />
+        </span>
+      )}
       <span className="igtile__over">
         <Icon name="instagram" size={22} />
         {item.title && <span className="igtile__cap">{item.title}</span>}
@@ -154,26 +168,32 @@ export default function Social() {
         image2={IMG.dq5}
       />
 
-      <nav className="soc-jump container" aria-label="Jump to">
-        <a href="#youtube" className="soc-jump__link soc-jump__link--youtube">
-          <Icon name="youtube" size={18} /> Videos
-        </a>
-        <a href="#instagram" className="soc-jump__link soc-jump__link--instagram">
-          <Icon name="instagram" size={18} /> Instagram
-        </a>
-        <a href="#facebook" className="soc-jump__link soc-jump__link--facebook">
-          <Icon name="facebook" size={18} /> Facebook
-        </a>
-        <a href="#reviews" className="soc-jump__link">
-          <Icon name="star" size={18} /> Reviews
-        </a>
-      </nav>
+      {SHOW_JUMP_LINKS && (
+        <nav className="soc-jump container" aria-label="Jump to">
+          <a href="#youtube" className="soc-jump__link soc-jump__link--youtube">
+            <Icon name="youtube" size={18} /> Videos
+          </a>
+          <a href="#instagram" className="soc-jump__link soc-jump__link--instagram">
+            <Icon name="instagram" size={18} /> Instagram
+          </a>
+          <a href="#facebook" className="soc-jump__link soc-jump__link--facebook">
+            <Icon name="facebook" size={18} /> Facebook
+          </a>
+          <a href="#reviews" className="soc-jump__link">
+            <Icon name="star" size={18} /> Reviews
+          </a>
+        </nav>
+      )}
 
       <SocialSection
         id="youtube"
         platform="youtube"
         eyebrow="YouTube"
-        title={<>Watch &amp; <em>learn</em></>}
+        title={
+          <>
+            Watch &amp; <em>learn</em>
+          </>
+        }
         text="Short videos from our dermatologist on common skin, hair and nail concerns."
         items={of('youtube')}
         loading={loading}
@@ -184,7 +204,11 @@ export default function Social() {
         id="instagram"
         platform="instagram"
         eyebrow="Instagram"
-        title={<>From our <em>Instagram</em></>}
+        title={
+          <>
+            From our <em>Instagram</em>
+          </>
+        }
         text={`Skin care tips and clinic moments — ${CONTACT.instagramHandle}`}
         link={CONTACT.instagram}
         linkLabel="Follow on Instagram"
@@ -199,7 +223,11 @@ export default function Social() {
         id="facebook"
         platform="facebook"
         eyebrow="Facebook"
-        title={<>On <em>Facebook</em></>}
+        title={
+          <>
+            On <em>Facebook</em>
+          </>
+        }
         text="Clinic news, updates and patient education."
         link={CONTACT.facebook}
         linkLabel="Follow on Facebook"
