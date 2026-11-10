@@ -165,12 +165,23 @@ app.get('/api/reviews', (req, res) => {
 });
 
 // Social media posts (visible only)
+// Which social platforms the website shows (switched on/off in Admin → Social media)
+const SOCIAL_PLATFORMS = ['youtube', 'instagram', 'facebook'];
+function socialPlatforms() {
+  let saved = {};
+  try {
+    saved = JSON.parse(db.prepare("SELECT value FROM settings WHERE key = 'social_platforms'").get()?.value || '{}');
+  } catch {}
+  return Object.fromEntries(SOCIAL_PLATFORMS.map((p) => [p, saved[p] !== false]));
+}
+
 app.get('/api/social', (_req, res) => {
+  const platforms = socialPlatforms();
   const items = db.prepare(
     `SELECT id, platform, url, embed_id AS embedId, title, description, image, created_at AS createdAt
      FROM social_posts WHERE visible = 1 ${META_FEED_ENABLED ? '' : "AND image = ''"} ORDER BY created_at DESC`
-  ).all();
-  res.json({ items });
+  ).all().filter((i) => platforms[i.platform]);
+  res.json({ items, platforms });
 });
 
 // Gallery: newest first, 10 photos per page
@@ -1450,12 +1461,23 @@ function parseSocialUrl(url) {
   return null;
 }
 
+// Turn a whole platform on or off on the website (admins only)
+app.put('/api/admin/social-platforms', requireStaff, requireAdmin, (req, res) => {
+  const { platform, enabled } = req.body || {};
+  if (!SOCIAL_PLATFORMS.includes(platform)) return bad(res, 'Unknown platform.');
+  const platforms = { ...socialPlatforms(), [platform]: Boolean(enabled) };
+  db.prepare(
+    "INSERT INTO settings (key, value) VALUES ('social_platforms', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+  ).run(JSON.stringify(platforms));
+  res.json({ platforms });
+});
+
 app.get('/api/admin/social', requireStaff, (_req, res) => {
   const items = db.prepare(
     `SELECT id, platform, url, embed_id AS embedId, title, description, image, visible, created_at AS createdAt
      FROM social_posts ${META_FEED_ENABLED ? '' : "WHERE image = ''"} ORDER BY created_at DESC`
   ).all();
-  res.json({ items });
+  res.json({ items, platforms: socialPlatforms() });
 });
 
 app.post('/api/admin/social', requireStaff, async (req, res) => {

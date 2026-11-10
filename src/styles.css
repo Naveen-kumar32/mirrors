@@ -3718,6 +3718,7 @@ a.scard:hover .scard__photo img { transform: scale(1.03); }
   transition: transform 0.2s, box-shadow 0.2s;
 }
 .soc__follow--instagram { background: linear-gradient(45deg, #f9a825, #e91e8c 55%, #6a1b9a); }
+.soc__follow--youtube { --c: #dc2626; }
 .soc__follow--facebook { --c: #1877f2; }
 .soc__follow:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(19, 51, 94, 0.18); }
 .soc__grid {
@@ -3727,19 +3728,6 @@ a.scard:hover .scard__photo img { transform: scale(1.03); }
   animation: fadeIn 0.4s ease both;
 }
 .soc__grid--square { gap: 14px; }
-.soc__empty {
-  display: grid;
-  justify-items: center;
-  gap: 12px;
-  padding: 44px 20px;
-  border: 1px dashed var(--line);
-  border-radius: 18px;
-  background: #fff;
-  text-align: center;
-  color: var(--muted);
-}
-.section--sand .soc__empty { background: #fffdf9; }
-
 .igtile {
   position: relative;
   display: block;

@@ -202,6 +202,14 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS gallery_recent ON gallery (category, created_at DESC);
 `);
 
+/* Site settings set from the staff area, e.g. which social platforms the website shows */
+db.exec(`
+  CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+`);
+
 /* Social media posts — YouTube (embedded), Instagram and Facebook (link-out) */
 db.exec(`
   CREATE TABLE IF NOT EXISTS social_posts (

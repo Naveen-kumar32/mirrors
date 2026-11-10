@@ -482,6 +482,61 @@ const PLATFORMS = [
   { key: 'facebook',  label: 'Facebook',  icon: 'facebook' },
 ];
 
+/* On/off switch per platform: when off, the website hides that platform's section and posts */
+function PlatformSwitches({ platforms, onChange }) {
+  const { user, onAuthError } = useAuth();
+  const isAdmin = user?.role === 'admin';
+  const [busy, setBusy] = useState(null);
+  const [error, setError] = useState('');
+
+  const toggle = async (key) => {
+    setBusy(key);
+    setError('');
+    try {
+      await api('/admin/social-platforms', { method: 'PUT', body: { platform: key, enabled: !platforms[key] } });
+      onChange();
+    } catch (err) { onAuthError(err); setError(err.message); }
+    finally { setBusy(null); }
+  };
+
+  return (
+    <div className="sswitches">
+      <div className="sswitches__head">
+        <h2 className="sform__heading">Show on website</h2>
+        <span className="sswitches__hint">
+          {isAdmin
+            ? 'Switch a platform off to hide its whole section and posts on the Social page. Posts are kept and come back when you switch it on.'
+            : 'Only admins can switch platforms on or off.'}
+        </span>
+      </div>
+      <div className="sswitches__list">
+        {PLATFORMS.map((p) => {
+          const on = platforms?.[p.key] !== false;
+          return (
+            <label key={p.key} className={`sswitch${on ? ' is-on' : ''}`} data-platform={p.key}>
+              <Icon name={p.icon} size={20} />
+              <span className="sswitch__text">
+                <strong>{p.label}</strong>
+                <small>{on ? 'Shown on website' : 'Hidden from website'}</small>
+              </span>
+              <input
+                type="checkbox"
+                role="switch"
+                checked={on}
+                disabled={!isAdmin || busy === p.key || !platforms}
+                onChange={() => toggle(p.key)}
+                aria-label={`Show ${p.label} on the website`}
+              />
+              <span className="sswitch__track" aria-hidden="true" />
+            </label>
+          );
+        })}
+      </div>
+      {error && <p className="bf__fail">{error}</p>}
+    </div>
+  );
+}
+
 export default function SocialAdmin() {
   const { data, loading, reload } = useApi('/admin/social');
   const all = data?.items || [];
@@ -499,6 +554,8 @@ export default function SocialAdmin() {
         <RefreshButton onRefresh={reload} loading={loading} />
       </div>
 
+      <PlatformSwitches platforms={data?.platforms} onChange={reload} />
+
       {/* Platform selector */}
       <div className="splat-tabs">
         {PLATFORMS.map((p) => (
@@ -510,6 +567,7 @@ export default function SocialAdmin() {
             <Icon name={p.icon} size={18} />
             <span>{p.label}</span>
             <span className="splat-tab__count">{forPlatform(p.key).length}</span>
+            {data?.platforms?.[p.key] === false && <span className="splat-tab__off">Hidden</span>}
           </button>
         ))}
       </div>

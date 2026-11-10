@@ -87,7 +87,7 @@ function FacebookCard({ item }) {
 }
 
 /* One platform: heading, up to 8 posts, Previous / Next */
-function SocialSection({ id, platform, eyebrow, title, text, link, linkLabel, items, loading, render, sand, gridClass = '' }) {
+function SocialSection({ id, platform, eyebrow, title, text, link, linkLabel, items, render, sand, gridClass = '' }) {
   const ref = useRef(null);
   const [page, setPage] = useState(1);
   const pages = Math.max(1, Math.ceil(items.length / PER_PAGE));
@@ -116,23 +116,9 @@ function SocialSection({ id, platform, eyebrow, title, text, link, linkLabel, it
           )}
         </header>
 
-        {loading && <p className="state">Loading…</p>}
-        {!loading && items.length === 0 && (
-          <div className="soc__empty">
-            <Icon name={platform} size={34} />
-            <p>New posts are coming soon.</p>
-            {link && (
-              <a className="btn btn--ghost" href={link} target="_blank" rel="noopener noreferrer">
-                {linkLabel}
-              </a>
-            )}
-          </div>
-        )}
-        {!loading && items.length > 0 && (
-          <div className={`soc__grid ${gridClass}`} key={current}>
-            {shown.map(render)}
-          </div>
-        )}
+        <div className={`soc__grid ${gridClass}`} key={current}>
+          {shown.map(render)}
+        </div>
 
         {pages > 1 && (
           <nav className="soc__pager" aria-label={`${eyebrow} pages`}>
@@ -156,6 +142,10 @@ export default function Social() {
   const { data, loading } = useApi('/social');
   const all = data?.items || [];
   const of = (p) => all.filter((i) => i.platform === p);
+  // Platforms switched off in Admin → Social media are left out (until the page knows, nothing is hidden)
+  // A platform's section only exists when it is switched on in Admin → Social media and has posts
+  // to show; nothing is drawn until the posts have loaded, so a hidden section never flashes up
+  const on = (p) => Boolean(data) && data.platforms?.[p] !== false && of(p).length > 0;
   useReveal(data ? 'social' : null);
 
   return (
@@ -168,73 +158,86 @@ export default function Social() {
         image2={IMG.dq5}
       />
 
+      {loading && !data && <p className="state container">Loading…</p>}
+
       {SHOW_JUMP_LINKS && (
         <nav className="soc-jump container" aria-label="Jump to">
-          <a href="#youtube" className="soc-jump__link soc-jump__link--youtube">
-            <Icon name="youtube" size={18} /> Videos
-          </a>
-          <a href="#instagram" className="soc-jump__link soc-jump__link--instagram">
-            <Icon name="instagram" size={18} /> Instagram
-          </a>
-          <a href="#facebook" className="soc-jump__link soc-jump__link--facebook">
-            <Icon name="facebook" size={18} /> Facebook
-          </a>
+          {on('youtube') && (
+            <a href="#youtube" className="soc-jump__link soc-jump__link--youtube">
+              <Icon name="youtube" size={18} /> Videos
+            </a>
+          )}
+          {on('instagram') && (
+            <a href="#instagram" className="soc-jump__link soc-jump__link--instagram">
+              <Icon name="instagram" size={18} /> Instagram
+            </a>
+          )}
+          {on('facebook') && (
+            <a href="#facebook" className="soc-jump__link soc-jump__link--facebook">
+              <Icon name="facebook" size={18} /> Facebook
+            </a>
+          )}
           <a href="#reviews" className="soc-jump__link">
             <Icon name="star" size={18} /> Reviews
           </a>
         </nav>
       )}
 
-      <SocialSection
-        id="youtube"
-        platform="youtube"
-        eyebrow="YouTube"
-        title={
-          <>
-            Watch &amp; <em>learn</em>
-          </>
-        }
-        text="Short videos from our dermatologist on common skin, hair and nail concerns."
-        items={of('youtube')}
-        loading={loading}
-        render={(item) => <YouTubeCard key={item.id} item={item} />}
-      />
+      {on('youtube') && (
+        <SocialSection
+          id="youtube"
+          platform="youtube"
+          eyebrow="YouTube"
+          title={
+            <>
+              Watch &amp; <em>learn</em>
+            </>
+          }
+          text="Short videos from our dermatologist on common skin, hair and nail concerns."
+        link={CONTACT.youtube}
+        linkLabel="Subscribe on YouTube"
+          items={of('youtube')}
+          render={(item) => <YouTubeCard key={item.id} item={item} />}
+        />
+      )}
 
-      <SocialSection
-        id="instagram"
-        platform="instagram"
-        eyebrow="Instagram"
-        title={
-          <>
-            From our <em>Instagram</em>
-          </>
-        }
-        text={`Skin care tips and clinic moments — ${CONTACT.instagramHandle}`}
-        link={CONTACT.instagram}
-        linkLabel="Follow on Instagram"
-        items={of('instagram')}
-        loading={loading}
-        sand
-        gridClass="soc__grid--square"
-        render={(item) => <InstagramTile key={item.id} item={item} />}
-      />
+      {on('instagram') && (
+        <SocialSection
+          id="instagram"
+          platform="instagram"
+          eyebrow="Instagram"
+          title={
+            <>
+              From our <em>Instagram</em>
+            </>
+          }
+          text={`Skin care tips and clinic moments — ${CONTACT.instagramHandle}`}
+          link={CONTACT.instagram}
+          linkLabel="Follow on Instagram"
+          items={of('instagram')}
+          sand
+          gridClass="soc__grid--square"
+          render={(item) => <InstagramTile key={item.id} item={item} />}
+        />
+      )}
 
-      <SocialSection
-        id="facebook"
-        platform="facebook"
-        eyebrow="Facebook"
-        title={
-          <>
-            On <em>Facebook</em>
-          </>
-        }
-        text="Clinic news, updates and patient education."
-        link={CONTACT.facebook}
-        linkLabel="Follow on Facebook"
-        items={of('facebook')}
-        loading={loading}
-        render={(item) => <FacebookCard key={item.id} item={item} />}
-      />
+      {on('facebook') && (
+        <SocialSection
+          id="facebook"
+          platform="facebook"
+          eyebrow="Facebook"
+          title={
+            <>
+              On <em>Facebook</em>
+            </>
+          }
+          text="Clinic news, updates and patient education."
+          link={CONTACT.facebook}
+          linkLabel="Follow on Facebook"
+          items={of('facebook')}
+          render={(item) => <FacebookCard key={item.id} item={item} />}
+        />
+      )}
 
       <div id="reviews" className="soc-reviews">
         <Reviews />

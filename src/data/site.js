@@ -127,6 +127,8 @@ export const CONTACT = {
   doctorInstagram: 'https://www.instagram.com/drsaranyarajee_derm/',
   doctorInstagramHandle: '@drsaranyarajee_derm',
   facebook: 'https://www.facebook.com/share/1EEB6MJtKi/',
+  // The clinic's YouTube channel, e.g. 'https://www.youtube.com/@channelname'. Empty = no "Subscribe" button on the Social page
+  youtube: '',
   address: 'First Floor, 1/95D, Avinashi Rd',
   area: 'Neelambur, Coimbatore, Tamil Nadu 641062',
   mapsHref: 'https://maps.app.goo.gl/QxyLqw2uTuRBwAMW8',
