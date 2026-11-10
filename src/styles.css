@@ -3718,7 +3718,7 @@ a.scard:hover .scard__photo img { transform: scale(1.03); }
   transition: transform 0.2s, box-shadow 0.2s;
 }
 .soc__follow--instagram { background: linear-gradient(45deg, #f9a825, #e91e8c 55%, #6a1b9a); }
-.soc__follow--youtube { --c: #dc2626; }
+.soc__follow--youtube { background: linear-gradient(45deg, #ff6a3d, #ff0000 55%, #a50d0d); }
 .soc__follow--facebook { --c: #1877f2; }
 .soc__follow:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(19, 51, 94, 0.18); }
 .soc__grid {

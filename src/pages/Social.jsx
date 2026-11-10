@@ -194,8 +194,8 @@ export default function Social() {
             </>
           }
           text="Short videos from our dermatologist on common skin, hair and nail concerns."
-        link={CONTACT.youtube}
-        linkLabel="Subscribe on YouTube"
+          link={CONTACT.youtube || 'https://www.youtube.com/results?search_query=THE+MIRRORS+DERMATOLOGY+CLINIC+Coimbatore'}
+          linkLabel="Subscribe on YouTube"
           items={of('youtube')}
           render={(item) => <YouTubeCard key={item.id} item={item} />}
         />
