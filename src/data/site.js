@@ -113,6 +113,11 @@ export const IMG = {
   jPlan2: 'jPlan2',
   jTreat2: 'jTreat2',
   jCare2: 'jCare2',
+  // Real clinic interior (photos from public/images/interior)
+  clinicReception: 'clinicReception',
+  clinicWaiting: 'clinicWaiting',
+  clinicConsult: 'clinicConsult',
+  clinicProcedure: 'clinicProcedure',
 };
 
 export const CONTACT = {

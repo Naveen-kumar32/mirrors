@@ -32,8 +32,8 @@ export default function AboutPage() {
         eyebrow="About"
         title="Care that begins with understanding you"
         text="Evidence-based, patient-tailored dermatology in Neelambur, Coimbatore."
-        image={IMG.aboutHero}
-        image2={IMG.dq6}
+        image={IMG.clinicReception}
+        image2={IMG.clinicWaiting}
       />
       <About full />
 

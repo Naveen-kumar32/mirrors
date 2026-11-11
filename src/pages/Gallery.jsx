@@ -77,8 +77,8 @@ export default function GalleryPage() {
         eyebrow="Gallery"
         title="Step inside THE MIRRORS"
         text="A look around our clinic, our treatments and our team."
-        image={IMG.visit1}
-        image2={IMG.dq6}
+        image={IMG.clinicProcedure}
+        image2={IMG.clinicWaiting}
       />
 
       <section className="section section--sand" ref={gridTop} style={{ scrollMarginTop: 'var(--header-h)' }}>

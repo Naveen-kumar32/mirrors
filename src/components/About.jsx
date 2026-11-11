@@ -8,7 +8,7 @@ export default function About({ link = false, full = false }) {
     <section className="section about">
       <div className="container about__grid">
         <div className="about__media reveal">
-          <img src={img(IMG.aboutHero, 1200)} alt="" loading="lazy" />
+          <img src={img(IMG.clinicConsult, 1200)} alt="Consultation room at THE MIRRORS DERMATOLOGY CLINIC" loading="lazy" />
           <div className="about__badge">
             <strong>10+</strong>
             <span>years of experience</span>
