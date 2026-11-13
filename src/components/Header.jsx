@@ -1,22 +1,69 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 import { BRAND } from '../data';
 import { useChat } from '../chat/ChatProvider';
 import { Icon } from './ui';
 
+// `more: true` links sit in the ☰ drop-down next to "Book appointment" on big screens;
+// on small screens (full-screen menu) and in the footer every link is listed as usual
 export const LINKS = [
   { to: '/', label: 'Home' },
-  { to: '/about', label: 'About' },
+  { to: '/about', label: 'About', more: true },
   { to: '/treatments', label: 'Treatments' },
-  { to: '/doctors', label: 'Our Doctor' },
+  { to: '/doctors', label: 'Our Doctor', more: true },
   { to: '/gallery', label: 'Gallery' },
-  { to: '/reviews', label: 'Reviews' },
+  { to: '/reviews', label: 'Reviews', more: true },
   { to: '/blog', label: 'Blog' },
   { to: '/social', label: 'Social' },
-  { to: '/faqs', label: 'FAQs' },
+  { to: '/faqs', label: 'FAQs', more: true },
   { to: '/contact', label: 'Contact' },
 ];
+const MAIN_LINKS = LINKS.filter((l) => !l.more);
+const MORE_LINKS = LINKS.filter((l) => l.more);
+
+/* ☰ button + small drop-down with the "more" links (big screens only) */
+function MoreMenu({ pathname }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const here = MORE_LINKS.some((l) => pathname.startsWith(l.to));
+
+  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const away = (e) => !ref.current?.contains(e.target) && setOpen(false);
+    const esc = (e) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('pointerdown', away);
+    document.addEventListener('keydown', esc);
+    return () => {
+      document.removeEventListener('pointerdown', away);
+      document.removeEventListener('keydown', esc);
+    };
+  }, [open]);
+
+  return (
+    <div className="more" ref={ref}>
+      <button
+        className={`more__btn${open ? ' is-open' : ''}${here ? ' is-here' : ''}`}
+        onClick={() => setOpen((o) => !o)}
+        aria-label="More pages"
+        aria-expanded={open}
+        aria-haspopup="true"
+      >
+        <Icon name={open ? 'close' : 'menu'} size={20} />
+      </button>
+      {open && (
+        <nav className="more__panel" aria-label="More pages">
+          {MORE_LINKS.map((l) => (
+            <NavLink key={l.to} to={l.to}>
+              {l.label}
+            </NavLink>
+          ))}
+        </nav>
+      )}
+    </div>
+  );
+}
 
 export function Logo() {
   return (
@@ -59,12 +106,13 @@ export default function Header() {
       <div className="container header__inner">
         <Logo />
         <nav className="header__nav" aria-label="Main">
-          {LINKS.map((l) => (
+          {MAIN_LINKS.map((l) => (
             <NavLink key={l.to} to={l.to} end={l.to === '/'}>
               {l.label}
             </NavLink>
           ))}
         </nav>
+        <MoreMenu pathname={pathname} />
         <button className="btn btn--navy header__book" onClick={book}>
           Book appointment
         </button>

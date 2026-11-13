@@ -277,9 +277,11 @@ button {
   color: var(--muted);
 }
 .header__nav {
+  /* takes the space between the logo and the ☰ button, links centred in it */
+  flex: 1;
   display: flex;
-  gap: clamp(8px, 1.1vw, 20px);
-  margin-left: auto;
+  justify-content: center;
+  gap: clamp(14px, 2vw, 32px);
   white-space: nowrap;
 }
 .header__nav a {
@@ -301,6 +303,60 @@ button {
 }
 .header__nav a:hover::after {
   transform: scaleX(1);
+}
+/* ☰ "more pages" button and its drop-down (About, Our Doctor, Reviews, FAQs) */
+.more {
+  position: relative;
+  flex-shrink: 0;
+}
+.more__btn {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: #fff;
+  color: var(--navy);
+  transition: border-color 0.2s, color 0.2s, background-color 0.2s;
+}
+.more__btn:hover,
+.more__btn.is-open {
+  border-color: var(--navy);
+}
+/* the current page is one of the drop-down pages */
+.more__btn.is-here {
+  border-color: var(--teal);
+  color: var(--teal);
+}
+.more__panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 0;
+  z-index: 60;
+  display: grid;
+  min-width: 190px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(19, 51, 94, 0.14);
+  animation: fadeIn 0.2s ease both;
+}
+.more__panel a {
+  padding: 10px 14px;
+  border-radius: 9px;
+  font-size: 14px;
+  color: var(--navy);
+  white-space: nowrap;
+  transition: background-color 0.2s, color 0.2s;
+}
+.more__panel a:hover {
+  background: var(--sand);
+}
+.more__panel a.active {
+  color: var(--teal);
+  background: var(--sand);
 }
 .header__book {
   min-height: 40px;
@@ -2337,12 +2393,13 @@ button.treatment {
 /* Laptops: keep the full nav, just tighter */
 @media (max-width: 1280px) {
   .header__inner { gap: 14px; }
-  .header__nav { gap: 13px; }
+  .header__nav { gap: 18px; }
   .header__nav a { font-size: 13px; }
   .header__book { padding: 0 14px; font-size: 13px; }
 }
 @media (max-width: 1000px) {
   .header__nav,
+  .more,
   .header__book {
     display: none;
   }
