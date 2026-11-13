@@ -2259,19 +2259,12 @@
   font-weight: 600;
   color: #dc2626;
 }
-.ytchannel__search {
-  display: flex;
-  gap: 8px;
-  align-items: center;
+.ytchannel__handle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #dc2626;
 }
-.ytchannel__input {
-  padding: 5px 10px;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  font: inherit;
-  font-size: 0.82rem;
-  width: 200px;
-}
+.ytchannel__handle:hover { text-decoration: underline; }
 .ytchannel__empty {
   padding: 28px;
   text-align: center;

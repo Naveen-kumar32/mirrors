@@ -1006,7 +1006,9 @@ button {
 }
 .phead__title {
   font-family: var(--serif);
-  font-size: clamp(2.6rem, 5vw, 4.4rem);
+  font-size: clamp(2.4rem, 4.6vw, 4.2rem);
+  /* spread the words evenly over the lines — no single word left alone on the last line */
+  text-wrap: balance;
   font-weight: 500;
   line-height: 1.05;
   color: var(--navy);
@@ -2897,8 +2899,9 @@ img.rcard__avatar {
 }
 .site-footer__grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.8fr) minmax(0, 1fr) minmax(0, 1fr);
-  gap: clamp(32px, 5vw, 64px);
+  /* the Contact column is as wide as the email address so it always stays on one line */
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.1fr) max-content;
+  gap: clamp(28px, 4vw, 56px);
 }
 .site-footer__tagline {
   max-width: 300px;
@@ -2938,8 +2941,12 @@ img.rcard__avatar {
   color: var(--navy);
 }
 .site-footer__links {
+  /* two short columns instead of one long list */
   display: grid;
-  gap: 10px;
+  grid-template-rows: repeat(5, auto);
+  grid-auto-flow: column;
+  justify-content: start;
+  gap: 10px clamp(24px, 3vw, 40px);
 }
 .site-footer__links a,
 a.site-footer__line {
@@ -2963,8 +2970,12 @@ a.site-footer__line:hover {
 .site-footer__hours {
   display: block;
 }
+/* "Monday – Saturday:" and "3:00 pm – 7:00 pm" each stay whole */
+.site-footer__hours > span {
+  white-space: nowrap;
+}
 .site-footer__email {
-  overflow-wrap: anywhere;
+  white-space: nowrap;
 }
 .site-footer__bottom {
   display: flex;
@@ -2994,6 +3005,18 @@ a.site-footer__line:hover {
 @media (max-width: 600px) {
   .site-footer__grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* very small phones: slightly smaller page titles so long words don't push one word onto its own line */
+@media (max-width: 360px) {
+  .phead__title {
+    font-size: 2.1rem;
+  }
+}
+/* small phones: shrink the email a little so it still fits on one line */
+@media (max-width: 400px) {
+  .site-footer__email {
+    font-size: clamp(12px, 3.7vw, 15px);
   }
 }
 

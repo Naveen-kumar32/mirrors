@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, useApi } from '../backend';
 import { Icon } from '../components/ui';
+import { CONTACT } from '../data';
 import { RefreshButton, useAuth } from './AdminApp';
 const PLATFORM_LABELS = { youtube: 'YouTube', instagram: 'Instagram', facebook: 'Facebook' };
 const PER_PAGE = 3;
@@ -156,11 +157,14 @@ function AddPostForm({ platform, onAdded }) {
   );
 }
 
-/* ── YouTube channel browser ── */
+/* ── YouTube channel browser ──
+   Always shows the clinic's own channel: the YouTube link saved as `youtube` in src/data/site.js
+   (the same link the website's "Subscribe on YouTube" button uses). */
+const CHANNEL_HANDLE = (CONTACT.youtube.match(/youtube\.com\/@([\w.-]+)/i) || [])[1] || '';
+
 function YouTubeChannel({ onAdded }) {
   const { onAuthError } = useAuth();
-  const [handle, setHandle] = useState('liarsfc');
-  const [inputVal, setInputVal] = useState('liarsfc');
+  const handle = CHANNEL_HANDLE;
   const [videos, setVideos] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -195,15 +199,7 @@ function YouTubeChannel({ onAdded }) {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { load('liarsfc', null, null, false, 'all'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const search = () => {
-    const clean = inputVal.trim().replace(/^@/, '');
-    setHandle(clean);
-    setPageStack([]);
-    setNextToken(null); setLongNextToken(null);
-    load(clean, null, null, false, typeFilter);
-  };
+  useEffect(() => { load(handle, null, null, false, 'all'); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const switchFilter = (f) => {
     setTypeFilter(f);
@@ -258,11 +254,16 @@ function YouTubeChannel({ onAdded }) {
           <span>Channel Videos{total ? ` — ${total} total` : ''}</span>
           {rssOnly && <span className="ytchannel__rss-note">(last 15 only — add YOUTUBE_API_KEY to .env for full list)</span>}
         </div>
-        <div className="ytchannel__search">
-          <input value={inputVal} onChange={(e) => setInputVal(e.target.value)} placeholder="Channel handle" className="ytchannel__input" onKeyDown={(e) => e.key === 'Enter' && search()} />
-          <button className="abtn abtn--sm" onClick={search} disabled={loading}>{loading ? 'Loading…' : 'Load'}</button>
-        </div>
+        {handle && (
+          <a className="ytchannel__handle" href={CONTACT.youtube} target="_blank" rel="noopener noreferrer">
+            @{handle}
+          </a>
+        )}
       </div>
+
+      {!handle && (
+        <div className="ytchannel__empty">The clinic's YouTube channel link hasn't been added to the website yet.</div>
+      )}
 
       {!rssOnly && (
         <div className="ytchannel__tabs">

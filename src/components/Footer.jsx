@@ -53,7 +53,7 @@ export default function Footer() {
             <span>
               {HOURS.map((h) => (
                 <span key={h.day} className="site-footer__hours">
-                  {h.day}: {h.time}
+                  <span>{h.day}:</span> <span>{h.time}</span>
                 </span>
               ))}
             </span>
