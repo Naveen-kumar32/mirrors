@@ -65,7 +65,6 @@ const PARALLAX = [
   ['.phead__shape', 0.07],
   ['.about__badge', -0.16],
   ['.ahours__icon', -0.12],
-  ['.cstat--lead', -0.05],
 ];
 // Cards that lean towards the mouse pointer
 const TILT = '.gcard, .cstat, .post-card, .facility, .rcard, .docfeature, .short, .scard';
