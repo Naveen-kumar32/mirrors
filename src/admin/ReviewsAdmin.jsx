@@ -118,13 +118,70 @@ function TestimonialDialog({ onClose, onSaved }) {
   );
 }
 
+// Tabs: new reviews wait in "Waiting for approval" → approve for the reviews page → choose which go on the home page
+const VIEWS = [
+  { value: 'pending', label: 'Waiting for approval' },
+  { value: 'published', label: 'On reviews page' },
+  { value: 'home', label: 'On home page' },
+  { value: 'hidden', label: 'Hidden' },
+  { value: 'all', label: 'All' },
+];
+
+const STATUS_BADGE = {
+  pending: { cls: 'pending', label: 'Waiting for approval' },
+  published: { cls: 'published', label: 'On reviews page' },
+  hidden: { cls: 'hidden', label: 'Hidden' },
+};
+
+/* The clinic's public reply under a review: write, change or remove it */
+function ReplyBox({ review, onSave, onCancel }) {
+  const [text, setText] = useState(review.reply || '');
+  const [busy, setBusy] = useState(false);
+  const save = async (value) => {
+    setBusy(true);
+    const ok = await onSave(value);
+    if (!ok) setBusy(false);
+  };
+  return (
+    <div className="areply">
+      <label className="bf__field">
+        <span className="bf__label">Reply from The Mirrors (shown publicly under the review)</span>
+        <textarea
+          rows={3}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          maxLength={1000}
+          placeholder={`e.g. Thank you, ${review.name.split(' ')[0]}! We're so glad the treatment helped. See you at your next visit.`}
+          autoFocus
+        />
+      </label>
+      <div className="areply__actions">
+        <button className="abtn abtn--primary" disabled={busy || !text.trim()} onClick={() => save(text.trim())}>
+          {busy ? 'Saving…' : review.reply ? 'Update reply' : 'Post reply'}
+        </button>
+        {review.reply && (
+          <button className="abtn abtn--danger" disabled={busy} onClick={() => save('')}>
+            Remove reply
+          </button>
+        )}
+        <button className="abtn" disabled={busy} onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* Admin only: every review with the private phone number and email */
 export default function ReviewsAdmin() {
   const { onAuthError } = useAuth();
+  const [view, setView] = useState('pending');
   const [page, setPage] = useState(1);
   const [adding, setAdding] = useState(false);
+  const [replying, setReplying] = useState(null);
   const [flash, setFlash] = useState('');
-  const { data, error, loading, refreshing, reload } = useApi(`/admin/reviews?page=${page}`);
+  const { data, error, loading, refreshing, reload } = useApi(`/admin/reviews?filter=${view}&page=${page}`);
+  const counts = data?.counts || {};
 
   useEffect(() => {
     if (error) onAuthError(error);
@@ -136,24 +193,53 @@ export default function ReviewsAdmin() {
       invalidateReviewSummary();
       if (message) setFlash(message);
       reload();
+      return true;
     } catch (err) {
       onAuthError(err);
       window.alert(err.message);
+      return false;
     }
   };
 
   const patch = (r, body, message) => act(() => api(`/admin/reviews/${r.id}`, { method: 'PATCH', body }), message);
-  const toggle = (r) => patch(r, { status: r.status === 'published' ? 'hidden' : 'published' });
+  // 1st approval: the reviews page
+  const approve = (r) => patch(r, { status: 'published' }, `${r.name}’s review is now on the reviews page.`);
+  const hide = (r) =>
+    patch(
+      r,
+      { status: 'hidden' },
+      r.status === 'pending' ? `${r.name}’s review was not approved and stays hidden.` : `${r.name}’s review is hidden from the website.`
+    );
+  // 2nd approval: the home page (only for reviews already on the reviews page)
   const feature = (r) =>
     patch(
       r,
       { featured: !r.featured },
       r.featured ? `${r.name}’s review is no longer on the home page.` : `${r.name}’s review now shows on the home page.`
     );
+  const saveReply = async (r, reply) => {
+    const ok = await patch(r, { reply }, reply ? `Reply posted under ${r.name}’s review.` : `Reply removed from ${r.name}’s review.`);
+    if (ok) setReplying(null);
+    return ok;
+  };
 
   const remove = (r) =>
     window.confirm(`Delete the review from ${r.name}? This cannot be undone.`) &&
     act(() => api(`/admin/reviews/${r.id}`, { method: 'DELETE' }), 'Review deleted.');
+
+  const changeView = (v) => {
+    setView(v);
+    setPage(1);
+    setReplying(null);
+  };
+
+  const empty = {
+    pending: 'No reviews waiting — you’re all caught up.',
+    published: 'No reviews on the reviews page yet.',
+    home: 'No reviews on the home page yet. Open “On reviews page” and choose “Show on home page”.',
+    hidden: 'No hidden reviews.',
+    all: 'No reviews yet.',
+  }[view];
 
   return (
     <section className="apage">
@@ -164,9 +250,10 @@ export default function ReviewsAdmin() {
         <div>
           <h1>Reviews</h1>
           <p>
-            New reviews go live on the website immediately. <strong>Feature</strong> the best ones to show them as
-            testimonials on the home page. <strong>Hide</strong> takes a review off the website. Phone numbers and
-            emails are only visible here.
+            New reviews from the website wait for your approval. <strong>Approve</strong> puts a review on the
+            reviews page. Once approved, <strong>Show on home page</strong> adds it to the home page too, and you can
+            take it off again at any time. <strong>Reply</strong> posts the clinic’s answer under the review. Phone
+            numbers and emails are only visible here.
           </p>
         </div>
         <div className="apage__actions">
@@ -184,43 +271,95 @@ export default function ReviewsAdmin() {
           </button>
         </p>
       )}
+
+      <div className="areport__bar">
+        <div className="filters filters--compact" role="tablist" aria-label="Show">
+          {VIEWS.map((v) => (
+            <button
+              key={v.value}
+              role="tab"
+              aria-selected={view === v.value}
+              className={view === v.value ? 'is-on' : ''}
+              onClick={() => changeView(v.value)}
+            >
+              {v.label}
+              {counts[v.value] > 0 && (
+                <span className={`acount ${v.value === 'pending' ? 'acount--alert' : ''}`}>{counts[v.value]}</span>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {loading && !data && <p className="state">Loading…</p>}
       {error && <p className="bf__fail">{error.message}</p>}
-      {data && !data.total && <p className="state">No reviews yet.</p>}
+      {data && !data.total && <p className="state">{empty}</p>}
 
       <ul className="alist">
-        {data?.items.map((r) => (
-          <li key={r.id} className={`alist__row areview ${r.status === 'hidden' ? 'is-hidden' : ''}`}>
-            <div className="alist__main">
-              <strong>
-                {r.name} <span className="rcard__stars">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
-              </strong>
-              <p className="areview__text">{r.text}</p>
-              <span>
-                <span className={`badge badge--${r.status}`}>{r.status === 'hidden' ? 'Hidden' : 'Live'}</span>
-                {!!r.featured && <span className="badge badge--featured">★ On home page</span>}
-                <span className="badge badge--draft">{SOURCE_LABEL[r.source] || 'Website'}</span>
-                {r.phone && (
-                  <a href={`tel:${r.phone.replace(/[^\d+]/g, '')}`}>{r.phone}</a>
+        {data?.items.map((r) => {
+          const badge = STATUS_BADGE[r.status] || STATUS_BADGE.published;
+          return (
+            <li key={r.id} className={`alist__row areview ${r.status === 'hidden' ? 'is-hidden' : ''} ${r.status === 'pending' ? 'is-pending' : ''}`}>
+              <div className="alist__main">
+                <strong>
+                  {r.name} <span className="rcard__stars">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+                </strong>
+                <p className="areview__text">{r.text}</p>
+                <span>
+                  <span className={`badge badge--${badge.cls}`}>{badge.label}</span>
+                  {r.status === 'published' && !!r.featured && <span className="badge badge--featured">★ On home page</span>}
+                  <span className="badge badge--draft">{SOURCE_LABEL[r.source] || 'Website'}</span>
+                  {r.phone && <a href={`tel:${r.phone.replace(/[^\d+]/g, '')}`}>{r.phone}</a>}
+                  {r.email && <a href={`mailto:${r.email}`}>{r.email}</a>}
+                  {!!r.permission && <span>· Permission confirmed</span>}
+                  <span>· {formatDate(r.createdAt)}</span>
+                </span>
+                {r.reply && replying !== r.id && (
+                  <div className="areply__current">
+                    <strong>Your reply{r.replyAt ? ` · ${formatDate(r.replyAt)}` : ''}</strong>
+                    <p>{r.reply}</p>
+                  </div>
                 )}
-                {r.email && <a href={`mailto:${r.email}`}>{r.email}</a>}
-                {!!r.permission && <span>· Permission confirmed</span>}
-                <span>· {formatDate(r.createdAt)}</span>
-              </span>
-            </div>
-            <div className="alist__actions">
-              <button className={`abtn ${r.featured ? '' : 'abtn--primary'}`} onClick={() => feature(r)} disabled={r.status === 'hidden'}>
-                {r.featured ? 'Remove from home' : 'Feature on home'}
-              </button>
-              <button className="abtn" onClick={() => toggle(r)}>
-                {r.status === 'published' ? 'Hide' : 'Show'}
-              </button>
-              <button className="abtn abtn--danger" onClick={() => remove(r)}>
-                Delete
-              </button>
-            </div>
-          </li>
-        ))}
+                {replying === r.id && <ReplyBox review={r} onSave={(text) => saveReply(r, text)} onCancel={() => setReplying(null)} />}
+              </div>
+              <div className="alist__actions">
+                {r.status === 'pending' && (
+                  <>
+                    <button className="abtn abtn--primary" onClick={() => approve(r)}>
+                      Approve
+                    </button>
+                    <button className="abtn" onClick={() => hide(r)}>
+                      Don’t approve
+                    </button>
+                  </>
+                )}
+                {r.status === 'published' && (
+                  <>
+                    <button className={`abtn ${r.featured ? '' : 'abtn--primary'}`} onClick={() => feature(r)}>
+                      {r.featured ? 'Hide from home page' : 'Show on home page'}
+                    </button>
+                    <button className="abtn" onClick={() => hide(r)}>
+                      Hide from website
+                    </button>
+                  </>
+                )}
+                {r.status === 'hidden' && (
+                  <button className="abtn" onClick={() => approve(r)}>
+                    Show on reviews page
+                  </button>
+                )}
+                {replying !== r.id && (
+                  <button className="abtn" onClick={() => setReplying(r.id)}>
+                    {r.reply ? 'Edit reply' : 'Reply'}
+                  </button>
+                )}
+                <button className="abtn abtn--danger" onClick={() => remove(r)}>
+                  Delete
+                </button>
+              </div>
+            </li>
+          );
+        })}
       </ul>
       {data && <Pagination page={data.page} pages={data.pages} onChange={(p) => (setPage(p), window.scrollTo({ top: 0 }))} />}
 
@@ -229,7 +368,7 @@ export default function ReviewsAdmin() {
           onClose={() => setAdding(false)}
           onSaved={() => {
             setAdding(false);
-            setFlash('Testimonial added and featured on the home page.');
+            setFlash('Testimonial added and shown on the reviews page and home page.');
             invalidateReviewSummary();
             reload();
           }}

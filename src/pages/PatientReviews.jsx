@@ -1,15 +1,17 @@
 import { useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { IMG } from '../data';
-import { api, formatDate, invalidateReviewSummary, useApi, useGoogle } from '../backend';
+import { api, formatDate, useApi, useGoogle } from '../backend';
 import Page from '../components/Page';
 import PageHeader from '../components/PageHeader';
 import Pagination from '../components/Pagination';
-import ReviewCard from '../components/ReviewCard';
+import { ReviewModal } from '../components/ReviewCard';
+import { GReviewCard } from '../components/Reviews';
 import CTA from '../components/CTA';
 import { Eyebrow, Icon, useReveal } from '../components/ui';
 
 const SOURCE_LABEL = { google: 'Google review', whatsapp: 'Shared on WhatsApp', 'in-person': 'Shared in clinic' };
+const reviewMeta = (r) => `${SOURCE_LABEL[r.source] ? `${SOURCE_LABEL[r.source]} · ` : ''}${formatDate(r.createdAt)}`;
 const RATING_WORDS = ['', 'Poor', 'Fair', 'Good', 'Very good', 'Excellent'];
 const EMPTY = { name: '', phone: '', email: '', rating: 0, text: '', website: '' };
 
@@ -89,7 +91,7 @@ function ReviewForm({ onPosted }) {
           <Icon name="check" size={22} />
         </span>
         <h3>Thank you for your review!</h3>
-        <p>Your review is now live below.</p>
+        <p>We’ve received it. It will appear on this page once the clinic has checked it.</p>
         <div className="rform__google">
           <strong>Would you also share it on Google?</strong>
           <span>It helps other patients find us. We’ll copy your review so you can paste it there.</span>
@@ -169,6 +171,7 @@ export default function PatientReviewsPage() {
   const page = Math.max(1, parseInt(params.get('page'), 10) || 1);
   const { data, error, loading, reload } = useApi(`/reviews?page=${page}`);
   const listTop = useRef(null);
+  const [open, setOpen] = useState(null); // review shown in full
   const google = useGoogle();
   useReveal(data ? `reviews-${data.page}-${data.total}` : null);
 
@@ -177,11 +180,8 @@ export default function PatientReviewsPage() {
     listTop.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const onPosted = () => {
-    invalidateReviewSummary();
-    if (page === 1) reload();
-    else goTo(1);
-  };
+  // the new review waits for the clinic's approval, so the list itself doesn't change yet
+  const onPosted = () => {};
 
   return (
     <Page title="Patient reviews">
@@ -273,17 +273,12 @@ export default function PatientReviewsPage() {
 
           {data?.items.length > 0 && (
             <>
-              <div className={`rgrid ${loading ? 'is-loading' : ''}`} key={data.page}>
-                {data.items.map((r, i) => (
-                  <ReviewCard
-                    key={r.id}
-                    i={i}
-                    review={{
-                      ...r,
-                      meta: `${SOURCE_LABEL[r.source] ? `${SOURCE_LABEL[r.source]} · ` : ''}${formatDate(r.createdAt)}`,
-                    }}
-                  />
-                ))}
+              {/* same Google-style cards as the home page */}
+              <div className={`rgrid rgrid--g ${loading ? 'is-loading' : ''}`} key={data.page}>
+                {data.items.map((r) => {
+                  const review = { ...r, meta: reviewMeta(r) };
+                  return <GReviewCard key={r.id} review={review} sub={review.meta} onOpen={() => setOpen(review)} />;
+                })}
               </div>
               <Pagination page={data.page} pages={data.pages} onChange={goTo} />
               <p className="pager__info">
@@ -304,22 +299,27 @@ export default function PatientReviewsPage() {
                 Recent <em>Google</em> reviews
               </h2>
             </header>
-            <div className="rgrid">
-              {google.reviews.map((r, i) => (
-                <ReviewCard
-                  key={`${r.name}-${i}`}
-                  i={i}
-                  review={{ ...r, meta: `Google · ${r.when}` }}
-                  avatar={r.photo && <img className="rcard__avatar" src={r.photo} alt="" referrerPolicy="no-referrer" />}
-                  nameNode={
-                    r.authorUrl && (
-                      <a href={r.authorUrl} target="_blank" rel="noreferrer">
-                        {r.name}
-                      </a>
-                    )
-                  }
-                />
-              ))}
+            <div className="rgrid rgrid--g">
+              {google.reviews.map((r, i) => {
+                const review = { ...r, meta: `Google · ${r.when}` };
+                return (
+                  <GReviewCard
+                    key={`${r.name}-${i}`}
+                    review={review}
+                    sub={r.when}
+                    google
+                    photo={r.photo}
+                    nameNode={
+                      r.authorUrl && (
+                        <a href={r.authorUrl} target="_blank" rel="noreferrer">
+                          {r.name}
+                        </a>
+                      )
+                    }
+                    onOpen={() => setOpen(review)}
+                  />
+                );
+              })}
             </div>
             <p className="section__more reveal">
               <a className="text-link" href={google.url} target="_blank" rel="noreferrer">
@@ -329,6 +329,8 @@ export default function PatientReviewsPage() {
           </div>
         </section>
       )}
+
+      {open && <ReviewModal review={open} onClose={() => setOpen(null)} />}
 
       <CTA title="Ready to start your own story?" />
     </Page>

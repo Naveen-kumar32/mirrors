@@ -44,7 +44,7 @@ db.exec(`
     phone      TEXT NOT NULL,
     rating     INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
     text       TEXT NOT NULL,
-    status     TEXT NOT NULL DEFAULT 'published' CHECK (status IN ('published', 'hidden')),
+    status     TEXT NOT NULL DEFAULT 'published' CHECK (status IN ('pending', 'published', 'hidden')),
     ip         TEXT,
     created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
   );
@@ -190,6 +190,46 @@ if (!reviewCols.includes('source')) db.exec("ALTER TABLE reviews ADD COLUMN sour
 if (!reviewCols.includes('permission')) db.exec('ALTER TABLE reviews ADD COLUMN permission INTEGER NOT NULL DEFAULT 0');
 // Photos a reviewer attached on Google — comma-separated image paths
 if (!reviewCols.includes('photos')) db.exec("ALTER TABLE reviews ADD COLUMN photos TEXT NOT NULL DEFAULT ''");
+// The clinic's public reply under a review (empty = no reply)
+if (!reviewCols.includes('reply')) db.exec("ALTER TABLE reviews ADD COLUMN reply TEXT NOT NULL DEFAULT ''");
+if (!reviewCols.includes('reply_at')) db.exec('ALTER TABLE reviews ADD COLUMN reply_at TEXT');
+
+/* Reviews sent from the website wait for approval ('pending') before they show. Older databases only
+   allowed 'published' / 'hidden', and SQLite can't change a CHECK rule in place, so the table is
+   rebuilt once with the same columns and rows. */
+if (!db.prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'reviews'").get().sql.includes("'pending'")) {
+  db.exec('BEGIN');
+  try {
+    db.exec(`
+      CREATE TABLE reviews_new (
+        id         INTEGER PRIMARY KEY,
+        name       TEXT NOT NULL,
+        email      TEXT NOT NULL,
+        phone      TEXT NOT NULL,
+        rating     INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+        text       TEXT NOT NULL,
+        status     TEXT NOT NULL DEFAULT 'published' CHECK (status IN ('pending', 'published', 'hidden')),
+        ip         TEXT,
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+        featured   INTEGER NOT NULL DEFAULT 0,
+        source     TEXT NOT NULL DEFAULT 'website',
+        permission INTEGER NOT NULL DEFAULT 0,
+        photos     TEXT NOT NULL DEFAULT '',
+        reply      TEXT NOT NULL DEFAULT '',
+        reply_at   TEXT
+      );
+      INSERT INTO reviews_new (id, name, email, phone, rating, text, status, ip, created_at, featured, source, permission, photos, reply, reply_at)
+        SELECT id, name, email, phone, rating, text, status, ip, created_at, featured, source, permission, photos, reply, reply_at FROM reviews;
+      DROP TABLE reviews;
+      ALTER TABLE reviews_new RENAME TO reviews;
+      CREATE INDEX IF NOT EXISTS reviews_public ON reviews (status, created_at DESC);
+    `);
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+}
 
 /* Photo gallery — uploaded by staff from /admin/gallery */
 db.exec(`

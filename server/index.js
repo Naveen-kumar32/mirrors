@@ -166,7 +166,7 @@ app.get('/api/reviews', (req, res) => {
   const page = Math.min(pages, Math.max(1, parseInt(req.query.page, 10) || 1));
   const items = db
     .prepare(
-      `SELECT id, name, rating, text, source, photos, created_at AS createdAt FROM reviews
+      `SELECT id, name, rating, text, source, photos, reply, reply_at AS replyAt, created_at AS createdAt FROM reviews
        WHERE status = 'published' ORDER BY created_at DESC LIMIT ? OFFSET ?`
     )
     .all(REVIEWS_PER_PAGE, (page - 1) * REVIEWS_PER_PAGE)
@@ -210,7 +210,7 @@ app.get('/api/reviews/featured', (_req, res) => {
   res.json(
     db
       .prepare(
-        `SELECT id, name, rating, text, source, photos, created_at AS createdAt FROM reviews
+        `SELECT id, name, rating, text, source, photos, reply, reply_at AS replyAt, created_at AS createdAt FROM reviews
          WHERE status = 'published' AND featured = 1 ORDER BY created_at DESC LIMIT 24`
       )
       .all()
@@ -248,7 +248,8 @@ app.post(
     if (!isEmail(r.email)) return bad(res, 'Please enter a valid email address.');
     if (!Number.isInteger(r.rating) || r.rating < 1 || r.rating > 5) return bad(res, 'Please choose a star rating.');
     if (r.text.length < 10) return bad(res, 'Please write a little more about your experience (10+ characters).');
-    db.prepare('INSERT INTO reviews (name, email, phone, rating, text, ip) VALUES (?, ?, ?, ?, ?, ?)').run(
+    // waits in Admin → Reviews until staff approve it for the reviews page
+    db.prepare("INSERT INTO reviews (name, email, phone, rating, text, ip, status) VALUES (?, ?, ?, ?, ?, ?, 'pending')").run(
       r.name, r.email, r.phone, r.rating, r.text, req.ip
     );
     res.status(201).json({ ok: true });
@@ -1530,29 +1531,60 @@ app.delete('/api/admin/social/:id', requireStaff, (req, res) => {
 /* ==========================================================================
    Admin only: reviews (with private contact details) and staff accounts
    ========================================================================== */
+// Tabs in Admin → Reviews: waiting for approval → on the reviews page → (also) on the home page
+const REVIEW_FILTERS = {
+  all: '1 = 1',
+  pending: "status = 'pending'",
+  published: "status = 'published'",
+  home: "status = 'published' AND featured = 1",
+  hidden: "status = 'hidden'",
+};
 app.get('/api/admin/reviews', requireStaff, requireAdmin, (req, res) => {
   const perPage = 20;
-  const total = db.prepare('SELECT COUNT(*) AS n FROM reviews').get().n;
+  const filter = REVIEW_FILTERS[req.query.filter] ? req.query.filter : 'all';
+  const where = REVIEW_FILTERS[filter];
+  const counts = Object.fromEntries(
+    Object.entries(REVIEW_FILTERS).map(([k, w]) => [k, db.prepare(`SELECT COUNT(*) AS n FROM reviews WHERE ${w}`).get().n])
+  );
+  const total = counts[filter];
   const pages = Math.max(1, Math.ceil(total / perPage));
   const page = Math.min(pages, Math.max(1, parseInt(req.query.page, 10) || 1));
   const items = db
     .prepare(
-      `SELECT id, name, email, phone, rating, text, status, featured, source, permission, created_at AS createdAt
-       FROM reviews ORDER BY created_at DESC LIMIT ? OFFSET ?`
+      `SELECT id, name, email, phone, rating, text, status, featured, source, permission, reply, reply_at AS replyAt,
+              created_at AS createdAt
+       FROM reviews WHERE ${where} ORDER BY (status = 'pending') DESC, created_at DESC LIMIT ? OFFSET ?`
     )
     .all(perPage, (page - 1) * perPage);
-  res.json({ items, page, pages, total });
+  res.json({ items, page, pages, total, filter, counts });
 });
 
 app.patch('/api/admin/reviews/:id', requireStaff, requireAdmin, (req, res) => {
   const r = db.prepare('SELECT * FROM reviews WHERE id = ?').get(req.params.id);
   if (!r) return bad(res, 'Review not found.', 404);
-  const { status, featured } = req.body || {};
+  const { status, featured, reply } = req.body || {};
+  let next = r.status;
   if (status !== undefined) {
+    // 1st approval: pending → published (shows on the reviews page); hidden takes it off the website
     if (!['published', 'hidden'].includes(status)) return bad(res, 'Invalid status.');
-    db.prepare('UPDATE reviews SET status = ? WHERE id = ?').run(status, r.id);
+    next = status;
+    // a review that leaves the reviews page also leaves the home page
+    db.prepare("UPDATE reviews SET status = ?, featured = CASE WHEN ? = 'published' THEN featured ELSE 0 END WHERE id = ?").run(
+      status, status, r.id
+    );
   }
-  if (featured !== undefined) db.prepare('UPDATE reviews SET featured = ? WHERE id = ?').run(featured ? 1 : 0, r.id);
+  if (featured !== undefined) {
+    // 2nd approval: only reviews already approved for the reviews page can go on the home page
+    if (featured && next !== 'published') return bad(res, 'Approve the review for the reviews page first.');
+    db.prepare('UPDATE reviews SET featured = ? WHERE id = ?').run(featured ? 1 : 0, r.id);
+  }
+  if (reply !== undefined) {
+    // the clinic's public reply; an empty reply removes it
+    const text = clean(reply, 1000);
+    db.prepare('UPDATE reviews SET reply = ?, reply_at = ? WHERE id = ?').run(
+      text, text ? new Date().toISOString() : null, r.id
+    );
+  }
   res.json({ ok: true });
 });
 

@@ -189,6 +189,10 @@ export const IMG = {
   nMirror: 'nMirror',
   nVlog: 'nVlog',
   nFaceW: 'nFaceW',
+  // Indian patients during treatment (free Pexels / Unsplash photos, ids in SOURCES.json)
+  sScar: 'sScar',
+  sPig: 'sPig',
+  sMedi: 'sMedi',
 };
 
 export const CONTACT = {

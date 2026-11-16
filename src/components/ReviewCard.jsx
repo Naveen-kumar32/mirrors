@@ -4,6 +4,19 @@ import { Icon } from './ui';
 
 const stars = (n) => '★'.repeat(n) + '☆'.repeat(5 - n);
 
+/* The clinic's public reply under a review */
+export function ReviewReply({ reply, className = '' }) {
+  if (!reply) return null;
+  return (
+    <div className={`rreply ${className}`}>
+      <strong className="rreply__who">
+        <Icon name="chat" size={14} /> Reply from The Mirrors
+      </strong>
+      <p className="rreply__text">{reply}</p>
+    </div>
+  );
+}
+
 /* Full review in a pop-up — closes with ×, Esc or a click outside */
 export function ReviewModal({ review, onClose }) {
   useEffect(() => {
@@ -29,6 +42,7 @@ export function ReviewModal({ review, onClose }) {
           </span>
         )}
         {review.text && <blockquote>“{review.text}”</blockquote>}
+        <ReviewReply reply={review.reply} />
         {review.photos?.length > 0 && (
           <div className="rmodal__photos">
             {review.photos.map((src) => (
@@ -93,7 +107,8 @@ export default function ReviewCard({ review, avatar, nameNode, i = 0 }) {
           <span ref={textRef} />
         )}
         <ReviewPhotos photos={review.photos} name={review.name} onOpen={() => setOpen(true)} />
-        {clamped && (
+        <ReviewReply reply={review.reply} className="rreply--short" />
+        {(clamped || review.reply?.length > 160) && (
           <button className="rcard__more" onClick={() => setOpen(true)}>
             Read more
           </button>

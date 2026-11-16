@@ -3,9 +3,9 @@ import { HOURS, IMG, img } from '../data';
 import { useChat } from '../chat/ChatProvider';
 import { Icon } from './ui';
 
-// The photo is 3120 × 2667; the top of the woman's head is 15% down from its top edge
-const PHOTO_RATIO = 3120 / 2667;
-const HEAD_TOP = 0.15;
+// The photo is 1600 × 1067; the top of the woman's head is 17% down from its top edge
+const PHOTO_RATIO = 1600 / 1067;
+const HEAD_TOP = 0.17;
 
 /* On wide screens the photo is taller than the banner and gets cropped. Pick the crop so the
    top of the head sits level with the small "Dermatology Clinic · Coimbatore" line:
@@ -43,7 +43,7 @@ export default function Hero() {
         {/* full-width photo: the browser picks the size that stays sharp on this screen (incl. retina and TVs) */}
         <img
           src={img(IMG.resultsHero, 1600)}
-          srcSet={[960, 1600, 2400, 3200].map((w) => `/images/site/${IMG.resultsHero}-${w}.webp ${w}w`).join(', ')}
+          srcSet={[480, 960, 1600, 2400, 3200].map((w) => `/images/site/${IMG.resultsHero}-${w}.webp ${w}w`).join(', ')}
           sizes="100vw"
           alt=""
           fetchPriority="high"

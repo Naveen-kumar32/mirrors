@@ -43,7 +43,7 @@ export const SERVICES = [
     limitations: 'Complete scar removal is usually not possible; multiple sessions and combination treatments may be required.',
     aftercare: 'Strict sun protection, gentle skincare, avoid picking/scratching and follow prescribed post-procedure medications.',
     image: IMG.iScar,
-    image2: IMG.tScar,
+    image2: IMG.sScar,
   },
   {
     slug: 'keloid-treatment',
@@ -68,7 +68,7 @@ export const SERVICES = [
     aftercare:
       'Daily broad-spectrum sunscreen, preferably with visible-light protection when appropriate, regular moisturization and adherence to the prescribed skincare routine.',
     image: IMG.pPigment,
-    image2: IMG.nPig2,
+    image2: IMG.sPig,
   },
   {
     slug: 'prp-gfc',
@@ -96,7 +96,7 @@ export const SERVICES = [
       'It is primarily a supportive skin-care procedure and does not replace treatment for acne, melasma or significant scarring.',
     aftercare: 'Gentle cleansing, moisturization and daily sunscreen; avoid harsh exfoliation immediately after treatment.',
     image: IMG.fMedi,
-    image2: IMG.iMedi,
+    image2: IMG.sMedi,
   },
   {
     slug: 'ear-lobe-repair',
@@ -136,13 +136,13 @@ export const TREATMENT_DISCLAIMER =
  * `slug` links to the matching treatment page; without one the card opens the booking form.
  */
 export const FEATURED_TREATMENTS = [
-  { name: 'Acne', text: 'Medical treatment to control breakouts and prevent marks and scars.', image: IMG.tScar2 },
+  { name: 'Acne', text: 'Medical treatment to control breakouts and prevent marks and scars.', image: IMG.sScar },
   { name: 'Pigmentation', text: 'Melasma, sun pigmentation, post-acne marks and uneven skin tone.', image: IMG.pPigment, slug: 'pigmentation-melasma' },
   { name: 'Hair Fall Restoration', text: 'Finding the cause of hair fall and treating it to restore density.', image: IMG.nHairF, slug: 'prp-gfc' },
   { name: 'Vitiligo', text: 'Assessment and treatment of vitiligo (white patches).', image: IMG.blogVitiligo },
   { name: 'Chemical Peel', text: 'Clearer, brighter skin for acne, tanning and mild pigmentation.', image: IMG.tChemPeel, slug: 'chemical-peeling' },
   { name: 'PRP / GFC', text: 'Treatment from your own blood to support hair growth.', image: IMG.iHairLoss, slug: 'prp-gfc' },
   { name: 'Laser Hair Removal', text: 'Long-term reduction of unwanted facial and body hair.', image: IMG.nLaser, slug: 'laser-hair-removal' },
-  { name: 'Mole / Skin Tag Removal', text: 'Removal of benign moles, warts, cysts and skin tags.', image: IMG.catMole, slug: 'mole-wart-cyst-skin-tag-removal' },
+  { name: 'Mole / Skin Tag Removal', text: 'Removal of benign moles, warts, cysts and skin tags.', image: IMG.tMole2, slug: 'mole-wart-cyst-skin-tag-removal' },
   { name: 'Ear Lobe Repair', text: 'Repair of torn, stretched or split earlobes.', image: IMG.iEar, slug: 'ear-lobe-repair' },
 ];

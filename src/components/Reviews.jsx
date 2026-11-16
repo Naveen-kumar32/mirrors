@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useApi, useGoogle, useReviewSummary } from '../backend';
 import { Eyebrow } from './ui';
-import { ReviewModal, ReviewPhotos } from './ReviewCard';
+import { ReviewModal, ReviewPhotos, ReviewReply } from './ReviewCard';
 
 const SOURCE = { google: 'Google review', whatsapp: 'via WhatsApp', 'in-person': 'shared in clinic', website: 'website review' };
 const AVATAR_COLOURS = ['#d93025', '#188038', '#1a73e8', '#e37400', '#9334e6', '#12828c', '#c5221f'];
@@ -9,7 +9,7 @@ const AVATAR_COLOURS = ['#d93025', '#188038', '#1a73e8', '#e37400', '#9334e6', '
 const avatarColour = (name = '') => AVATAR_COLOURS[[...name].reduce((n, c) => n + c.charCodeAt(0), 0) % AVATAR_COLOURS.length];
 
 /* "3 months ago", the way Google shows review dates */
-function timeAgo(iso) {
+export function timeAgo(iso) {
   const days = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000));
   if (days < 1) return 'today';
   if (days < 7) return days === 1 ? 'a day ago' : `${days} days ago`;
@@ -19,7 +19,7 @@ function timeAgo(iso) {
 }
 
 /* Google's multicolour "G" */
-function GoogleG({ size = 22 }) {
+export function GoogleG({ size = 22 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true">
       <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z" />
@@ -30,7 +30,7 @@ function GoogleG({ size = 22 }) {
   );
 }
 
-function GStars({ value = 5, size = 18 }) {
+export function GStars({ value = 5, size = 18 }) {
   return (
     <span className="gstars" aria-label={`${value} out of 5 stars`}>
       {[1, 2, 3, 4, 5].map((n) => (
@@ -45,12 +45,54 @@ function GStars({ value = 5, size = 18 }) {
   );
 }
 
-const Verified = () => (
+export const Verified = () => (
   <svg className="gverified" width="16" height="16" viewBox="0 0 24 24" aria-label="Verified">
     <path fill="#1a73e8" d="M12 1l2.6 2.2 3.4-.4.9 3.3 3 1.7-1.3 3.2 1.3 3.2-3 1.7-.9 3.3-3.4-.4L12 23l-2.6-2.2-3.4.4-.9-3.3-3-1.7L3.4 13 2.1 9.8l3-1.7.9-3.3 3.4.4z" />
     <path fill="#fff" d="M10.6 15.6l-3.2-3.2 1.4-1.4 1.8 1.8 4.6-4.6 1.4 1.4z" />
   </svg>
 );
+
+/*
+ * One review in the style of a Google review card — used on the home page and the reviews page.
+ * `sub` replaces the line under the name, `photo` is a reviewer photo (live Google reviews),
+ * `nameNode` can make the name a link, `google` shows the Google "G".
+ */
+export function GReviewCard({ review: r, onOpen, sub, photo, nameNode, google = r.source === 'google' }) {
+  return (
+    <article className="gcard">
+      <header className="gcard__head">
+        {photo ? (
+          <img className="gcard__avatar" src={photo} alt="" referrerPolicy="no-referrer" />
+        ) : (
+          <span className="gcard__avatar" style={{ background: avatarColour(r.name) }} aria-hidden="true">
+            {r.name.trim().charAt(0).toUpperCase()}
+          </span>
+        )}
+        <span className="gcard__who">
+          <strong>{nameNode || r.name}</strong>
+          <small>{sub || (r.source === 'google' ? timeAgo(r.createdAt) : SOURCE[r.source] || 'Patient review')}</small>
+        </span>
+        {google && (
+          <span className="gcard__g">
+            <GoogleG size={22} />
+          </span>
+        )}
+      </header>
+      <p className="gcard__stars">
+        <GStars value={r.rating} size={18} />
+        <Verified />
+      </p>
+      {r.text && <p className="gcard__text">{r.text}</p>}
+      <ReviewPhotos photos={r.photos} name={r.name} onOpen={onOpen} />
+      <ReviewReply reply={r.reply} className="rreply--short" />
+      {(r.text?.length > 170 || r.reply?.length > 120) && (
+        <button type="button" className="gcard__more" onClick={onOpen}>
+          Read more
+        </button>
+      )}
+    </article>
+  );
+}
 
 /*
  * Patient reviews in the style of Google's review widget: a rating summary on the left and
@@ -118,33 +160,7 @@ export default function Reviews() {
             )}
             <div className="greviews__row" ref={rowRef}>
               {quotes.map((r) => (
-                <article key={r.id} className="gcard">
-                  <header className="gcard__head">
-                    <span className="gcard__avatar" style={{ background: avatarColour(r.name) }} aria-hidden="true">
-                      {r.name.trim().charAt(0).toUpperCase()}
-                    </span>
-                    <span className="gcard__who">
-                      <strong>{r.name}</strong>
-                      <small>{r.source === 'google' ? timeAgo(r.createdAt) : SOURCE[r.source] || 'Patient review'}</small>
-                    </span>
-                    {r.source === 'google' && (
-                      <span className="gcard__g">
-                        <GoogleG size={22} />
-                      </span>
-                    )}
-                  </header>
-                  <p className="gcard__stars">
-                    <GStars value={r.rating} size={18} />
-                    <Verified />
-                  </p>
-                  {r.text && <p className="gcard__text">{r.text}</p>}
-                  <ReviewPhotos photos={r.photos} name={r.name} onOpen={() => setOpen(r)} />
-                  {r.text.length > 170 && (
-                    <button type="button" className="gcard__more" onClick={() => setOpen(r)}>
-                      Read more
-                    </button>
-                  )}
-                </article>
+                <GReviewCard key={r.id} review={r} onOpen={() => setOpen(r)} />
               ))}
             </div>
             {quotes.length > 1 && (
