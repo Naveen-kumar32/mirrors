@@ -5,8 +5,6 @@ import { submitRequest, whatsappLink } from '../api';
 import { useApi } from '../backend';
 import { bookableDays, dayLabel, timeSlots, todayISO } from '../../server/booking-rules.js';
 import { Icon } from '../components/ui';
-import { opensWhen } from '../components/ClinicStatus';
-import { useClinicStatus } from '../lib';
 import { useChat } from './ChatProvider';
 import { first, isName, isPhone } from './flow';
 
@@ -171,9 +169,8 @@ export default function BookingModal() {
   const [calOpen, setCalOpen] = useState(false);
   const dialog = useRef(null);
   const calPickerRef = useRef(null);
-  const clinic = useClinicStatus();
-  // While the clinic is closed the follow-up call happens once it opens
-  const followUp = clinic.open ? 'within 2–3 hours (working days)' : `after we open (${opensWhen(clinic.text)})`;
+  // The clinic's opening hours are shown, never whether it is open or closed right now
+  const followUp = 'during clinic hours (Mon – Sat, 3 – 7 pm)';
 
   const schedule = slots.data || (slots.error ? OFFLINE_SLOTS : null);
   const day = schedule?.days.find((d) => d.date === form.date);
@@ -323,7 +320,7 @@ export default function BookingModal() {
               <Icon name="check" size={18} />
               <span>
                 <strong>Instant confirmation.</strong> Pick a free slot and your appointment is booked straight away —
-                our team will call you {clinic.open ? 'within 2–3 hours on working days' : `after we open (${opensWhen(clinic.text)})`}{' '}
+                our team will call you during clinic hours (Mon – Sat, 3 – 7 pm){' '}
                 to follow up.
               </span>
             </p>

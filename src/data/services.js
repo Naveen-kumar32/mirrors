@@ -16,8 +16,8 @@ export const SERVICES = [
     limitations: 'Multiple sessions may be needed; deeper scars and severe pigmentation may require combination treatments.',
     aftercare:
       'Use sunscreen regularly, moisturize well, avoid scrubbing/peeling the skin and temporarily avoid irritating active ingredients as advised.',
-    image: IMG.catPeel,
-    image2: IMG.jTreat,
+    image: IMG.tChemPeel,
+    image2: IMG.tChemPeel2,
   },
   {
     slug: 'laser-hair-removal',
@@ -30,8 +30,8 @@ export const SERVICES = [
       'It is a hair-reduction, not guaranteed permanent hair-removal procedure. Results vary with hair colour, skin type and hormonal factors.',
     aftercare:
       'Avoid waxing/plucking between sessions, minimize sun exposure, use sunscreen and follow the recommended shaving and skincare routine.',
-    image: IMG.ovLaser,
-    image2: IMG.catLaser,
+    image: IMG.nLaser,
+    image2: IMG.nLaser2,
   },
   {
     slug: 'acne-scar-revision',
@@ -42,8 +42,8 @@ export const SERVICES = [
     benefits: 'Improves skin texture, scar depth and overall skin appearance.',
     limitations: 'Complete scar removal is usually not possible; multiple sessions and combination treatments may be required.',
     aftercare: 'Strict sun protection, gentle skincare, avoid picking/scratching and follow prescribed post-procedure medications.',
-    image: IMG.catMicro,
-    image2: IMG.catAcne,
+    image: IMG.iScar,
+    image2: IMG.tScar,
   },
   {
     slug: 'keloid-treatment',
@@ -54,8 +54,8 @@ export const SERVICES = [
     benefits: 'Can reduce size, firmness, itching and discomfort.',
     limitations: 'Keloids can recur even after successful treatment; combination or repeated treatment may be necessary.',
     aftercare: 'Keep the area protected, avoid unnecessary trauma and follow pressure/silicone or medication advice when prescribed.',
-    image: IMG.jTreat2,
-    image2: IMG.tech2,
+    image: IMG.iDerm,
+    image2: IMG.fKeloid,
   },
   {
     slug: 'pigmentation-melasma',
@@ -67,8 +67,8 @@ export const SERVICES = [
     limitations: 'Melasma can be chronic and recurrent. Results require maintenance and strict sun protection.',
     aftercare:
       'Daily broad-spectrum sunscreen, preferably with visible-light protection when appropriate, regular moisturization and adherence to the prescribed skincare routine.',
-    image: IMG.catRosacea,
-    image2: IMG.caseAcne,
+    image: IMG.pPigment,
+    image2: IMG.nPig2,
   },
   {
     slug: 'prp-gfc',
@@ -82,8 +82,8 @@ export const SERVICES = [
       'Response varies between individuals and it does not restore completely lost hair follicles. Multiple sessions and maintenance may be required.',
     aftercare:
       'Keep the treated area clean, avoid vigorous exercise and irritating products for the advised period, and follow prescribed hair/skin care.',
-    image: IMG.catPrp,
-    image2: IMG.catHairloss,
+    image: IMG.iHairLoss,
+    image2: IMG.fPrp,
   },
   {
     slug: 'medifacial',
@@ -95,8 +95,8 @@ export const SERVICES = [
     limitations:
       'It is primarily a supportive skin-care procedure and does not replace treatment for acne, melasma or significant scarring.',
     aftercare: 'Gentle cleansing, moisturization and daily sunscreen; avoid harsh exfoliation immediately after treatment.',
-    image: IMG.rg2,
-    image2: IMG.rg7,
+    image: IMG.fMedi,
+    image2: IMG.iMedi,
   },
   {
     slug: 'ear-lobe-repair',
@@ -109,8 +109,8 @@ export const SERVICES = [
       'Healing takes time, and re-piercing should only be done after adequate healing. Recurrence is possible if the repaired lobe is subjected to excessive tension.',
     aftercare:
       'Keep the wound clean and dry as advised, attend follow-up visits, avoid heavy earrings and follow wound-care instructions carefully.',
-    image: IMG.visit3,
-    image2: IMG.jAnalysis2,
+    image: IMG.iEar,
+    image2: IMG.iEar2,
   },
   {
     slug: 'mole-wart-cyst-skin-tag-removal',
@@ -123,8 +123,8 @@ export const SERVICES = [
       'Some lesions can recur; scarring or pigmentation changes can occur. Suspicious lesions may require biopsy/histopathological examination.',
     aftercare:
       'Keep the treated area clean, follow wound-care instructions, avoid picking the site and use sun protection to minimize post-inflammatory pigmentation.',
-    image: IMG.catMole,
-    image2: IMG.catCyst,
+    image: IMG.tMole2,
+    image2: IMG.catMole,
   },
 ];
 
@@ -136,13 +136,13 @@ export const TREATMENT_DISCLAIMER =
  * `slug` links to the matching treatment page; without one the card opens the booking form.
  */
 export const FEATURED_TREATMENTS = [
-  { name: 'Acne', text: 'Medical treatment to control breakouts and prevent marks and scars.', image: IMG.catAcne },
-  { name: 'Pigmentation', text: 'Melasma, sun pigmentation, post-acne marks and uneven skin tone.', image: IMG.catRosacea, slug: 'pigmentation-melasma' },
-  { name: 'Hair Fall Restoration', text: 'Finding the cause of hair fall and treating it to restore density.', image: IMG.catHairloss, slug: 'prp-gfc' },
-  { name: 'Vitiligo', text: 'Assessment and treatment of vitiligo (white patches).', image: IMG.jCare2 },
-  { name: 'Chemical Peel', text: 'Clearer, brighter skin for acne, tanning and mild pigmentation.', image: IMG.catPeel, slug: 'chemical-peeling' },
-  { name: 'PRP / GFC', text: 'Treatment from your own blood to support hair growth.', image: IMG.catPrp, slug: 'prp-gfc' },
-  { name: 'Laser Hair Removal', text: 'Long-term reduction of unwanted facial and body hair.', image: IMG.ovLaser, slug: 'laser-hair-removal' },
+  { name: 'Acne', text: 'Medical treatment to control breakouts and prevent marks and scars.', image: IMG.tScar2 },
+  { name: 'Pigmentation', text: 'Melasma, sun pigmentation, post-acne marks and uneven skin tone.', image: IMG.pPigment, slug: 'pigmentation-melasma' },
+  { name: 'Hair Fall Restoration', text: 'Finding the cause of hair fall and treating it to restore density.', image: IMG.nHairF, slug: 'prp-gfc' },
+  { name: 'Vitiligo', text: 'Assessment and treatment of vitiligo (white patches).', image: IMG.blogVitiligo },
+  { name: 'Chemical Peel', text: 'Clearer, brighter skin for acne, tanning and mild pigmentation.', image: IMG.tChemPeel, slug: 'chemical-peeling' },
+  { name: 'PRP / GFC', text: 'Treatment from your own blood to support hair growth.', image: IMG.iHairLoss, slug: 'prp-gfc' },
+  { name: 'Laser Hair Removal', text: 'Long-term reduction of unwanted facial and body hair.', image: IMG.nLaser, slug: 'laser-hair-removal' },
   { name: 'Mole / Skin Tag Removal', text: 'Removal of benign moles, warts, cysts and skin tags.', image: IMG.catMole, slug: 'mole-wart-cyst-skin-tag-removal' },
-  { name: 'Ear Lobe Repair', text: 'Repair of torn, stretched or split earlobes.', image: IMG.visit3, slug: 'ear-lobe-repair' },
+  { name: 'Ear Lobe Repair', text: 'Repair of torn, stretched or split earlobes.', image: IMG.iEar, slug: 'ear-lobe-repair' },
 ];

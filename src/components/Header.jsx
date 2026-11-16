@@ -9,10 +9,9 @@ import { Icon } from './ui';
 // on small screens (full-screen menu) and in the footer every link is listed as usual
 export const LINKS = [
   { to: '/', label: 'Home' },
-  { to: '/about', label: 'About', more: true },
+  { to: '/about', label: 'About' },
   { to: '/treatments', label: 'Treatments' },
-  { to: '/doctors', label: 'Our Doctor', more: true },
-  { to: '/gallery', label: 'Gallery' },
+  { to: '/gallery', label: 'Gallery', more: true },
   { to: '/reviews', label: 'Reviews', more: true },
   { to: '/blog', label: 'Blog' },
   { to: '/social', label: 'Social' },

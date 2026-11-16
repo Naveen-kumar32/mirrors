@@ -1,0 +1,93 @@
+[
+ {
+  "name": "Siva K.",
+  "rating": 5,
+  "text": "A friendly and compassionate doctor who genuinely cares about their patients, listens patiently, understands their concerns, and provides the best possible care with kindness and dedication",
+  "source": "google",
+  "createdAt": "2026-11-07T10:00:00.000Z",
+  "photos": []
+ },
+ {
+  "name": "Anusuya D.",
+  "rating": 5,
+  "text": "I have visited Mirrors clinic for my dermatological issue mam's evaluation and the treatment was so good...Thank you for your kind words mam...",
+  "source": "google",
+  "createdAt": "2026-11-12T10:00:00.000Z",
+  "photos": []
+ },
+ {
+  "name": "Sathyanarayanan U.",
+  "rating": 5,
+  "text": "Had a great experience. The doctor was very kind and patient.",
+  "source": "google",
+  "createdAt": "2026-10-24T10:00:00.000Z",
+  "photos": []
+ },
+ {
+  "name": "Lavanya P.",
+  "rating": 5,
+  "text": "Well maintained and great service. Consultations are given with a through study and wellness.",
+  "source": "google",
+  "createdAt": "2026-10-24T10:00:00.000Z",
+  "photos": []
+ },
+ {
+  "name": "Yazhini L.",
+  "rating": 5,
+  "text": "I had a really great experience with the doctor.She was so kind and took the time to understand my skin concerns.The guidance was soo good that my skin is very healthy right now.So I would definitely recommend this place to anyone looking for a proper skin care and professional advice.",
+  "source": "google",
+  "createdAt": "2026-10-14T10:00:00.000Z",
+  "photos": []
+ },
+ {
+  "name": "Sanjeevi R.",
+  "rating": 5,
+  "text": "We are extremely happy with our experience at this clinic! The doctor’s prediction was remarkably accurate! And the guidance was so clear as well! Highly recommended .",
+  "source": "google",
+  "createdAt": "2026-09-14T10:00:00.000Z",
+  "photos": []
+ },
+ {
+  "name": "Ranju R.",
+  "rating": 5,
+  "text": "Good experience with mirrors..i had viral wart in scalp and it was easily removed without any pain.. Thanks to Dr Saranya Rajee Saminathan mam for the treatment",
+  "source": "google",
+  "createdAt": "2026-09-14T10:00:00.000Z",
+  "photos": []
+ },
+ {
+  "name": "Srija S.",
+  "rating": 5,
+  "text": "Dr Saranya Rajee took sufficient time to understand my skin, my preferences and suggested a regime. She has advised not only on skin care routine, but also how the product works on the skin, lifestyle changes and dietary changes that can ensure long lasting effects of the therapy.",
+  "source": "google",
+  "createdAt": "2026-09-14T10:00:00.000Z",
+  "photos": []
+ },
+ {
+  "name": "Sneka L.",
+  "rating": 5,
+  "text": "",
+  "source": "google",
+  "createdAt": "2026-09-14T10:00:00.000Z",
+  "photos": [
+   "/images/reviews/sneka-1.webp",
+   "/images/reviews/sneka-2.webp"
+  ]
+ },
+ {
+  "name": "Sivakumar V.",
+  "rating": 5,
+  "text": "Best doctor i have seen. I was suffering hair loss problem after I met the doctor and follows the medicine now feel much better. Thank you doctor",
+  "source": "google",
+  "createdAt": "2026-08-14T10:00:00.000Z",
+  "photos": []
+ },
+ {
+  "name": "Goutham P.",
+  "rating": 5,
+  "text": "I recently visited Mirrors Skin Clinic for a hair fall consultation, and I'm really glad I did. The doctor took the time to properly understand my concerns and explained the possible causes behind my hair fall in a way that was easy to understand…",
+  "source": "google",
+  "createdAt": "2026-08-14T10:00:00.000Z",
+  "photos": []
+ }
+]

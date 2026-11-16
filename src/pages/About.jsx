@@ -1,16 +1,13 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { AWARDS, FACILITIES, IMG, PHILOSOPHY_HIGHLIGHT, PHILOSOPHY_INTRO, PROMISE, VALUES } from '../data';
 import Page from '../components/Page';
 import PageHeader from '../components/PageHeader';
 import About from '../components/About';
+import ClinicStats from '../components/ClinicStats';
+import { DoctorProfile } from '../components/Doctors';
 import CTA from '../components/CTA';
 import { Eyebrow, Icon } from '../components/ui';
-
-const STATS = [
-  { value: '10+', label: 'Years of experience' },
-  { value: '2026', label: 'Clinic established' },
-  { value: '3', label: 'Languages: English, Tamil, Hindi' },
-  { value: 'Mon–Sat', label: '3:00 pm – 7:00 pm' },
-];
 
 // Puts the clinic's key phrase in bold where it appears
 function Highlight({ text }) {
@@ -25,17 +22,39 @@ function Highlight({ text }) {
   );
 }
 
+// About the clinic and its doctor (the former "Our Doctor" page is the #doctor section here)
 export default function AboutPage() {
+  const { hash } = useLocation();
+  useEffect(() => {
+    if (!hash) return;
+    const t = setTimeout(() => document.getElementById(hash.slice(1))?.scrollIntoView({ behavior: 'smooth' }), 120);
+    return () => clearTimeout(t);
+  }, [hash]);
+
   return (
     <Page title="About">
       <PageHeader
         eyebrow="About"
         title="Care that begins with understanding you"
-        text="Evidence-based, patient-tailored dermatology in Neelambur, Coimbatore."
+        text="Meet the clinic and the dermatologist behind it — evidence-based, patient-tailored care in Neelambur, Coimbatore."
         image={IMG.clinicReception}
         image2={IMG.clinicWaiting}
       />
       <About full />
+
+      <section id="doctor" className="section section--sand doctor-sec">
+        <div className="container">
+          <header className="section__head">
+            <Eyebrow>Our doctor</Eyebrow>
+            <h2 className="title reveal">
+              Meet your <em>dermatologist</em>
+            </h2>
+          </header>
+          <div className="profiles">
+            <DoctorProfile />
+          </div>
+        </div>
+      </section>
 
       <section className="section philo">
         <div className="container philo__grid">
@@ -139,16 +158,7 @@ export default function AboutPage() {
         </section>
       )}
 
-      <section className="stats">
-        <div className="container stats__grid">
-          {STATS.map((s, i) => (
-            <div key={s.label} className="stat reveal" style={{ '--d': `${i * 100}ms` }}>
-              <strong>{s.value}</strong>
-              <span>{s.label}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+      <ClinicStats />
 
       <CTA title="Come and meet us" />
     </Page>

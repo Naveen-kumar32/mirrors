@@ -28,7 +28,14 @@ export function ReviewModal({ review, onClose }) {
             {stars(review.rating)}
           </span>
         )}
-        <blockquote>“{review.text}”</blockquote>
+        {review.text && <blockquote>“{review.text}”</blockquote>}
+        {review.photos?.length > 0 && (
+          <div className="rmodal__photos">
+            {review.photos.map((src) => (
+              <img key={src} src={src} alt={`Photo shared by ${review.name}`} />
+            ))}
+          </div>
+        )}
         <figcaption>
           <strong>{review.name}</strong>
           {review.meta && <span>{review.meta}</span>}
@@ -36,6 +43,20 @@ export function ReviewModal({ review, onClose }) {
       </figure>
     </div>,
     document.body
+  );
+}
+
+/* Small photo thumbnails a reviewer attached (as on Google) — tapping opens the review larger */
+export function ReviewPhotos({ photos, name, onOpen }) {
+  if (!photos?.length) return null;
+  return (
+    <span className="rphotos">
+      {photos.slice(0, 3).map((src) => (
+        <button key={src} type="button" className="rphotos__item" onClick={onOpen} aria-label={`See photos shared by ${name}`}>
+          <img src={src} alt="" loading="lazy" />
+        </button>
+      ))}
+    </span>
   );
 }
 
@@ -64,9 +85,14 @@ export default function ReviewCard({ review, avatar, nameNode, i = 0 }) {
         <span className="rcard__stars" aria-label={`${review.rating} out of 5 stars`}>
           {stars(review.rating)}
         </span>
-        <blockquote ref={textRef} className="rcard__text">
-          “{review.text}”
-        </blockquote>
+        {review.text ? (
+          <blockquote ref={textRef} className="rcard__text">
+            “{review.text}”
+          </blockquote>
+        ) : (
+          <span ref={textRef} />
+        )}
+        <ReviewPhotos photos={review.photos} name={review.name} onOpen={() => setOpen(true)} />
         {clamped && (
           <button className="rcard__more" onClick={() => setOpen(true)}>
             Read more

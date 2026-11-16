@@ -36,7 +36,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(here, '..', 'dist');
 const BRAND_NAME = 'THE MIRRORS DERMATOLOGY CLINIC';
 const PORT = Number(process.env.PORT) || 3001;
-const REVIEWS_PER_PAGE = 10;
+const REVIEWS_PER_PAGE = 6;
 
 /* First start: create the owner's admin account from the environment */
 if (db.prepare('SELECT COUNT(*) AS n FROM users').get().n === 0) {
@@ -53,6 +53,12 @@ const app = express();
 app.set('trust proxy', 1);
 app.disable('x-powered-by');
 app.use(express.json({ limit: '200kb' }));
+// API answers are always live data: browsers and proxies must never reuse an old one
+// (an old cached answer from when the server was down kept showing "can't reach the server")
+app.use('/api', (_req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
 app.use(loadUser);
 
 /* ---------- helpers ---------- */
@@ -151,16 +157,20 @@ function reviewSummary() {
 app.get('/api/reviews/summary', (_req, res) => res.json(reviewSummary()));
 
 // Only name, rating, text and date are public — never email or phone.
+// "a.webp,b.webp" → ['a.webp', 'b.webp']
+const withPhotos = (r) => ({ ...r, photos: r.photos ? r.photos.split(',') : [] });
+
 app.get('/api/reviews', (req, res) => {
   const summary = reviewSummary();
   const pages = Math.max(1, Math.ceil(summary.total / REVIEWS_PER_PAGE));
   const page = Math.min(pages, Math.max(1, parseInt(req.query.page, 10) || 1));
   const items = db
     .prepare(
-      `SELECT id, name, rating, text, source, created_at AS createdAt FROM reviews
+      `SELECT id, name, rating, text, source, photos, created_at AS createdAt FROM reviews
        WHERE status = 'published' ORDER BY created_at DESC LIMIT ? OFFSET ?`
     )
-    .all(REVIEWS_PER_PAGE, (page - 1) * REVIEWS_PER_PAGE);
+    .all(REVIEWS_PER_PAGE, (page - 1) * REVIEWS_PER_PAGE)
+    .map(withPhotos);
   res.json({ items, page, pages, perPage: REVIEWS_PER_PAGE, ...summary });
 });
 
@@ -200,10 +210,11 @@ app.get('/api/reviews/featured', (_req, res) => {
   res.json(
     db
       .prepare(
-        `SELECT id, name, rating, text, source, created_at AS createdAt FROM reviews
-         WHERE status = 'published' AND featured = 1 ORDER BY created_at DESC LIMIT 8`
+        `SELECT id, name, rating, text, source, photos, created_at AS createdAt FROM reviews
+         WHERE status = 'published' AND featured = 1 ORDER BY created_at DESC LIMIT 24`
       )
       .all()
+      .map(withPhotos)
   );
 });
 

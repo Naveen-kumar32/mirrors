@@ -188,6 +188,8 @@ const reviewCols = db.prepare('PRAGMA table_info(reviews)').all().map((c) => c.n
 if (!reviewCols.includes('featured')) db.exec('ALTER TABLE reviews ADD COLUMN featured INTEGER NOT NULL DEFAULT 0');
 if (!reviewCols.includes('source')) db.exec("ALTER TABLE reviews ADD COLUMN source TEXT NOT NULL DEFAULT 'website'");
 if (!reviewCols.includes('permission')) db.exec('ALTER TABLE reviews ADD COLUMN permission INTEGER NOT NULL DEFAULT 0');
+// Photos a reviewer attached on Google — comma-separated image paths
+if (!reviewCols.includes('photos')) db.exec("ALTER TABLE reviews ADD COLUMN photos TEXT NOT NULL DEFAULT ''");
 
 /* Photo gallery — uploaded by staff from /admin/gallery */
 db.exec(`
@@ -243,14 +245,89 @@ if (db.prepare('SELECT COUNT(*) AS n FROM social_posts').get().n === 0) {
   );
 }
 
-/* First run: load the starter blog articles */
-if (db.prepare('SELECT COUNT(*) AS n FROM posts').get().n === 0) {
-  const seed = JSON.parse(readFileSync(path.join(here, 'seed-posts.json'), 'utf8'));
-  const insert = db.prepare(
-    `INSERT INTO posts (slug, title, excerpt, category, author, cover, body, status, published_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'published', ?)`
+/* Starter blog articles (seed-posts.json): health articles based on CDC, MedlinePlus and NIAMS */
+const STARTER_POSTS = JSON.parse(readFileSync(path.join(here, 'seed-posts.json'), 'utf8'));
+const insertStarter = db.prepare(
+  `INSERT OR IGNORE INTO posts (slug, title, excerpt, category, author, cover, body, tags, status, published_at)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'published', ?)`
+);
+const addStarterPosts = () => {
+  for (const p of STARTER_POSTS) {
+    insertStarter.run(p.slug, p.title, p.excerpt, p.category, p.author, p.cover, p.body, (p.tags || []).join(','), p.publishedAt);
+  }
+};
+
+// First run: load the starter articles
+if (db.prepare('SELECT COUNT(*) AS n FROM posts').get().n === 0) addStarterPosts();
+
+// Once (Nov 2026): swap the original 6 sample articles for the new starter articles.
+// Only those 6 sample articles are removed — articles written by staff are never touched.
+if (!db.prepare("SELECT 1 FROM settings WHERE key = 'starter_posts_v2'").get()) {
+  const OLD_SAMPLES = [
+    'adult-acne-causes-and-treatment',
+    'sunscreen-guide-indian-skin',
+    'hair-fall-when-to-worry',
+    'mole-checks-what-to-look-for',
+    'chemical-peels-explained',
+    'eczema-flare-tips',
+  ];
+  const remove = db.prepare('DELETE FROM posts WHERE slug = ?');
+  OLD_SAMPLES.forEach((slug) => remove.run(slug));
+  addStarterPosts();
+  db.prepare("INSERT INTO settings (key, value) VALUES ('starter_posts_v2', 'done')").run();
+}
+
+/* Real Google reviews of the clinic (copied word-for-word from its Google Maps listing, Nov 2026).
+   Added once; staff can hide or remove any of them in Admin → Reviews. */
+if (!db.prepare("SELECT 1 FROM settings WHERE key = 'google_reviews_v1'").get()) {
+  const reviews = JSON.parse(readFileSync(path.join(here, 'seed-reviews.json'), 'utf8'));
+  const exists = db.prepare('SELECT 1 FROM reviews WHERE name = ? AND text = ?');
+  const add = db.prepare(
+    `INSERT INTO reviews (name, email, phone, rating, text, source, permission, featured, created_at)
+     VALUES (?, '', '', ?, ?, ?, 1, ?, ?)`
   );
-  for (const p of seed) insert.run(p.slug, p.title, p.excerpt, p.category, p.author, p.cover, p.body, p.publishedAt);
+  for (const r of reviews) {
+    if (!exists.get(r.name, r.text)) add.run(r.name, r.rating, r.text, r.source, r.rating === 5 ? 1 : 0, r.createdAt);
+  }
+  db.prepare("INSERT INTO settings (key, value) VALUES ('google_reviews_v1', 'done')").run();
+}
+
+/* More real Google reviews (word-for-word from the clinic's listing, supplied Nov 2026), incl. photos */
+if (!db.prepare("SELECT 1 FROM settings WHERE key = 'google_reviews_v2'").get()) {
+  const reviews = JSON.parse(readFileSync(path.join(here, 'seed-reviews-2.json'), 'utf8'));
+  const exists = db.prepare('SELECT 1 FROM reviews WHERE name = ? AND text = ? AND photos = ?');
+  const add = db.prepare(
+    `INSERT INTO reviews (name, email, phone, rating, text, source, permission, featured, photos, created_at)
+     VALUES (?, '', '', ?, ?, ?, 1, ?, ?, ?)`
+  );
+  for (const r of reviews) {
+    const photos = (r.photos || []).join(',');
+    if (!exists.get(r.name, r.text, photos)) add.run(r.name, r.rating, r.text, r.source, r.rating === 5 ? 1 : 0, photos, r.createdAt);
+  }
+  db.prepare("INSERT INTO settings (key, value) VALUES ('google_reviews_v2', 'done')").run();
+}
+
+/* Once: remove the test reviews made while building the site (test names, the developer's
+   email, or placeholder "Lorem ipsum" text). Real patient reviews are not matched. */
+if (!db.prepare("SELECT 1 FROM settings WHERE key = 'test_reviews_removed'").get()) {
+  db.prepare(
+    `DELETE FROM reviews
+     WHERE lower(email) = 'nilanaveen32@gmail.com'
+        OR lower(name) IN ('navi', 'navi2', 'navi3', 'navi4', 'navi5', 'navi6', 'navi7', 'sample review')
+        OR text LIKE 'Lorem ipsum%'`
+  ).run();
+  db.prepare("INSERT INTO settings (key, value) VALUES ('test_reviews_removed', 'done')").run();
+}
+
+/* Starter articles: covers with Indian faces (only articles still using the old cover are changed) */
+{
+  const swap = db.prepare('UPDATE posts SET cover = ? WHERE cover = ?');
+  [
+    ['/images/site/tScar-960.webp', '/images/site/catAcne-960.webp'],
+    ['/images/site/nHairF-960.webp', '/images/site/catHairloss-960.webp'],
+    ['/images/site/nPig2-960.webp', '/images/site/catRosacea-960.webp'],
+    ['/images/site/nDandruff-960.webp', '/images/site/hair-960.webp'],
+  ].forEach(([to, from]) => swap.run(to, from));
 }
 
 /* Brand name is shown in capitals; update articles seeded before the change */

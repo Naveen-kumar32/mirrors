@@ -2,11 +2,10 @@ import { useLayoutEffect, useRef } from 'react';
 import { HOURS, IMG, img } from '../data';
 import { useChat } from '../chat/ChatProvider';
 import { Icon } from './ui';
-import ClinicStatus from './ClinicStatus';
 
-// The photo is 1600 × 1067; the top of the woman's head is 17% down from its top edge
-const PHOTO_RATIO = 1600 / 1067;
-const HEAD_TOP = 0.17;
+// The photo is 3120 × 2667; the top of the woman's head is 15% down from its top edge
+const PHOTO_RATIO = 3120 / 2667;
+const HEAD_TOP = 0.15;
 
 /* On wide screens the photo is taller than the banner and gets cropped. Pick the crop so the
    top of the head sits level with the small "Dermatology Clinic · Coimbatore" line:
@@ -41,7 +40,14 @@ export default function Hero() {
   return (
     <section className="hero" id="top" ref={heroRef}>
       <div className="hero__bg" aria-hidden="true">
-        <img src={img(IMG.resultsHero, 1600)} alt="" fetchPriority="high" />
+        {/* full-width photo: the browser picks the size that stays sharp on this screen (incl. retina and TVs) */}
+        <img
+          src={img(IMG.resultsHero, 1600)}
+          srcSet={[960, 1600, 2400, 3200].map((w) => `/images/site/${IMG.resultsHero}-${w}.webp ${w}w`).join(', ')}
+          sizes="100vw"
+          alt=""
+          fetchPriority="high"
+        />
       </div>
       <div className="container hero__content">
         <p className="hero__kicker" ref={kickerRef}>Dermatology Clinic · Coimbatore</p>
@@ -65,7 +71,6 @@ export default function Hero() {
         <p className="hero__hours">
           <Icon name="clock" size={16} /> {HOURS[0].day}, {HOURS[0].time}
         </p>
-        <ClinicStatus className="hero__status" />
       </div>
     </section>
   );

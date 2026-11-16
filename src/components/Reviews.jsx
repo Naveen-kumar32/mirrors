@@ -1,78 +1,161 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useRef, useState } from 'react';
 import { useApi, useGoogle, useReviewSummary } from '../backend';
-import { Stars } from './ui';
-import { ReviewModal } from './ReviewCard';
+import { Eyebrow } from './ui';
+import { ReviewModal, ReviewPhotos } from './ReviewCard';
 
 const SOURCE = { google: 'Google review', whatsapp: 'via WhatsApp', 'in-person': 'shared in clinic', website: 'website review' };
+const AVATAR_COLOURS = ['#d93025', '#188038', '#1a73e8', '#e37400', '#9334e6', '#12828c', '#c5221f'];
 
-/* Testimonials chosen by staff (Admin → Reviews → Feature), one at a time, cross-fading */
+const avatarColour = (name = '') => AVATAR_COLOURS[[...name].reduce((n, c) => n + c.charCodeAt(0), 0) % AVATAR_COLOURS.length];
+
+/* "3 months ago", the way Google shows review dates */
+function timeAgo(iso) {
+  const days = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 86400000));
+  if (days < 1) return 'today';
+  if (days < 7) return days === 1 ? 'a day ago' : `${days} days ago`;
+  if (days < 30) return days < 14 ? 'a week ago' : `${Math.floor(days / 7)} weeks ago`;
+  if (days < 365) return days < 60 ? 'a month ago' : `${Math.floor(days / 30)} months ago`;
+  return days < 730 ? 'a year ago' : `${Math.floor(days / 365)} years ago`;
+}
+
+/* Google's multicolour "G" */
+function GoogleG({ size = 22 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z" />
+      <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z" />
+      <path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z" />
+      <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.1 1.4-4.9 2.3-8.2 2.3-6.2 0-11.5-4.1-13.4-9.8l-7.9 6.1C6.6 42.6 14.6 48 24 48z" />
+    </svg>
+  );
+}
+
+function GStars({ value = 5, size = 18 }) {
+  return (
+    <span className="gstars" aria-label={`${value} out of 5 stars`}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <svg key={n} width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            fill={n <= Math.round(value) ? '#fbbc04' : '#dadce0'}
+            d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"
+          />
+        </svg>
+      ))}
+    </span>
+  );
+}
+
+const Verified = () => (
+  <svg className="gverified" width="16" height="16" viewBox="0 0 24 24" aria-label="Verified">
+    <path fill="#1a73e8" d="M12 1l2.6 2.2 3.4-.4.9 3.3 3 1.7-1.3 3.2 1.3 3.2-3 1.7-.9 3.3-3.4-.4L12 23l-2.6-2.2-3.4.4-.9-3.3-3-1.7L3.4 13 2.1 9.8l3-1.7.9-3.3 3.4.4z" />
+    <path fill="#fff" d="M10.6 15.6l-3.2-3.2 1.4-1.4 1.8 1.8 4.6-4.6 1.4 1.4z" />
+  </svg>
+);
+
+/*
+ * Patient reviews in the style of Google's review widget: a rating summary on the left and
+ * review cards on the right. Shows the testimonials staff feature in Admin → Reviews.
+ */
 export default function Reviews() {
   const { data } = useApi('/reviews/featured');
   const summary = useReviewSummary();
   const google = useGoogle();
-  const quotes = data || [];
-  const [i, setI] = useState(0);
+  const rowRef = useRef(null);
   const [open, setOpen] = useState(null); // review shown in full
-
-  useEffect(() => {
-    if (quotes.length < 2 || open) return; // don't move on while someone is reading
-    const id = setTimeout(() => setI((n) => (n + 1) % quotes.length), 6000);
-    return () => clearTimeout(id);
-  }, [i, quotes.length, open]);
-
+  const quotes = data || [];
   if (!quotes.length) return null;
 
+  const rating = google.has ? google.rating : summary?.average || 5;
+  const count = google.has ? google.count : summary?.total || quotes.length;
+  const label = rating >= 4.5 ? 'Excellent' : rating >= 4 ? 'Very good' : 'Good';
+
+  const scroll = (dir) => {
+    const row = rowRef.current;
+    const card = row?.querySelector('.gcard');
+    row?.scrollBy({ left: dir * ((card?.offsetWidth || 300) + 18), behavior: 'smooth' });
+  };
+
   return (
-    <section className="section reviews">
-      <div className="container reviews__inner">
-        <Stars />
-        <div className="reviews__stage">
-          {quotes.map((t, k) => (
-            <figure key={t.id} className={`review ${k === i ? 'is-active' : ''}`} aria-hidden={k !== i}>
-              <blockquote className="review__text">“{t.text}”</blockquote>
-              {t.text.length > 220 && (
-                <button className="review__more" tabIndex={k === i ? 0 : -1} onClick={() => setOpen(t)}>
-                  Read the full review
-                </button>
-              )}
-              <figcaption>
-                {t.name} <span>· {SOURCE[t.source] || 'patient review'}</span>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
-        {quotes.length > 1 && (
-          <div className="reviews__dots" role="tablist" aria-label="Choose a review">
-            {quotes.map((t, k) => (
-              <button
-                key={t.id}
-                role="tab"
-                aria-selected={k === i}
-                aria-label={`Review from ${t.name}`}
-                className={k === i ? 'is-active' : ''}
-                onClick={() => setI(k)}
-              />
-            ))}
+    <section className="section greviews">
+      <div className="container">
+        <header className="section__head greviews__head">
+          <Eyebrow>Patient stories</Eyebrow>
+          <h2 className="title reveal">
+            Kind words from our <em>patients</em>
+          </h2>
+        </header>
+
+        <div className="greviews__layout">
+          {/* summary, like Google's rating badge */}
+          <aside className="gsummary reveal">
+            <p className="gsummary__label">{label}</p>
+            <GStars value={rating} size={26} />
+            <p className="gsummary__count">
+              Based on{' '}
+              <a href={google.url} target="_blank" rel="noreferrer">
+                {count} reviews
+              </a>
+            </p>
+            <p className="gsummary__google" aria-label="Google">
+              <span style={{ color: '#4285F4' }}>G</span>
+              <span style={{ color: '#EA4335' }}>o</span>
+              <span style={{ color: '#FBBC05' }}>o</span>
+              <span style={{ color: '#4285F4' }}>g</span>
+              <span style={{ color: '#34A853' }}>l</span>
+              <span style={{ color: '#EA4335' }}>e</span>
+            </p>
+            <a className="gsummary__btn" href={google.reviewUrl} target="_blank" rel="noreferrer">
+              Review us on Google
+            </a>
+          </aside>
+
+          {/* review cards */}
+          <div className="greviews__carousel">
+            {quotes.length > 1 && (
+              <button type="button" className="greviews__arrow greviews__arrow--prev" onClick={() => scroll(-1)} aria-label="Previous reviews">
+                ‹
+              </button>
+            )}
+            <div className="greviews__row" ref={rowRef}>
+              {quotes.map((r) => (
+                <article key={r.id} className="gcard">
+                  <header className="gcard__head">
+                    <span className="gcard__avatar" style={{ background: avatarColour(r.name) }} aria-hidden="true">
+                      {r.name.trim().charAt(0).toUpperCase()}
+                    </span>
+                    <span className="gcard__who">
+                      <strong>{r.name}</strong>
+                      <small>{r.source === 'google' ? timeAgo(r.createdAt) : SOURCE[r.source] || 'Patient review'}</small>
+                    </span>
+                    {r.source === 'google' && (
+                      <span className="gcard__g">
+                        <GoogleG size={22} />
+                      </span>
+                    )}
+                  </header>
+                  <p className="gcard__stars">
+                    <GStars value={r.rating} size={18} />
+                    <Verified />
+                  </p>
+                  {r.text && <p className="gcard__text">{r.text}</p>}
+                  <ReviewPhotos photos={r.photos} name={r.name} onOpen={() => setOpen(r)} />
+                  {r.text.length > 170 && (
+                    <button type="button" className="gcard__more" onClick={() => setOpen(r)}>
+                      Read more
+                    </button>
+                  )}
+                </article>
+              ))}
+            </div>
+            {quotes.length > 1 && (
+              <button type="button" className="greviews__arrow greviews__arrow--next" onClick={() => scroll(1)} aria-label="More reviews">
+                ›
+              </button>
+            )}
           </div>
-        )}
-        {open && (
-          <ReviewModal review={{ ...open, meta: SOURCE[open.source] || 'patient review' }} onClose={() => setOpen(null)} />
-        )}
-        <p className="reviews__score">
-          {google.has ? (
-            <>
-              <strong>{google.rating.toFixed(1)} / 5</strong> on Google from {google.count} reviews ·{' '}
-            </>
-          ) : (
-            summary?.total > 0 && (
-              <>
-                Rated <strong>{summary.average.toFixed(1)} / 5</strong> by our patients ·{' '}
-              </>
-            )
-          )}
-          <Link to="/reviews">Read all reviews</Link>
-        </p>
+        </div>
+
+        {open && <ReviewModal review={{ ...open, meta: SOURCE[open.source] || 'patient review' }} onClose={() => setOpen(null)} />}
       </div>
     </section>
   );

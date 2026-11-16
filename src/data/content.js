@@ -29,7 +29,6 @@ export const FACILITIES = [
  * Add the issuing body / year and a link to the certificate when available.
  */
 export const AWARDS = [
-  { icon: 'award', title: 'Gold Medalist in Surgery', detail: 'Undergraduate medical training' },
   { icon: 'award', title: 'Best Outgoing Student', detail: 'Undergraduate medical training' },
   { icon: 'plan', title: 'MD — Dermatology, Venereology & Leprosy', detail: 'Govt. Stanley Medical College, Chennai' },
   { icon: 'plan', title: 'Fellowship in Laser Medicine, Aesthetic Dermatology & Dermatosurgery' },
@@ -40,7 +39,7 @@ export const AWARDS = [
 
 /* "Why choose this clinic?" — the clinic's own statement, shown as one paragraph */
 export const WHY_US =
-  'A board-certified dermatologist with 10+ years of experience in treating all skin, hair and nail related conditions — in an evidence-based manner. No treatment is pushed unless it is actually needed.';
+  'A board-certified dermatologist with 5+ years of experience in treating all skin, hair and nail related conditions — in an evidence-based manner. No treatment is pushed unless it is actually needed.';
 
 /* Care philosophy — "Listen. Understand. Treat." (text supplied by the clinic) */
 export const PHILOSOPHY_INTRO = [

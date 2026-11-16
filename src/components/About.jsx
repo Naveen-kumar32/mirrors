@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ABOUT_FULL, ABOUT_INTRO, ABOUT_LINE, IMG, img } from '../data';
+import { ABOUT_FULL, ABOUT_INTRO, ABOUT_LINE, DOCTOR, IMG, img } from '../data';
 import { Eyebrow, Icon, Rich } from './ui';
 
 /* Clinic introduction: short on the home page, the clinic's full text with `full` (About page) */
@@ -8,9 +8,9 @@ export default function About({ link = false, full = false }) {
     <section className="section about">
       <div className="container about__grid">
         <div className="about__media reveal">
-          <img src={img(IMG.clinicConsult, 1200)} alt="Consultation room at THE MIRRORS DERMATOLOGY CLINIC" loading="lazy" />
+          <img src={img(IMG.clinicConsult, 1200)} alt="The consultation room at THE MIRRORS DERMATOLOGY CLINIC" loading="lazy" />
           <div className="about__badge">
-            <strong>10+</strong>
+            <strong>{DOCTOR.years}</strong>
             <span>years of experience</span>
           </div>
         </div>

@@ -189,8 +189,8 @@ export default function PatientReviewsPage() {
         eyebrow="Patient reviews"
         title="What our patients say"
         text="Honest words from people we have cared for. Visited us? We’d love to hear from you."
-        image={IMG.trust3}
-        image2={IMG.rg4}
+        image={IMG.iReviews2}
+        image2={IMG.nFaceW}
       />
 
       <section className="section">

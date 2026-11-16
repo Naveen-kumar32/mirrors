@@ -11,8 +11,8 @@ export default function TreatmentsPage() {
         eyebrow="Treatments"
         title="Treatments for skin, hair and nails"
         text="Every procedure is planned after an individual skin assessment by our dermatologist."
-        image={IMG.treatHero}
-        image2={IMG.dq1}
+        image={IMG.nLaser}
+        image2={IMG.tChemPeel}
       />
       <Treatments heading={false} />
       <CTA title="Not sure which treatment you need?" />

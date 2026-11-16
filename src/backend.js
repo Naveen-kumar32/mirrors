@@ -20,7 +20,7 @@ export function notifyDataChange(source = 'manual') {
 }
 
 export async function api(path, { method = 'GET', body, form } = {}) {
-  const init = { method, credentials: 'same-origin', headers: {} };
+  const init = { method, credentials: 'same-origin', cache: 'no-store', headers: {} };
   if (form) init.body = form;
   else if (body !== undefined) {
     init.headers['Content-Type'] = 'application/json';

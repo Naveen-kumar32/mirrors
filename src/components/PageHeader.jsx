@@ -17,10 +17,18 @@ const POINTS = [
 // `image` is a built-in photo name (see IMG) or a full URL such as an uploaded blog cover
 const src = (image, w) => (image.startsWith('/') || image.startsWith('http') ? image : img(image, w));
 
-export default function PageHeader({ eyebrow, title, text, image, image2, crumbs = [], preset, cover = false }) {
+// `background`: one photo filling the whole banner behind the text, slightly blurred (Contact page)
+// No `image` and no `background`: text only, full width (e.g. Our Doctor until the clinic sends a photo)
+export default function PageHeader({ eyebrow, title, text, image, image2, background, crumbs = [], preset, cover = false }) {
   const chat = useChat();
+  const mods = [cover && 'phead--cover', background && 'phead--bg', !image && !background && 'phead--text'].filter(Boolean).join(' ');
   return (
-    <section className={`phead ${cover ? 'phead--cover' : ''}`}>
+    <section className={`phead ${mods}`}>
+      {background && (
+        <div className="phead__bg" aria-hidden="true">
+          <img src={src(background, 1600)} alt="" fetchPriority="high" />
+        </div>
+      )}
       <div className="container phead__grid">
         <div className="phead__content">
           <nav className="crumbs" aria-label="Breadcrumb">

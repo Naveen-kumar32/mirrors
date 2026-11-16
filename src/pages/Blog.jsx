@@ -50,8 +50,8 @@ export default function BlogPage() {
         eyebrow="Blog"
         title="Skin advice from our dermatologist"
         text="Simple, trustworthy guides on skin, hair and treatments — from the clinic that treats you."
-        image={IMG.dq2}
-        image2={IMG.dq5}
+        image={IMG.iBlog}
+        image2={IMG.nRoutine}
       />
 
       <section className="section section--sand">

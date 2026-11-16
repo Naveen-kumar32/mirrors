@@ -1,7 +1,6 @@
 import { CONTACT, COORDINATOR, DIRECTIONS, HOURS, HOURS_NOTE } from '../data';
 import { useChat } from '../chat/ChatProvider';
 import { Eyebrow, Icon } from './ui';
-import ClinicStatus from './ClinicStatus';
 
 export default function Contact() {
   const chat = useChat();
@@ -49,7 +48,6 @@ export default function Contact() {
                     {h.day}: <strong>{h.time}</strong>
                   </span>
                 ))}
-                <ClinicStatus note={false} className="contact__status" />
                 <span className="contact__note">{HOURS_NOTE}</span>
               </span>
             </li>

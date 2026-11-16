@@ -118,6 +118,77 @@ export const IMG = {
   clinicWaiting: 'clinicWaiting',
   clinicConsult: 'clinicConsult',
   clinicProcedure: 'clinicProcedure',
+  // Free Unsplash photos chosen to match each page (ids in public/images/site/SOURCES.json)
+  aboutClinic: 'aboutClinic',
+  contactBg: 'contactBg',
+  faqMain: 'faqMain',
+  faqInset: 'faqInset',
+  blogMain: 'blogMain',
+  blogInset: 'blogInset',
+  socialMain: 'socialMain',
+  socialInset: 'socialInset',
+  treatInset: 'treatInset',
+  medifacial2: 'medifacial2',
+  blogVitiligo: 'blogVitiligo',
+  // Treatments — Indian faces (free Unsplash photos, ids in SOURCES.json)
+  tChemPeel: 'tChemPeel',
+  tChemPeel2: 'tChemPeel2',
+  tLaser: 'tLaser',
+  tScar: 'tScar',
+  tScar2: 'tScar2',
+  tKeloid: 'tKeloid',
+  tPigment: 'tPigment',
+  tPigment2: 'tPigment2',
+  tPrp: 'tPrp',
+  tHairFall: 'tHairFall',
+  tMedi: 'tMedi',
+  tMedi2: 'tMedi2',
+  tEar: 'tEar',
+  tEar2: 'tEar2',
+  tMole2: 'tMole2',
+  tHero: 'tHero',
+  tHeroInset: 'tHeroInset',
+  // Treatments being done (procedure photos)
+  pLaser: 'pLaser',
+  pLaser2: 'pLaser2',
+  pPrp: 'pPrp',
+  pPrp2: 'pPrp2',
+  pKeloid: 'pKeloid',
+  pPigment: 'pPigment',
+  pMedi2: 'pMedi2',
+  pHairConsult: 'pHairConsult',
+  // Free photos picked to match the client's reference images (Unsplash / Pexels)
+  fPrp: 'fPrp',
+  fKeloid: 'fKeloid',
+  fMedi: 'fMedi',
+  fMedi2: 'fMedi2',
+  fEar: 'fEar',
+  // Indian faces / Indian clinics (free Pexels photos)
+  iEar: 'iEar',
+  iEar2: 'iEar2',
+  iMedi: 'iMedi',
+  iHairLoss: 'iHairLoss',
+  iDerm: 'iDerm',
+  iScar: 'iScar',
+  iSocial: 'iSocial',
+  iSocial2: 'iSocial2',
+  iBlog: 'iBlog',
+  iBlog2: 'iBlog2',
+  iFaq: 'iFaq',
+  iFaq2: 'iFaq2',
+  iReviews: 'iReviews',
+  iReviews2: 'iReviews2',
+  nLaser: 'nLaser',
+  nLaser2: 'nLaser2',
+  nPig2: 'nPig2',
+  nHairF: 'nHairF',
+  nSkin: 'nSkin',
+  nDandruff: 'nDandruff',
+  nRoutine: 'nRoutine',
+  nRoutine2: 'nRoutine2',
+  nMirror: 'nMirror',
+  nVlog: 'nVlog',
+  nFaceW: 'nFaceW',
 };
 
 export const CONTACT = {
@@ -152,12 +223,21 @@ export const CONTACT = {
  *   (e.g. rating: 4.9, count: 37, checkedOn: '2026-10-05'). With GOOGLE_PLACES_API_KEY set on the
  *   server, the live rating is used instead.
  */
+/*
+ * "Why patients trust us" numbers (home page, below the banner). Use only real figures from the clinic.
+ * treatmentsDone: total treatments done (figure given by the clinic) — shows as "20,000+".
+ * null = that tile shows "Treatments offered" (the number of treatments on the site) instead.
+ */
+export const CLINIC_STATS = {
+  treatmentsDone: 20000,
+};
+
 export const GOOGLE = {
   listingUrl: 'https://www.google.com/maps?cid=5173265861907796516',
   reviewUrl: 'https://www.google.com/maps?cid=5173265861907796516',
-  rating: null,
-  count: null,
-  checkedOn: null,
+  rating: 4.9,
+  count: 36,
+  checkedOn: '2026-11-14',
 };
 
 /* Staff member who receives appointment calls, WhatsApp messages and enquiries */
@@ -177,10 +257,6 @@ export const HOURS = [
 /* Shown with the opening hours */
 export const HOURS_NOTE =
   'Planning a visit around a festival? The clinic may occasionally close for festivals or family emergencies — please call to confirm, and check our WhatsApp status for the latest updates.';
-
-/* Shown when someone visits the website while the clinic is closed */
-export const CLOSED_NOTE =
-  'You can still book online, send a question or leave us a WhatsApp message — we’ll get back to you once we open.';
 
 /* Getting here */
 export const DIRECTIONS = [

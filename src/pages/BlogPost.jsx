@@ -96,7 +96,7 @@ export default function BlogPostPage() {
               {author && (
                 <>
                   <span>{author.role}</span>
-                  <Link to="/doctors" className="text-link">
+                  <Link to="/about#doctor" className="text-link">
                     View profile <Icon name="arrow" size={16} />
                   </Link>
                 </>

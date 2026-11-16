@@ -154,8 +154,8 @@ export default function Social() {
         eyebrow="Follow Us"
         title="Our social media"
         text="Watch our educational videos, follow our skin care tips, and stay connected with THE MIRRORS DERMATOLOGY CLINIC."
-        image={IMG.dq2}
-        image2={IMG.dq5}
+        image={IMG.nVlog}
+        image2={IMG.nRoutine2}
       />
 
       {loading && !data && <p className="state container">Loading…</p>}

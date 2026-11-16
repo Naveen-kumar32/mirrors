@@ -13,8 +13,7 @@ export default function ContactPage() {
         eyebrow="Contact"
         title="We’d love to see you"
         text="Call, WhatsApp or book online — consultations are by appointment."
-        image={IMG.clinicReception}
-        image2={IMG.clinicWaiting}
+        background={IMG.iFaq}
       />
       <Contact />
       <section className="section">

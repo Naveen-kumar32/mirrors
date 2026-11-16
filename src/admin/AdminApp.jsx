@@ -55,6 +55,7 @@ function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     setUser(await api('/auth/login', { method: 'POST', body: { email, password } }));
+    setOffline(false); // the server answered, so it is reachable
   }, []);
 
   const logout = useCallback(async () => {

@@ -13,8 +13,8 @@ export default function FaqPage() {
         eyebrow="FAQs"
         title="Questions, answered"
         text="Everything you may want to know before your visit — appointments, treatments, fees and more."
-        image={IMG.dq4}
-        image2={IMG.dq3}
+        image={IMG.nMirror}
+        image2={IMG.nSkin}
       />
 
       <section className="section">
