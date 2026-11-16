@@ -271,18 +271,13 @@ const socialCols = db.prepare('PRAGMA table_info(social_posts)').all().map((c) =
 // Local copy of an Instagram / Facebook post's picture (Meta's own image links expire)
 if (!socialCols.includes('image')) db.exec("ALTER TABLE social_posts ADD COLUMN image TEXT NOT NULL DEFAULT ''");
 
-/* First run: seed a sample social post so the page isn't blank */
-if (db.prepare('SELECT COUNT(*) AS n FROM social_posts').get().n === 0) {
+/* Once: remove the sample YouTube video that used to be added on first run (it isn't the clinic's).
+   Only that exact sample is matched — videos added by staff are never touched. */
+if (!db.prepare("SELECT 1 FROM settings WHERE key = 'sample_social_removed'").get()) {
   db.prepare(
-    `INSERT INTO social_posts (platform, url, embed_id, title, description)
-     VALUES (?, ?, ?, ?, ?)`
-  ).run(
-    'youtube',
-    'https://www.youtube.com/watch?v=OUxfQhpJ5QY',
-    'OUxfQhpJ5QY',
-    'How to treat acne — dermatologist explains',
-    'A dermatologist breaks down the causes of acne and the most effective treatments available.'
-  );
+    "DELETE FROM social_posts WHERE embed_id = 'OUxfQhpJ5QY' AND title = 'How to treat acne — dermatologist explains'"
+  ).run();
+  db.prepare("INSERT INTO settings (key, value) VALUES ('sample_social_removed', 'done')").run();
 }
 
 /* Starter blog articles (seed-posts.json): health articles based on CDC, MedlinePlus and NIAMS */
