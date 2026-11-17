@@ -17,7 +17,7 @@ export const SERVICES = [
     aftercare:
       'Use sunscreen regularly, moisturize well, avoid scrubbing/peeling the skin and temporarily avoid irritating active ingredients as advised.',
     image: IMG.cPeel,
-    image2: IMG.tChemPeel,
+    image2: IMG.cPeel,
   },
   {
     slug: 'laser-hair-removal',
@@ -43,7 +43,7 @@ export const SERVICES = [
     limitations: 'Complete scar removal is usually not possible; multiple sessions and combination treatments may be required.',
     aftercare: 'Strict sun protection, gentle skincare, avoid picking/scratching and follow prescribed post-procedure medications.',
     image: IMG.cAcne,
-    image2: IMG.sScar,
+    image2: IMG.cAcne,
   },
   {
     slug: 'keloid-treatment',
@@ -68,7 +68,7 @@ export const SERVICES = [
     aftercare:
       'Daily broad-spectrum sunscreen, preferably with visible-light protection when appropriate, regular moisturization and adherence to the prescribed skincare routine.',
     image: IMG.cPig,
-    image2: IMG.sPig,
+    image2: IMG.cPig,
   },
   {
     slug: 'prp-gfc',
@@ -96,7 +96,7 @@ export const SERVICES = [
       'It is primarily a supportive skin-care procedure and does not replace treatment for acne, melasma or significant scarring.',
     aftercare: 'Gentle cleansing, moisturization and daily sunscreen; avoid harsh exfoliation immediately after treatment.',
     image: IMG.cMedi,
-    image2: IMG.fMedi,
+    image2: IMG.cMedi,
   },
   {
     slug: 'ear-lobe-repair',
@@ -110,7 +110,7 @@ export const SERVICES = [
     aftercare:
       'Keep the wound clean and dry as advised, attend follow-up visits, avoid heavy earrings and follow wound-care instructions carefully.',
     image: IMG.cEar,
-    image2: IMG.iEar,
+    image2: IMG.cEar,
   },
   {
     slug: 'mole-wart-cyst-skin-tag-removal',
@@ -124,7 +124,7 @@ export const SERVICES = [
     aftercare:
       'Keep the treated area clean, follow wound-care instructions, avoid picking the site and use sun protection to minimize post-inflammatory pigmentation.',
     image: IMG.cMole,
-    image2: IMG.tMole2,
+    image2: IMG.cMole,
   },
 ];
 

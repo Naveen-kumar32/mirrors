@@ -183,6 +183,7 @@ export const IMG = {
   // version of the feedback graphic for the reviews banner
   cFeedbackSoft: 'cFeedbackSoft', // round, soft-edged (transparent corners)
   nLaser: 'nLaser',
+  nLaserFlip: 'nLaserFlip', // mirrored copy for the Treatments banner, so the treatment sits on the right (clear of the text)
   nLaser2: 'nLaser2',
   nPig2: 'nPig2',
   nHairF: 'nHairF',
