@@ -1631,15 +1631,15 @@ button {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-/* ---------- Home: evening appointments ----------
+/* ---------- Home: why the clinic is open 3 – 7 pm ----------
    A full-width "dusk" band (edge to edge): the sky fades from deep navy to a warm horizon, a setting
-   sun glows in the bottom-right corner. Message on the left, a frosted "7 pm" clock card on the right. */
+   sun glows in the bottom-right corner. Message on the left, a frosted "3–7 pm" clock card on the right. */
 .dusk {
   --warm: #f6c58f;
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  padding: clamp(72px, 9vw, 128px) 0;
+  padding: clamp(64px, 8vw, 104px) 0;
   color: rgba(232, 238, 246, 0.88);
   background: linear-gradient(180deg, #0d2443 0%, #163d68 38%, #2d6688 66%, #8f8f97 86%, #e6b48a 100%);
 }
@@ -1692,7 +1692,7 @@ button {
 .dusk__grid {
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.85fr);
-  gap: clamp(32px, 6vw, 96px);
+  gap: 40px clamp(32px, 6vw, 96px);
   align-items: center;
 }
 .dusk__kicker {
@@ -1746,10 +1746,30 @@ button {
   border-color: #fff;
   background: rgba(255, 255, 255, 0.1);
 }
-.dusk__note {
-  margin: 14px 0 0;
-  font-size: 13px;
-  color: rgba(232, 238, 246, 0.62);
+/* who the hours are planned for */
+.dusk__for {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin: 26px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.dusk__for li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  color: #fff;
+}
+.dusk__for span {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(246, 197, 143, 0.45);
+  border-radius: 50%;
+  color: var(--warm);
 }
 /* frosted clock card */
 .dusk__clock {
@@ -1777,9 +1797,10 @@ button {
   gap: 6px;
   margin: 6px 0 22px;
   font-family: var(--serif);
-  font-size: clamp(6rem, 11vw, 9rem);
+  font-size: clamp(4.8rem, 8.5vw, 7.4rem);
   font-weight: 500;
   line-height: 0.95;
+  white-space: nowrap;
   color: #fff;
 }
 .dusk__time small {
@@ -1810,11 +1831,103 @@ button {
   color: #fff;
   text-align: right;
 }
-.dusk__hours .is-evening b {
+.dusk__hours li:first-child b {
   color: var(--warm);
+}
+.dusk__hours .is-off b {
+  color: rgba(232, 238, 246, 0.6);
+}
+/* day bar: 9 am – 9 pm, with the clinic's 3 – 7 pm glowing */
+.dusk__day {
+  margin: 0 0 22px;
+}
+.dusk__track {
+  position: relative;
+  height: 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.14);
+}
+.dusk__open {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 33.333%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--warm), #f1a26d);
+  box-shadow: 0 0 18px rgba(246, 197, 143, 0.55);
+  font-size: 0; /* label is for the eye only via the hours list */
+}
+.dusk__ticks {
+  position: relative;
+  height: 16px;
+  margin-top: 8px;
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: rgba(232, 238, 246, 0.55);
+}
+/* each label centred under its time; the first and last stay inside the bar */
+.dusk__ticks span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.dusk__ticks span:first-child {
+  transform: none;
+}
+.dusk__ticks span:last-child {
+  transform: translateX(-100%);
+}
+/* note tiles along the bottom */
+.dusk__notes {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: clamp(8px, 2vw, 24px) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.dusk__notes li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 20px;
+  background: rgba(10, 30, 58, 0.35);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.dusk__note-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(246, 197, 143, 0.16);
+  color: var(--warm);
+}
+.dusk__notes strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 15.5px;
+  font-weight: 500;
+  color: #fff;
+}
+.dusk__notes p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(232, 238, 246, 0.75);
 }
 @media (max-width: 900px) {
   .dusk__grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .dusk__notes {
     grid-template-columns: minmax(0, 1fr);
   }
   .dusk__sun {
