@@ -277,10 +277,10 @@ button {
   color: var(--muted);
 }
 .header__nav {
-  /* takes the space between the logo and the ☰ button, links centred in it */
+  /* takes the space between the logo and the ☰ button, links grouped on the right next to ☰ */
   flex: 1;
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
   gap: clamp(14px, 2vw, 32px);
   white-space: nowrap;
 }
@@ -2063,6 +2063,10 @@ button {
 }
 .greviews__row::-webkit-scrollbar {
   display: none;
+}
+/* the looping copy of the cards sits in the same row, as if the cards were listed twice */
+.greviews__copies {
+  display: contents;
 }
 .gcard {
   display: flex;

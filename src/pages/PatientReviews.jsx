@@ -201,7 +201,7 @@ export default function PatientReviewsPage() {
               <span className="stars" aria-hidden="true">★★★★★</span>
               <p>
                 {data?.total
-                  ? `Based on ${data.total} patient ${data.total === 1 ? 'review' : 'reviews'}`
+                  ? 'Average rating from our patients'
                   : error?.offline
                     ? 'Patient reviews coming soon'
                     : 'No reviews yet — be the first!'}
@@ -214,8 +214,7 @@ export default function PatientReviewsPage() {
                   <strong>
                     {google.rating.toFixed(1)} <span className="stars">★</span> on Google
                   </strong>
-                  {google.count} reviews
-                  {google.checkedAt && <> · checked {formatDate(google.checkedAt)}</>}
+                  Read our Google reviews
                 </span>
                 <Icon name="arrow" size={16} />
               </a>

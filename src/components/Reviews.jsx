@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useApi, useGoogle, useReviewSummary } from '../backend';
 import { Eyebrow } from './ui';
 import { ReviewModal, ReviewPhotos, ReviewReply } from './ReviewCard';
@@ -104,17 +104,58 @@ export default function Reviews() {
   const google = useGoogle();
   const rowRef = useRef(null);
   const [open, setOpen] = useState(null); // review shown in full
+  const [paused, setPaused] = useState(false); // mouse over / keyboard focus inside the carousel
   const quotes = data || [];
+
+  // Endless loop: the cards are followed by a copy of themselves. Moving forward past the last review
+  // slides straight on to the first one again (its copy); once the slide has settled, the row quietly
+  // jumps back to the real first card — the same picture — so it never runs out and never rewinds.
+  const loop = quotes.length > 1;
+  const step = () => {
+    const card = rowRef.current?.querySelector('.gcard');
+    return (card?.offsetWidth || 300) + 18;
+  };
+  const setWidth = () => quotes.length * step();
+  const jump = (left) => {
+    const row = rowRef.current;
+    row.style.scrollSnapType = 'none'; // move instantly, without snapping or animating
+    row.scrollTo({ left, behavior: 'instant' });
+    requestAnimationFrame(() => (row.style.scrollSnapType = ''));
+  };
+  const settle = useRef(0);
+  const onRowScroll = () => {
+    if (!loop) return;
+    clearTimeout(settle.current);
+    settle.current = setTimeout(() => {
+      const row = rowRef.current;
+      if (row && row.scrollLeft >= setWidth() - 4) jump(row.scrollLeft - setWidth());
+    }, 150);
+  };
+
+  // slide forward on its own every few seconds. Waits while the visitor is pointing at / tabbing through
+  // the cards, reading one in full, or has the tab in the background — and never runs for people who
+  // prefer reduced motion.
+  useEffect(() => {
+    if (!loop || paused || open) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const id = setInterval(() => {
+      if (document.hidden) return;
+      rowRef.current?.scrollBy({ left: step(), behavior: 'smooth' });
+    }, 4500);
+    return () => clearInterval(id);
+  }, [loop, paused, open]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (!quotes.length) return null;
 
   const rating = google.has ? google.rating : summary?.average || 5;
-  const count = google.has ? google.count : summary?.total || quotes.length;
   const label = rating >= 4.5 ? 'Excellent' : rating >= 4 ? 'Very good' : 'Good';
 
   const scroll = (dir) => {
     const row = rowRef.current;
-    const card = row?.querySelector('.gcard');
-    row?.scrollBy({ left: dir * ((card?.offsetWidth || 300) + 18), behavior: 'smooth' });
+    if (!row) return;
+    // going back from the first review: hop to its copy first, so the last review slides in from the left
+    if (dir < 0 && loop && row.scrollLeft < 4) jump(setWidth());
+    requestAnimationFrame(() => row.scrollBy({ left: dir * step(), behavior: 'smooth' }));
   };
 
   return (
@@ -133,9 +174,8 @@ export default function Reviews() {
             <p className="gsummary__label">{label}</p>
             <GStars value={rating} size={26} />
             <p className="gsummary__count">
-              Based on{' '}
               <a href={google.url} target="_blank" rel="noreferrer">
-                {count} reviews
+                Read our Google reviews
               </a>
             </p>
             <p className="gsummary__google" aria-label="Google">
@@ -152,16 +192,31 @@ export default function Reviews() {
           </aside>
 
           {/* review cards */}
-          <div className="greviews__carousel">
+          <div
+            className="greviews__carousel"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
+            onFocus={() => setPaused(true)}
+            onBlur={() => setPaused(false)}
+            onTouchStart={() => setPaused(true)}
+          >
             {quotes.length > 1 && (
               <button type="button" className="greviews__arrow greviews__arrow--prev" onClick={() => scroll(-1)} aria-label="Previous reviews">
                 ‹
               </button>
             )}
-            <div className="greviews__row" ref={rowRef}>
+            <div className="greviews__row" ref={rowRef} onScroll={onRowScroll}>
               {quotes.map((r) => (
                 <GReviewCard key={r.id} review={r} onOpen={() => setOpen(r)} />
               ))}
+              {/* the copy that makes the loop endless — hidden from screen readers and the keyboard */}
+              {loop && (
+                <div className="greviews__copies" aria-hidden="true" inert>
+                  {quotes.map((r) => (
+                    <GReviewCard key={`copy-${r.id}`} review={r} onOpen={() => setOpen(r)} />
+                  ))}
+                </div>
+              )}
             </div>
             {quotes.length > 1 && (
               <button type="button" className="greviews__arrow greviews__arrow--next" onClick={() => scroll(1)} aria-label="More reviews">
