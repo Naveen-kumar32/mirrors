@@ -75,10 +75,9 @@ export default function GalleryPage() {
     <Page title="Gallery">
       <PageHeader
         eyebrow="Gallery"
-        title="Step inside THE MIRRORS"
+        title={<>Step inside <em>THE MIRRORS</em></>}
         text="A look around our clinic, our treatments and our team."
         image={IMG.clinicProcedure}
-        image2={IMG.clinicWaiting}
       />
 
       <section className="section section--sand" ref={gridTop} style={{ scrollMarginTop: 'var(--header-h)' }}>

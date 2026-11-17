@@ -54,7 +54,7 @@ export default function Hero() {
         <h1 className="hero__title">
           Rooted in science,
           <br />
-          <em>reflected</em> in your skin.
+          <em>Reflected</em> in your skin.
         </h1>
         <p className="hero__text">
           A calm, welcoming dermatology clinic in Neelambur, Coimbatore — here to understand your skin,

@@ -10,27 +10,49 @@ const POINTS = [
 ];
 
 /*
- * Banner at the top of every inner page.
- * Left: breadcrumbs, title, text, actions. Right: a small photo collage
- * (main photo at its natural shape and a round inset photo).
+ * Banner at the top of every inner page — light "editorial" design, in the same spirit as the home hero:
+ *   • a full-width cream banner; the photo fills the right side right up to the screen edge and
+ *     melts softly into the cream behind the text (no hard frame)
+ *   • left: breadcrumbs, a large navy title with one highlighted word, the intro, Book / Call
+ *   • along the bottom: a frosted-glass strip with the clinic's three promises, floating over the photo
+ * On phones the photo sits on top, fading into the cream where the text begins.
  */
 // `image` is a built-in photo name (see IMG) or a full URL such as an uploaded blog cover
 const src = (image, w) => (image.startsWith('/') || image.startsWith('http') ? image : img(image, w));
 
-// `background`: one photo filling the whole banner behind the text, slightly blurred (Contact page)
-// No `image` and no `background`: text only, full width (e.g. Our Doctor until the clinic sends a photo)
-export default function PageHeader({ eyebrow, title, text, image, image2, background, crumbs = [], preset, cover = false }) {
+// `image` = EMPTY: keeps the photo area but shows a soft branded fill (logo watermark) until a photo is chosen.
+// `background` (Contact page) is shown in the photo area the same way as `image`.
+// No image at all: text only.
+export const EMPTY = 'empty';
+// `fit` = { bg: '#colour' }: show the whole image (no cropping) on that background colour — for graphics with text,
+//   such as the blog word cloud, whose plain background then fills the rest of the photo area.
+export default function PageHeader({ eyebrow, title, text, image, background, fit, crumbs = [], preset }) {
   const chat = useChat();
-  const mods = [cover && 'phead--cover', background && 'phead--bg', !image && !background && 'phead--text'].filter(Boolean).join(' ');
+  const photo = image || background;
+  const builtIn = photo && photo !== EMPTY && !photo.startsWith('/') && !photo.startsWith('http');
+
   return (
-    <section className={`phead ${mods}`}>
-      {background && (
-        <div className="phead__bg" aria-hidden="true">
-          <img src={src(background, 1600)} alt="" fetchPriority="high" />
+    <section className={`ph${photo ? '' : ' ph--text'}`}>
+      {photo && (
+        <div className="ph__media" aria-hidden="true">
+          {photo === EMPTY ? (
+            <div className="ph__empty" />
+          ) : (
+            <img
+              className={fit ? 'is-fit' : undefined}
+              style={fit ? { background: fit.bg } : undefined}
+              src={src(photo, 1600)}
+              srcSet={builtIn ? [480, 960, 1600].map((w) => `${img(photo, w)} ${w}w`).join(', ') : undefined}
+              sizes="(max-width: 860px) 100vw, 62vw"
+              alt=""
+              fetchPriority="high"
+            />
+          )}
         </div>
       )}
-      <div className="container phead__grid">
-        <div className="phead__content">
+
+      <div className="container ph__inner">
+        <div className="ph__content">
           <nav className="crumbs" aria-label="Breadcrumb">
             <Link to="/">Home</Link>
             {crumbs.map((c) => (
@@ -55,29 +77,16 @@ export default function PageHeader({ eyebrow, title, text, image, image2, backgr
               {CONTACT.phone}
             </a>
           </div>
-          <ul className="phead__points">
-            {POINTS.map((p) => (
-              <li key={p.text}>
-                <Icon name={p.icon} size={16} /> {p.text}
-              </li>
-            ))}
-          </ul>
         </div>
 
-        {image && (
-          <div className="phead__collage">
-            <span className="phead__shape" aria-hidden="true" />
-            <span className="phead__dots" aria-hidden="true" />
-            <figure className="phead__main">
-              <img src={src(image, 1200)} alt="" fetchPriority="high" />
-            </figure>
-            {image2 && (
-              <figure className="phead__inset">
-                <img src={src(image2, 480)} alt="" />
-              </figure>
-            )}
-          </div>
-        )}
+        <ul className="ph__points">
+          {POINTS.map((p) => (
+            <li key={p.text}>
+              <Icon name={p.icon} size={16} />
+              {p.text}
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   );

@@ -59,7 +59,6 @@ export default function BlogPostPage() {
         title={post.title}
         text={`${formatDate(post.publishedAt)} · ${post.readTime} · By ${post.author}`}
         image={post.cover}
-        cover
         crumbs={[{ to: '/blog', label: 'Blog' }]}
       />
 
@@ -120,7 +119,7 @@ export default function BlogPostPage() {
             <header className="section__head">
               <Eyebrow>Keep reading</Eyebrow>
               <h2 className="title reveal">
-                More <em>articles</em>
+                More <em>Articles</em>
               </h2>
             </header>
             <div className="treatments">

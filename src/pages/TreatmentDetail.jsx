@@ -27,10 +27,14 @@ export default function TreatmentDetail() {
     <Page title={s.title}>
       <PageHeader
         eyebrow={s.title}
-        title={s.title}
+        title={
+          // the condition (first word) highlighted, like the other page titles: "<em>Keloid</em> Treatment"
+          <>
+            <em>{s.title.split(' ')[0]}</em> {s.title.split(' ').slice(1).join(' ')}
+          </>
+        }
         text={s.text}
         image={s.image}
-        image2={s.image2}
         preset={preset}
         crumbs={[{ to: '/treatments', label: 'Treatments' }]}
       />
@@ -40,7 +44,7 @@ export default function TreatmentDetail() {
           <div className="detail__text">
             <Eyebrow>About this treatment</Eyebrow>
             <h2 className="title reveal">
-              What it <em>involves</em>
+              What it <em>Involves</em>
             </h2>
             <p className="reveal">{s.text}</p>
             <p className="reveal detail__ideal">
@@ -61,7 +65,7 @@ export default function TreatmentDetail() {
           <header className="section__head">
             <Eyebrow>Good to know</Eyebrow>
             <h2 className="title reveal">
-              Before you <em>decide</em>
+              Before you <em>Decide</em>
             </h2>
           </header>
           <div className="values">
@@ -84,7 +88,7 @@ export default function TreatmentDetail() {
           <header className="section__head">
             <Eyebrow>Explore</Eyebrow>
             <h2 className="title reveal">
-              Other <em>treatments</em>
+              Other <em>Treatments</em>
             </h2>
           </header>
           <div className="treatments">

@@ -19,7 +19,7 @@ export default function About({ link = false, full = false }) {
           <h2 className="title reveal">
             Honest, scientific
             <br />
-            <em>dermatological</em> care.
+            <em>Dermatological</em> care.
           </h2>
           {full ? (
             ABOUT_FULL.map((p) => (

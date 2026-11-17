@@ -178,6 +178,10 @@ export const IMG = {
   iFaq2: 'iFaq2',
   iReviews: 'iReviews',
   iReviews2: 'iReviews2',
+  cFeedback: 'cFeedback', // clinic-supplied "Your experience matters" graphic (reviews banner)
+  cBlogCloud: 'cBlogCloud', // clinic-supplied word cloud
+  // version of the feedback graphic for the reviews banner
+  cFeedbackSoft: 'cFeedbackSoft', // round, soft-edged (transparent corners)
   nLaser: 'nLaser',
   nLaser2: 'nLaser2',
   nPig2: 'nPig2',
@@ -193,6 +197,16 @@ export const IMG = {
   sScar: 'sScar',
   sPig: 'sPig',
   sMedi: 'sMedi',
+  // Treatment photos supplied by the clinic (public/images/*.png, resized to WebP)
+  cAcne: 'cAcne',
+  cPeel: 'cPeel',
+  cEar: 'cEar',
+  cHairLoss: 'cHairLoss',
+  cMedi: 'cMedi',
+  cMole: 'cMole',
+  cPrp: 'cPrp',
+  cPig: 'cPig',
+  cVitiligo: 'cVitiligo',
 };
 
 export const CONTACT = {

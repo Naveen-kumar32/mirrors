@@ -21,8 +21,7 @@ const RULES = [
   ['.about__text', 'right'],
   ['.about__badge', 'drop'],
   ['.cstat', 'flip', true],
-  ['.ahours__tag', 'swing'],
-  ['.ahours__body', 'unfold'],
+  ['.dusk__hours li', 'up', true],
   ['.why__head', 'left'],
   ['.why__body', 'blur'],
   ['.treatment', 'flip', true],
@@ -51,7 +50,6 @@ const RULES = [
   // headings rise out from behind a mask
   ['.title', 'mask'],
   ['.phead__title', 'mask'],
-  ['.ahours__title', 'mask'],
   // closing call-to-action + footer
   ['.cta__title', 'blur'],
   ['.cta__actions', 'drop'],
@@ -60,11 +58,8 @@ const RULES = [
 
 // Decorative bits that drift at their own speed while scrolling (depth / parallax)
 const PARALLAX = [
-  ['.phead__inset', -0.12],
   ['.phead__dots', 0.14],
-  ['.phead__shape', 0.07],
   ['.about__badge', -0.16],
-  ['.ahours__icon', -0.12],
 ];
 // Cards that lean towards the mouse pointer
 const TILT = '.gcard, .cstat, .post-card, .facility, .rcard, .docfeature, .short, .scard';

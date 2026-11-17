@@ -55,7 +55,7 @@ export default function ClinicStats() {
         <header className="section__head cstats__head">
           <Eyebrow>Why patients trust us</Eyebrow>
           <h2 className="title reveal">
-            Raising the standard of <em>skin care</em> in Coimbatore
+            Raising the standard of <em>Skin&nbsp;care</em> in Coimbatore
           </h2>
           <p className="reveal">
             Our reputation is built on careful diagnosis, honest advice and results our patients are happy to talk about.

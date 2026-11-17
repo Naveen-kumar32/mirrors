@@ -11,7 +11,7 @@ export function WhyChoose() {
         <div className="why__head">
           <Eyebrow>Why choose this clinic?</Eyebrow>
           <h2 className="title reveal">
-            Honest care, backed by <em>science</em>
+            Honest care, <span style={{ whiteSpace: 'nowrap' }}>backed by <em>Science</em></span>
           </h2>
         </div>
         <div className="why__body">
@@ -103,7 +103,7 @@ export function FeaturedTreatments() {
           <div className="tjourney__intro">
             <p className="eyebrow">Featured treatments</p>
             <h2 className="title">
-              Care for <em>skin, hair</em> &amp; nails
+              Care for <em>Skin, hair</em> &amp; nails
             </h2>
             <p className="tjourney__lead">Every treatment is planned after an individual assessment by our dermatologist.</p>
             {!still && (
@@ -132,7 +132,7 @@ export function FeaturedTreatments() {
           <div className="tjourney__end">
             <span>Healthy</span>
             <span className="tjourney__outline">skin,</span>
-            <em>for life.</em>
+            <em>For life.</em>
             <Link to="/treatments" className="tjourney__more">
               All treatments <Icon name="arrow" size={18} />
             </Link>

@@ -48,10 +48,10 @@ export default function BlogPage() {
     <Page title="Blog">
       <PageHeader
         eyebrow="Blog"
-        title="Skin advice from our dermatologist"
+        title={<>Skin advice from our <em>Dermatologist</em></>}
         text="Simple, trustworthy guides on skin, hair and treatments — from the clinic that treats you."
-        image={IMG.iBlog}
-        image2={IMG.nRoutine}
+        image={IMG.cBlogCloud}
+        fit={{ bg: 'transparent' }}
       />
 
       <section className="section section--sand">

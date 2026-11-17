@@ -35,10 +35,9 @@ export default function AboutPage() {
     <Page title="About">
       <PageHeader
         eyebrow="About"
-        title="Care that begins with understanding you"
+        title={<>Care that begins with <em>Understanding</em> you</>}
         text="Meet the clinic and the dermatologist behind it — evidence-based, patient-tailored care in Neelambur, Coimbatore."
         image={IMG.clinicReception}
-        image2={IMG.clinicWaiting}
       />
       <About full />
 
@@ -47,7 +46,7 @@ export default function AboutPage() {
           <header className="section__head">
             <Eyebrow>Our doctor</Eyebrow>
             <h2 className="title reveal">
-              Meet your <em>dermatologist</em>
+              Meet your <em>Dermatologist</em>
             </h2>
           </header>
           <div className="profiles">
@@ -108,7 +107,7 @@ export default function AboutPage() {
             <header className="section__head">
               <Eyebrow>Facilities &amp; equipment</Eyebrow>
               <h2 className="title reveal">
-                Treatments done <em>in-house</em>
+                Treatments done <em>In-house</em>
               </h2>
             </header>
             <div className="facilities">
@@ -132,7 +131,7 @@ export default function AboutPage() {
             <div className="awards__head">
               <Eyebrow>Awards &amp; accreditations</Eyebrow>
               <h2 className="title reveal">
-                Trained, recognised <em>&amp; registered</em>
+                Trained, recognised <em>&amp; Registered</em>
               </h2>
               <p className="reveal">Dr. Saranya Rajee Saminathan’s academic awards, qualifications and professional memberships.</p>
             </div>

@@ -136,5 +136,17 @@
  "nFaceW": "pexels:27902428",
  "sScar": "pexels:34297951",
  "sPig": "unsplash:1740726442397-e84e559a4f7d",
- "sMedi": "unsplash:1741769766402-7b44a4e77bdc"
+ "sMedi": "unsplash:1741769766402-7b44a4e77bdc",
+ "evening": "pexels:19929573",
+ "cAcne": "clinic:treatment-acne.png",
+ "cPeel": "clinic:treatment-chemical-peel.png",
+ "cEar": "clinic:treatment-ear-lobe-repair.png",
+ "cHairLoss": "clinic:treatment-hair-loss.png",
+ "cMedi": "clinic:treatment-medifacial.png",
+ "cMole": "clinic:treatment-mole-skin-tag-removal.png",
+ "cPrp": "clinic:treatment-prp-gfc.png",
+ "cPig": "clinic:treatment-pigmentation.png",
+ "cVitiligo": "clinic:treatment-vitiligo.png",
+ "cFeedback": "clinic:reviews-your-experience-matters.png",
+ "cBlogCloud": "clinic:blog-word-cloud.png"
 }

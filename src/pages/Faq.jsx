@@ -1,7 +1,7 @@
-import { CONTACT, FAQ_LIST, IMG } from '../data';
+import { CONTACT, FAQ_LIST } from '../data';
 import { useChat } from '../chat/ChatProvider';
 import Page from '../components/Page';
-import PageHeader from '../components/PageHeader';
+import PageHeader, { EMPTY } from '../components/PageHeader';
 import Faqs from '../components/Faqs';
 import { Icon } from '../components/ui';
 
@@ -11,10 +11,9 @@ export default function FaqPage() {
     <Page title="FAQs">
       <PageHeader
         eyebrow="FAQs"
-        title="Questions, answered"
+        title={<>Questions, <em>Answered</em></>}
         text="Everything you may want to know before your visit — appointments, treatments, fees and more."
-        image={IMG.nMirror}
-        image2={IMG.nSkin}
+        image={EMPTY}
       />
 
       <section className="section">

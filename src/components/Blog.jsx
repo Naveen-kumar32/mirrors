@@ -35,7 +35,7 @@ export default function BlogPreview({ count = 3 }) {
         <header className="section__head">
           <Eyebrow>From our blog</Eyebrow>
           <h2 className="title reveal">
-            Skin <em>advice</em> from our clinic
+            Skin <em>Advice</em> from our clinic
           </h2>
         </header>
         <div className="treatments">

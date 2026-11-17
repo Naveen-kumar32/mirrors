@@ -33,7 +33,7 @@ export default function HomeShorts() {
           <div>
             <Eyebrow>YouTube Shorts</Eyebrow>
             <h2 className="title reveal">
-              Skin tips in <em>under a minute</em>
+              Skin tips in <em>Under a&nbsp;minute</em>
             </h2>
             <p className="shorts__text reveal">Quick answers from our dermatologist to the questions patients ask most.</p>
           </div>

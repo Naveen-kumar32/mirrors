@@ -9,10 +9,9 @@ export default function TreatmentsPage() {
     <Page title="Treatments">
       <PageHeader
         eyebrow="Treatments"
-        title="Treatments for skin, hair and nails"
+        title={<>Treatments for <em>Skin, hair</em> and nails</>}
         text="Every procedure is planned after an individual skin assessment by our dermatologist."
         image={IMG.nLaser}
-        image2={IMG.tChemPeel}
       />
       <Treatments heading={false} />
       <CTA title="Not sure which treatment you need?" />

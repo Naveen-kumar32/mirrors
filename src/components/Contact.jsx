@@ -10,7 +10,7 @@ export default function Contact() {
         <div className="contact__info">
           <Eyebrow>Visit us</Eyebrow>
           <h2 className="title reveal">
-            Book your <em>visit</em>
+            Book your <em>Visit</em>
           </h2>
           <p className="reveal">
             Call or WhatsApp us, or book online. The doctor sees patients by appointment, so please book ahead.

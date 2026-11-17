@@ -8,7 +8,7 @@ export default function NotFound() {
         <div className="container">
           <p className="eyebrow">Error 404</p>
           <h1 className="title">
-            This page could not be <em>found</em>
+            This page could not be <em>Found</em>
           </h1>
           <Link to="/" className="btn btn--navy">
             Back to home

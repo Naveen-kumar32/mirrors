@@ -11,7 +11,7 @@ export default function ContactPage() {
     <Page title="Contact">
       <PageHeader
         eyebrow="Contact"
-        title="We’d love to see you"
+        title={<>We’d love to <em>See you</em></>}
         text="Call, WhatsApp or book online — consultations are by appointment."
         background={IMG.iFaq}
       />
@@ -21,7 +21,7 @@ export default function ContactPage() {
           <header className="section__head">
             <Eyebrow>FAQ</Eyebrow>
             <h2 className="title reveal">
-              Before you <em>visit</em>
+              Before you <em>Visit</em>
             </h2>
           </header>
           <Faqs items={FAQS} />

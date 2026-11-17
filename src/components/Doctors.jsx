@@ -76,7 +76,7 @@ export default function Doctors() {
         <header className="section__head">
           <Eyebrow>Our doctor</Eyebrow>
           <h2 className="title reveal">
-            Meet your <em>dermatologist</em>
+            Meet your <em>Dermatologist</em>
           </h2>
         </header>
         <Link to="/about#doctor" className="docfeature reveal">

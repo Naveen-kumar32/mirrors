@@ -187,10 +187,10 @@ export default function PatientReviewsPage() {
     <Page title="Patient reviews">
       <PageHeader
         eyebrow="Patient reviews"
-        title="What our patients say"
+        title={<>What our <em>Patients</em> say</>}
         text="Honest words from people we have cared for. Visited us? We’d love to hear from you."
-        image={IMG.iReviews2}
-        image2={IMG.nFaceW}
+        image={IMG.cFeedbackSoft}
+        fit={{ bg: 'transparent' }}
       />
 
       <section className="section">
@@ -255,7 +255,7 @@ export default function PatientReviewsPage() {
           <header className="section__head">
             <Eyebrow>Patient stories</Eyebrow>
             <h2 className="title reveal">
-              Real <em>experiences</em>
+              Real <em>Experiences</em>
             </h2>
           </header>
 

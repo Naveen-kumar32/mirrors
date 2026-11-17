@@ -123,7 +123,7 @@ export default function Reviews() {
         <header className="section__head greviews__head">
           <Eyebrow>Patient stories</Eyebrow>
           <h2 className="title reveal">
-            Kind words from our <em>patients</em>
+            Kind words from our <em>Patients</em>
           </h2>
         </header>
 
