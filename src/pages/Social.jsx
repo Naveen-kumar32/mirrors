@@ -1,11 +1,11 @@
 import { useRef, useState } from 'react';
 import { useApi } from '../backend';
 import Page from '../components/Page';
-import PageHeader, { EMPTY } from '../components/PageHeader';
+import PageHeader from '../components/PageHeader';
 import Reviews from '../components/Reviews';
 import CTA from '../components/CTA';
 import { Eyebrow, Icon, useReveal } from '../components/ui';
-import { CONTACT } from '../data';
+import { CONTACT, IMG } from '../data';
 
 const PER_PAGE = 8;
 // Quick links (Videos · Instagram · Facebook · Reviews) under the banner — hidden for now, set to true to show them
@@ -154,7 +154,7 @@ export default function Social() {
         eyebrow="Follow Us"
         title={<>Our <em>Social</em> media</>}
         text="Watch our educational videos, follow our skin care tips, and stay connected with THE MIRRORS DERMATOLOGY CLINIC."
-        image={EMPTY}
+        image={IMG.hSocial}
       />
 
       {loading && !data && <p className="state container">Loading…</p>}

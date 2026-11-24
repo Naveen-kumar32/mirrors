@@ -182,6 +182,11 @@ export const IMG = {
   cBlogCloud: 'cBlogCloud', // clinic-supplied word cloud
   // version of the feedback graphic for the reviews banner
   cFeedbackSoft: 'cFeedbackSoft', // round, soft-edged (transparent corners)
+  // banner photos for Blog, Social, Reviews and FAQ (Pexels, Indian models; ids in SOURCES.json)
+  hBlog: 'hBlog',
+  hSocial: 'hSocial',
+  hReviews: 'hReviews', // bright skin-clinic treatment room (no people)
+  hFaq: 'hFaq',
   nLaser: 'nLaser',
   nLaserFlip: 'nLaserFlip', // mirrored copy for the Treatments banner, so the treatment sits on the right (clear of the text)
   nLaser2: 'nLaser2',

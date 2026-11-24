@@ -149,5 +149,9 @@
  "cPig": "clinic:treatment-pigmentation.png",
  "cVitiligo": "clinic:treatment-vitiligo.png",
  "cFeedback": "clinic:reviews-your-experience-matters.png",
- "cBlogCloud": "clinic:blog-word-cloud.png"
+ "cBlogCloud": "clinic:blog-word-cloud.png",
+ "hBlog": "pexels:8837770",
+ "hSocial": "pexels:20444698",
+ "hReviews": "pexels:7789601",
+ "hFaq": "pexels:18870282 (cropped)"
 }

@@ -189,8 +189,7 @@ export default function PatientReviewsPage() {
         eyebrow="Patient reviews"
         title={<>What our <em>Patients</em> say</>}
         text="Honest words from people we have cared for. Visited us? We’d love to hear from you."
-        image={IMG.cFeedbackSoft}
-        fit={{ bg: 'transparent' }}
+        image={IMG.hReviews}
       />
 
       <section className="section">

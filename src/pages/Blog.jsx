@@ -50,8 +50,7 @@ export default function BlogPage() {
         eyebrow="Blog"
         title={<>Skin advice from our <em>Dermatologist</em></>}
         text="Simple, trustworthy guides on skin, hair and treatments — from the clinic that treats you."
-        image={IMG.cBlogCloud}
-        fit={{ bg: 'transparent' }}
+        image={IMG.hBlog}
       />
 
       <section className="section section--sand">
