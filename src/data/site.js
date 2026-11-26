@@ -183,10 +183,12 @@ export const IMG = {
   // version of the feedback graphic for the reviews banner
   cFeedbackSoft: 'cFeedbackSoft', // round, soft-edged (transparent corners)
   // banner photos for Blog, Social, Reviews and FAQ (Pexels, Indian models; ids in SOURCES.json)
-  hBlog: 'hBlog',
-  hSocial: 'hSocial',
+  hBlog: 'hBlog', // clinic-supplied word cloud (cream background matches the page; shown whole)
+  hSocial: 'hSocial', // clinic-supplied social media banner (v3, cream); its soft background extended on all sides so it fills the banner
   hReviews: 'hReviews', // bright skin-clinic treatment room (no people)
   hFaq: 'hFaq',
+  hContact: 'hContact', // AI-generated (FLUX): receptionist on the phone — illustrative
+  hGallery: 'hGallery', // AI-generated (FLUX): skincare still life — illustrative
   nLaser: 'nLaser',
   nLaserFlip: 'nLaserFlip', // mirrored copy for the Treatments banner, so the treatment sits on the right (clear of the text)
   nLaser2: 'nLaser2',

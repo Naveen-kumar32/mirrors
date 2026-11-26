@@ -150,8 +150,10 @@
  "cVitiligo": "clinic:treatment-vitiligo.png",
  "cFeedback": "clinic:reviews-your-experience-matters.png",
  "cBlogCloud": "clinic:blog-word-cloud.png",
- "hBlog": "pexels:8837770",
- "hSocial": "pexels:20444698",
+ "hBlog": "clinic:blog-word-cloud-2.png (margins trimmed)",
+ "hSocial": "clinic:social-media-banner-3.png (background extended)",
  "hReviews": "pexels:7789601",
- "hFaq": "pexels:18870282 (cropped)"
+ "hFaq": "pexels:18870282 (cropped)",
+ "hContact": "ai:FLUX.1-schnell, mirrored (illustrative)",
+ "hGallery": "ai:FLUX.1-schnell (illustrative)"
 }

@@ -51,6 +51,7 @@ export default function BlogPage() {
         title={<>Skin advice from our <em>Dermatologist</em></>}
         text="Simple, trustworthy guides on skin, hair and treatments — from the clinic that treats you."
         image={IMG.hBlog}
+        fit={{ bg: 'transparent' }}
       />
 
       <section className="section section--sand">
